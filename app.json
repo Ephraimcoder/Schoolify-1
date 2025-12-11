@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "androidNavigationBar": {
+      "visible": "immersive",
+      "backgroundColor": "transparent"
+    },
+    "name": "Schoolify1",
+    "slug": "Schoolify1",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/1.png",
+    "scheme": "schoolify1",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/1.png",
+        "backgroundColor": "#FFFBF5"
+      },
+      "edgeToEdgeEnabled": false,
+      "package": "com.ephraimcoder.Schoolify"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/1.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/1.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F4EBDC"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "be36c56d-4cc6-4068-ab56-b0ed27cef796"
+      }
+    },
+    "owner": "ephraimcoder"
+  }
+}
