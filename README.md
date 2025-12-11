@@ -1,50 +1,28 @@
-# Welcome to your Expo app 👋
+# 📚 Schoolify: Student Task Management App (React Native)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Schoolify is a modern, intuitive, and feature-rich task management application specifically designed to help students stay organized, prioritize academic tasks, and manage their schedules effectively across both **iOS and Android** platforms. Say goodbye to forgotten deadlines and disorganized tasks!
 
-## Get started
+---
 
-1. Install dependencies
+## ✨ Features
 
-   ```bash
-   npm install
-   ```
+Schoolify is built to streamline the student experience with powerful mobile tools:
 
-2. Start the app
+* **Cross-Platform Support:** Seamless experience on both iOS and Android devices.
+* **Task/Assignment Tracking:** Easily add, edit, and delete school-related tasks, including homework, projects, and exams.
+* **Due Date Notifications:** Set specific deadlines and receive local device notifications to ensure nothing falls through the cracks.
+* **Course/Subject Filtering:** Organize tasks by their associated course or subject for quick access.
+* **Priority Levels:** Assign importance levels (High, Medium, Low) to tasks for effective prioritization.
+* **Offline Access:** Basic task viewing and input are available even without an internet connection (if implemented).
 
-   ```bash
-   npx expo start
-   ```
+## 💻 Tech Stack
 
-In the output, you'll find options to open the app in a
+| Category | Technology | Description |
+| :--- | :--- | :--- |
+| **Mobile Framework** | **React Native** | For building native mobile UIs on iOS and Android. |
+| **Environment** | **Expo / React Native CLI** |  Managed Workflow with Expo 
+| **State Management** | [React Context] | Efficiently manages application state. |
+| **Styling** | [Styled Components / Tailwind CSS Native] | For component-based styling. |
+| **Backend/DB** | [Watermelon DB / Appwrite / ] | Server-side logic and database storage. |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
