@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useContext, useMemo, useRef, useState } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
@@ -12,6 +13,8 @@ const Tasks = () => {
   const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [sortVisible, setSortVisible] = useState(false);
+  const [sortOption, setSortOption] = useState("dueDateAsc"); // default
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Animation on mount
@@ -119,12 +122,69 @@ const Tasks = () => {
     return acc;
   }, {});
 
-  // Sort tasks by due date
-  const sortedDates = Object.keys(tasksByDate).sort((a, b) => {
+  // Helpers for sorting within a date group
+  const priorityRank = (p) => {
+    const v = (p || "").toLowerCase();
+    if (v === "high") return 3;
+    if (v === "medium") return 2;
+    if (v === "low") return 1;
+    return 0;
+  };
+
+  const sortTasksInGroup = (arr) => {
+    const copy = [...arr];
+    switch (sortOption) {
+      case "createdNew":
+        return copy.sort(
+          (a, b) => new Date(b.date || 0) - new Date(a.date || 0)
+        );
+      case "createdOld":
+        return copy.sort(
+          (a, b) => new Date(a.date || 0) - new Date(b.date || 0)
+        );
+      case "priorityHighLow":
+        return copy.sort(
+          (a, b) => priorityRank(b.priority) - priorityRank(a.priority)
+        );
+      case "priorityLowHigh":
+        return copy.sort(
+          (a, b) => priorityRank(a.priority) - priorityRank(b.priority)
+        );
+      case "dueDateDesc":
+      case "dueDateAsc":
+      default:
+        // Keep original order for group when sorting by date at the group level
+        return copy;
+    }
+  };
+
+  // Sort date groups by due date (and keep "No Date" last)
+  let sortedDates = Object.keys(tasksByDate).sort((a, b) => {
     if (a === "No Date") return 1;
     if (b === "No Date") return -1;
     return new Date(a) - new Date(b);
   });
+  if (sortOption === "dueDateDesc") {
+    const noDate = sortedDates.includes("No Date");
+    const datesOnly = sortedDates.filter((d) => d !== "No Date").reverse();
+    sortedDates = noDate ? [...datesOnly, "No Date"] : datesOnly;
+  }
+
+  // Apply in-group sorting based on selected option
+  const tasksByDateSorted = Object.fromEntries(
+    sortedDates.map((d) => [d, sortTasksInGroup(tasksByDate[d])])
+  );
+
+  // Flat mode for created date sorting: single column, stacked top-to-bottom
+  const flatMode = sortOption === "createdNew" || sortOption === "createdOld";
+  const flatTasks = useMemo(() => {
+    if (!flatMode) return [];
+    const arr = [...filteredTasks];
+    if (sortOption === "createdNew") {
+      return arr.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    }
+    return arr.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+  }, [filteredTasks, sortOption, flatMode]);
 
   // Helper for priority badge styling in inline cards
   const getPriorityClasses = (priority) => {
@@ -154,6 +214,16 @@ const Tasks = () => {
                 {tasks.length} task{tasks.length !== 1 ? "s" : ""} in total
               </Text>
             </View>
+            <TouchableOpacity
+              onPress={() => setSortVisible((v) => !v)}
+              className="flex-row items-center px-3 py-2 bg-white rounded-lg shadow-sm border border-gray-100"
+              activeOpacity={0.8}
+            >
+              <Ionicons name="funnel-outline" size={18} color="#4F46E5" />
+              <Text className="ml-2 text-indigo-600 font-quicksandSemiBold text-sm">
+                Sort
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Search Bar */}
@@ -165,6 +235,50 @@ const Tasks = () => {
               placeholder="Search tasks..."
             />
           </View>
+
+          {/* Sort Dropdown */}
+          {sortVisible && (
+            <>
+              <TouchableOpacity
+                className="absolute inset-0"
+                activeOpacity={1}
+                onPress={() => setSortVisible(false)}
+              />
+              <View className="absolute right-4 top-24 bg-white rounded-xl shadow-lg border border-gray-100 w-64 z-50">
+                {[
+                  { key: "dueDateAsc", label: "Due date: earliest first" },
+                  { key: "dueDateDesc", label: "Due date: latest first" },
+                  { key: "createdNew", label: "Created: newest first" },
+                  { key: "createdOld", label: "Created: oldest first" },
+                  { key: "priorityHighLow", label: "Priority: High → Low" },
+                  { key: "priorityLowHigh", label: "Priority: Low → High" },
+                ].map((opt) => (
+                  <TouchableOpacity
+                    key={opt.key}
+                    className="px-4 py-3 flex-row items-center justify-between"
+                    onPress={() => {
+                      setSortOption(opt.key);
+                      setSortVisible(false);
+                    }}
+                  >
+                    <Text
+                      className={
+                        opt.key === sortOption
+                          ? "text-indigo-600 font-quicksandSemiBold"
+                          : "text-gray-700 font-quicksand"
+                      }
+                    >
+                      {opt.label}
+                    </Text>
+                    {opt.key === sortOption && (
+                      <Ionicons name="checkmark" size={16} color="#4F46E5" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
           {searchQuery?.length > 0 && (
             <View className="mb-4 px-1 flex-row items-center justify-between">
               <Text className="text-gray-500 font-quicksand text-sm">
@@ -188,7 +302,7 @@ const Tasks = () => {
           {/* Tasks List */}
           <TaskList
             tasks={filteredTasks}
-            tasksByDate={tasksByDate}
+            tasksByDate={tasksByDateSorted}
             sortedDates={sortedDates}
             getPriorityClasses={getPriorityClasses}
             onRefresh={onRefresh}
@@ -196,6 +310,8 @@ const Tasks = () => {
             searchQuery={searchQuery}
             renderHighlightedText={renderHighlightedText}
             matchedSubtasks={matchedSubtasks}
+            flatMode={flatMode}
+            flatTasks={flatTasks}
           />
         </SafeAreaView>
       </LinearGradient>

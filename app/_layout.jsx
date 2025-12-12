@@ -3,14 +3,24 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
-import { Stack, useRouter } from "expo-router";
-import { useEffect } from "react";
+import * as Notifications from "expo-notifications";
+import { Stack, usePathname, useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableFreeze, enableScreens } from "react-native-screens";
 import { TaskProvider } from "../context/TasksContext";
 import { UserProvider, useUser } from "../context/UserContext";
 import "../global.css";
+
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 // Enable native screen optimizations and freeze offscreen views
 enableScreens(true);
@@ -19,6 +29,48 @@ enableFreeze(true);
 function RootLayoutContent() {
   const { user, isLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
+  const notificationListener = useRef();
+  const responseListener = useRef();
+
+  // Handle notification taps
+  useEffect(() => {
+    // This listener is called when a notification is received while the app is in the foreground
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        console.log("Notification received:", notification);
+      });
+
+    // This listener is called when a user taps on a notification
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        const notificationData =
+          response.notification.request.content.data || {};
+        const { id, type } = notificationData;
+
+        console.log("Notification tapped:", { id, type });
+
+        // Handle different notification types
+        if (
+          id &&
+          type === "task" &&
+          !pathname.includes(`/task-details/${id}`)
+        ) {
+          router.push(`/task-details/${id}`);
+        } else if (type === "daily-reminder") {
+          router.push("/(tabs)/Home");
+        }
+      });
+
+    return () => {
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
+  }, [pathname, router]);
 
   // Hide Android navigation bar
   useEffect(() => {

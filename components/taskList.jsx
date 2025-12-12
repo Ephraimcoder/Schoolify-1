@@ -19,12 +19,13 @@ const TaskItem = React.memo(
     parentTaskColor,
     getPriorityClasses,
     onPress,
+    fullWidth = false,
   }) => {
     const color = isSubtask ? parentTaskColor : task.color || "#4F46E5";
 
     return (
       <TouchableOpacity
-        className="w-1/2 px-2 mb-4"
+        className={fullWidth ? "w-full px-2 mb-4" : "w-1/2 px-2 mb-4"}
         activeOpacity={0.7}
         onPress={onPress}
       >
@@ -139,6 +140,8 @@ export const TaskList = ({
   searchQuery,
   renderHighlightedText,
   matchedSubtasks = [],
+  flatMode = false,
+  flatTasks = [],
 }) => {
   const router = useRouter();
 
@@ -157,6 +160,7 @@ export const TaskList = ({
           renderHighlightedText={renderHighlightedText}
           getPriorityClasses={getPriorityClasses}
           onPress={() => handleTaskPress(item.id)}
+          fullWidth={flatMode}
         />
       ),
       subtask: ({ item }) => (
@@ -170,7 +174,13 @@ export const TaskList = ({
         />
       ),
     }),
-    [searchQuery, renderHighlightedText, getPriorityClasses, handleTaskPress]
+    [
+      searchQuery,
+      renderHighlightedText,
+      getPriorityClasses,
+      handleTaskPress,
+      flatMode,
+    ]
   );
 
   // Memoize the key extractors
@@ -192,6 +202,57 @@ export const TaskList = ({
     []
   );
 
+  // Flat list mode for created date sorting
+  if (flatMode) {
+    return (
+      <FlatList
+        key="flat"
+        data={flatTasks}
+        renderItem={renderTaskItem.task}
+        keyExtractor={keyExtractors.task}
+        numColumns={1}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListHeaderComponent={
+          searchQuery && matchedSubtasks.length > 0 ? (
+            <View className="mb-6">
+              <View className="flex-row items-center mb-3">
+                <View className="h-6 w-1 bg-amber-500 rounded-r mr-2" />
+                <Ionicons name="list" size={18} color="#F59E0B" />
+                <Text className="text-gray-700 font-quicksandBold ml-2">
+                  Matched Subtasks
+                </Text>
+                <Text className="ml-2 text-gray-400 text-sm font-quicksand">
+                  ({matchedSubtasks.length} subtask
+                  {matchedSubtasks.length !== 1 ? "s" : ""})
+                </Text>
+              </View>
+              <FlatList
+                key="matched-subtasks"
+                data={matchedSubtasks}
+                renderItem={renderTaskItem.subtask}
+                keyExtractor={keyExtractors.subtask}
+                numColumns={2}
+                getItemLayout={getItemLayout}
+                initialNumToRender={4}
+                maxToRenderPerBatch={5}
+                windowSize={5}
+                removeClippedSubviews={true}
+              />
+            </View>
+          ) : null
+        }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={8}
+        updateCellsBatchingPeriod={50}
+        windowSize={10}
+        initialNumToRender={6}
+        getItemLayout={getItemLayout}
+      />
+    );
+  }
+
   // Render a single date section
   const renderDateSection = (date) => (
     <View key={date} className="mb-6">
@@ -212,6 +273,7 @@ export const TaskList = ({
         </Text>
       </View>
       <FlatList
+        key={`grid-${date}`}
         data={tasksByDate[date]}
         renderItem={renderTaskItem.task}
         keyExtractor={keyExtractors.task}
@@ -228,6 +290,7 @@ export const TaskList = ({
 
   return (
     <FlatList
+      key="grouped"
       data={sortedDates}
       renderItem={({ item: date }) => renderDateSection(date)}
       keyExtractor={(date) => `date-${date}`}
@@ -249,6 +312,7 @@ export const TaskList = ({
               </Text>
             </View>
             <FlatList
+              key="matched-subtasks"
               data={matchedSubtasks}
               renderItem={renderTaskItem.subtask}
               keyExtractor={keyExtractors.subtask}

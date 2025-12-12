@@ -28,6 +28,7 @@ import ItemManagementModal from "../../components/ItemManagementModal";
 import SelectableButton from "../../components/SelectableButton";
 import SubtaskModal from "../../components/SubtaskModal";
 import { TasksContext } from "../../context/TasksContext";
+import { getNotificationLeadMinutes } from "../../utils/notificationPrefs";
 
 const formatDate = (date) => {
   return date.toLocaleDateString("en-US", {
@@ -111,8 +112,12 @@ const AddTask = () => {
       dueDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
     }
 
+    // Apply user's preferred lead time (minutes before)
+    const leadMinutes = await getNotificationLeadMinutes();
+    const triggerTime = new Date(dueDateTime.getTime() - leadMinutes * 60000);
+
     // Don't schedule in the past
-    if (!dueDateTime || dueDateTime <= new Date()) return null;
+    if (!triggerTime || triggerTime <= new Date()) return null;
 
     try {
       // Request permissions if not already granted
@@ -146,24 +151,30 @@ const AddTask = () => {
       // Cancel any existing notification with this ID
       await Notifications.cancelScheduledNotificationAsync(id);
 
-      // Schedule the notification with the existing trigger format
+      // Schedule the notification using the adjusted trigger time
       await Notifications.scheduleNotificationAsync({
         identifier: id,
         content: {
-          title: `🔔 ${title}`,
-          body: description || "Task due now!",
-          data: { id, title },
+          title: `🔔 Your Task ${title} is due soon`,
+          body: `Don't forget to complete it!`,
+          data: {
+            id,
+            title,
+            type: "task",
+          },
           sound: "default",
           priority: Notifications.AndroidNotificationPriority.HIGH,
           vibrate: [0, 250, 250, 250],
         },
         trigger: {
           type: "date",
-          date: dueDateTime,
+          date: triggerTime,
         },
       });
 
-      console.log("Notification scheduled for:", dueDateTime);
+      console.log(
+        `Notification scheduled for ${triggerTime.toISOString()} (lead ${leadMinutes}m before ${dueDateTime.toISOString()})`
+      );
       return id;
     } catch (error) {
       console.error("Error scheduling notification:", error);
