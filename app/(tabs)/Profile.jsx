@@ -126,18 +126,12 @@ const Profile = () => {
         <Text className="text-xl font-quicksandBold text-gray-900">
           My Profile
         </Text>
-        <View className="flex-row items-center">
+        <View className="w-12">
           <TouchableOpacity
             onPress={logout}
-            className="w-12 h-12 rounded-full items-center justify-center mr-2"
+            className="w-12 h-12 rounded-full items-center justify-center"
           >
             <MaterialIcons name="logout" size={24} color="#EF4444" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/settings")}
-            className="p-2"
-          >
-            <Ionicons name="settings-outline" size={24} color="#4F46E5" />
           </TouchableOpacity>
         </View>
       </View>
@@ -203,6 +197,13 @@ const Profile = () => {
                 }}
               />
             ))}
+
+            {/* Settings Button */}
+            <SectionItem
+              icon="settings-outline"
+              label="Settings"
+              onPress={() => router.push("/settings")}
+            />
           </View>
         </ScrollView>
 

@@ -1,7 +1,6 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Platform,
@@ -14,14 +13,12 @@ import {
 import { useUser } from "../../context/UserContext";
 import { showError, showSuccess, showWarning } from "../../utils/toast";
 
-export default function SignIn() {
+export default function OtpStart() {
+  const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "" });
-  const { login } = useUser();
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const { requestEmailOtp } = useUser();
 
   useEffect(() => {
     // Mark onboarding as seen as soon as user hits any auth screen
@@ -29,42 +26,41 @@ export default function SignIn() {
   }, []);
 
   useEffect(() => {
-    // Check if we're offline from the router params
-    if (params.offline === "true") {
-      setIsOffline(true);
-    }
-
-    // Set up network status listener
+    // Check initial network status and subscribe
+    const checkNetworkStatus = async () => {
+      const netInfo = await NetInfo.fetch();
+      setIsOffline(!netInfo.isConnected);
+    };
+    checkNetworkStatus();
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsOffline(!state.isConnected);
     });
-
     return () => unsubscribe();
-  }, [params]);
+  }, []);
 
   const submit = async () => {
     if (isOffline) {
-      showWarning("You need to be online to sign in.");
+      showWarning("You need to be online to request an OTP.");
       return;
     }
 
-    const { email, password } = form;
-    if (!form.email || !form.password) {
-      showError("Please enter a valid email and password");
+    const emailTrimmed = email.trim();
+    if (!emailTrimmed || !emailTrimmed.includes("@")) {
+      showError("Please enter a valid email address");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await login(email, password);
-      showSuccess("User signed in successfully");
-      router.replace("/(tabs)/Home");
+      const { userId } = await requestEmailOtp(emailTrimmed, { phrase: false });
+      showSuccess("OTP sent to your email");
+      router.push({
+        pathname: "/(auth)/otp-verify",
+        params: { userId, email: emailTrimmed },
+      });
     } catch (error) {
-      console.error("Sign in error:", error);
-      showError(
-        error.message ||
-          "Failed to sign in. Please check your credentials and try again."
-      );
+      console.error("OTP request error:", error);
+      showError(error.message || "Failed to request OTP. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -99,7 +95,7 @@ export default function SignIn() {
           </Text>
         </View>
 
-        {/* Optional hero placeholder to echo onboarding style */}
+        {/* Hero */}
         <View className="items-center mt-6">
           <View
             className="w-11/12 h-44 bg-white rounded-3xl items-center justify-center"
@@ -124,10 +120,10 @@ export default function SignIn() {
         {/* Header */}
         <View className="items-center mt-8">
           <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
-            Agent Login
+            Email OTP
           </Text>
           <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
-            Hey, Enter your details to get sign in{"\n"}to your account
+            Enter your email to receive a 6-digit OTP
           </Text>
         </View>
 
@@ -135,50 +131,23 @@ export default function SignIn() {
         <View className="mt-10">
           <View className="mb-5">
             <TextInput
-              placeholder="Enter Email / Phone No"
-              value={form.email}
-              onChangeText={(text) =>
-                setForm((prev) => ({ ...prev, email: text }))
-              }
+              placeholder="Email address"
+              value={email}
+              onChangeText={setEmail}
               keyboardType="email-address"
+              autoCapitalize="none"
               className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg"
               placeholderTextColor="#9CA3AF"
               style={{ fontFamily: "Quicksand-Regular" }}
             />
           </View>
-
-          <View className="mb-4">
-            <View className="relative">
-              <TextInput
-                placeholder="Password"
-                value={form.password}
-                onChangeText={(text) =>
-                  setForm((prev) => ({ ...prev, password: text }))
-                }
-                secureTextEntry={!showPassword}
-                className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg pr-14"
-                placeholderTextColor="#9CA3AF"
-                style={{ fontFamily: "Quicksand-Regular" }}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                className="absolute right-0 top-0 h-16 w-14 items-center justify-center"
-              >
-                <MaterialIcons
-                  name={showPassword ? "visibility-off" : "visibility"}
-                  size={24}
-                  color="#6B7280"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
 
-        {/* Bottom spacing reserved for the pinned CTA */}
+        {/* Spacer */}
         <View className="h-10" />
       </ScrollView>
 
-      {/* Pinned bottom CTA + links */}
+      {/* Pinned bottom CTA + link back */}
       <View className="absolute left-6 right-6 bottom-6">
         <TouchableOpacity
           className="bg-orange-600 h-16 rounded-full items-center justify-center"
@@ -186,33 +155,23 @@ export default function SignIn() {
           disabled={isSubmitting}
         >
           <Text className="text-white font-quicksandBold text-lg">
-            {isSubmitting ? "Signing In..." : "Sign In"}
+            {isSubmitting ? "Sending..." : "Send OTP"}
           </Text>
         </TouchableOpacity>
 
         <View className="flex-row justify-center mt-3">
-          <Link
-            href="/(auth)/otp-start"
-            className="text-orange-500 font-quicksandBold text-base"
-            style={{ fontFamily: "Quicksand-Regular" }}
-          >
-            Use Email OTP instead
-          </Link>
-        </View>
-
-        <View className="flex-row justify-center mt-2">
           <Text
             className="text-gray-600 text-base"
             style={{ fontFamily: "Quicksand-Regular" }}
           >
-            Don't have an account?{" "}
+            Prefer password login?{" "}
           </Text>
           <Link
-            href="/(auth)/sign-up"
+            href="/(auth)/sign-in"
             className="text-orange-500 font-quicksandBold text-base"
             style={{ fontFamily: "Quicksand-Regular" }}
           >
-            Sign Up
+            Go back
           </Link>
         </View>
       </View>

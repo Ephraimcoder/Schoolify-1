@@ -8,16 +8,33 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BarChart, PieChart } from "react-native-chart-kit";
 
 export const AnalyticsModal = ({ visible, onClose, tasks }) => {
   const stats = useMemo(() => {
+    console.log("All tasks:", tasks); // Debug log
+
     const completed = tasks.filter((t) => t.isCompleted).length;
     const pending = tasks.length - completed;
+
+    // Debug: Log priority values from all tasks
+    tasks.forEach((task, index) => {
+      console.log(`Task ${index + 1}:`, {
+        id: task.id,
+        title: task.title,
+        priority: task.priority,
+        isCompleted: task.isCompleted,
+      });
+    });
+
     const priorityCounts = tasks.reduce((acc, task) => {
-      acc[task.priority] = (acc[task.priority] || 0) + 1;
+      if (task.priority) {
+        const priority = task.priority.toLowerCase();
+        acc[priority] = (acc[priority] || 0) + 1;
+      }
       return acc;
     }, {});
+
+    console.log("Calculated priority counts:", priorityCounts); // Debug log
 
     // Calculate category distribution
     const categoryCounts = tasks.reduce((acc, task) => {
@@ -64,17 +81,31 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
   }, [tasks]);
 
   function calculateStreak(tasks) {
-    // Sort completed tasks by completion date
+    // Sort completed tasks by completion date in descending order (newest first)
     const completedTasks = tasks
-      .filter((t) => t.completedAt)
+      .filter((t) => t.isCompleted && t.completedAt)
       .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
     if (completedTasks.length === 0) return 0;
 
-    let streak = 1;
-    let currentDate = new Date(completedTasks[0].completedAt);
-    currentDate.setHours(0, 0, 0, 0);
+    // Convert all dates to YYYY-MM-DD format for accurate comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Check if the most recent task was completed today or yesterday
+    const lastCompleted = new Date(completedTasks[0].completedAt);
+    lastCompleted.setHours(0, 0, 0, 0);
+
+    // If the last completed task is before yesterday, there's no active streak
+    if (lastCompleted < yesterday) return 0;
+
+    let streak = 1;
+    let currentDate = lastCompleted;
+
+    // Check for consecutive days
     for (let i = 1; i < completedTasks.length; i++) {
       const taskDate = new Date(completedTasks[i].completedAt);
       taskDate.setHours(0, 0, 0, 0);
@@ -83,17 +114,25 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) {
+        // Next day in streak
         streak++;
         currentDate = taskDate;
       } else if (diffDays > 1) {
-        break; // Streak broken
+        // Streak broken
+        break;
       }
+      // If diffDays === 0, it's the same day, so we skip it
     }
 
     return streak;
   }
 
   function getMostProductiveDay(tasks) {
+    console.log(
+      "First task structure:",
+      tasks[0] ? JSON.stringify(tasks[0], null, 2) : "No tasks"
+    );
+
     const dayCount = {};
     const days = [
       "Sunday",
@@ -105,68 +144,47 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       "Saturday",
     ];
 
+    // Count completed tasks by day of week
     tasks.forEach((task) => {
-      if (task.completedAt) {
-        const day = new Date(task.completedAt).getDay();
-        dayCount[day] = (dayCount[day] || 0) + 1;
+      // Check for different possible completion timestamp field names
+      const completionDate =
+        task.completedAt || task.completedDate || task.dateCompleted;
+
+      if (completionDate) {
+        try {
+          const date = new Date(completionDate);
+          if (!isNaN(date.getTime())) {
+            // Check if date is valid
+            const day = date.getDay();
+            dayCount[day] = (dayCount[day] || 0) + 1;
+          } else {
+            console.log(
+              `Task ${task.id} has invalid date format:`,
+              completionDate
+            );
+          }
+        } catch (e) {
+          console.warn("Error processing task date:", e);
+        }
       }
     });
 
-    if (Object.keys(dayCount).length === 0) return "No data";
+    console.log("Day counts:", dayCount);
 
+    // If no completed tasks, return a helpful message
+    if (Object.keys(dayCount).length === 0) {
+      return "Complete tasks to see your most productive day";
+    }
+
+    // Find the day with the most completed tasks
     const mostProductive = Object.entries(dayCount).reduce((a, b) =>
       a[1] > b[1] ? a : b
     );
+
     return days[mostProductive[0]];
   }
 
-  const chartConfig = {
-    backgroundGradientFrom: "#fff",
-    backgroundGradientTo: "#fff",
-    decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: "4",
-      strokeWidth: "2",
-      stroke: "#4F46E5",
-    },
-  };
-
   const screenWidth = Dimensions.get("window").width - 80;
-
-  const priorityData = [
-    {
-      name: "High",
-      count: stats.priorityCounts["3"] || 0,
-      color: "#EF4444",
-      legendFontColor: "#7F7F7F",
-    },
-    {
-      name: "Medium",
-      count: stats.priorityCounts["2"] || 0,
-      color: "#F59E0B",
-      legendFontColor: "#7F7F7F",
-    },
-    {
-      name: "Low",
-      count: stats.priorityCounts["1"] || 0,
-      color: "#10B981",
-      legendFontColor: "#7F7F7F",
-    },
-  ];
-
-  const categoryData = Object.entries(stats.categoryCounts).map(
-    ([name, count]) => ({
-      name,
-      count,
-      color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-      legendFontColor: "#7F7F7F",
-    })
-  );
 
   return (
     <Modal
@@ -195,150 +213,203 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} className="mt-2">
-            {/* Quick Stats */}
-            <View className="flex-row flex-wrap justify-between mb-6">
-              <View className="w-[48%] bg-blue-50 p-4 rounded-xl mb-3">
-                <Text className="text-blue-800 font-quicksandBold text-2xl">
-                  {stats.total}
-                </Text>
-                <Text className="text-blue-600 font-quicksand">
-                  Total Tasks
-                </Text>
-              </View>
-              <View className="w-[48%] bg-green-50 p-4 rounded-xl mb-3">
-                <Text className="text-green-800 font-quicksandBold text-2xl">
-                  {stats.completed}
-                </Text>
-                <Text className="text-green-600 font-quicksand">Completed</Text>
-              </View>
-              <View className="w-[48%] bg-purple-50 p-4 rounded-xl">
-                <Text className="text-purple-800 font-quicksandBold text-2xl">
-                  {stats.streak} {stats.streak === 1 ? "day" : "days"}
-                </Text>
-                <Text className="text-purple-600 font-quicksand">
-                  Current Streak
-                </Text>
-              </View>
-              <View className="w-[48%] bg-yellow-50 p-4 rounded-xl">
-                <Text className="text-yellow-800 font-quicksandBold text-2xl">
-                  {stats.completionRate}%
-                </Text>
-                <Text className="text-yellow-600 font-quicksand">
-                  Completion Rate
-                </Text>
-              </View>
-            </View>
-
-            {/* Weekly Trend */}
+            {/* Task Overview */}
             <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100">
-              <Text className="text-lg font-quicksandBold mb-3">
-                Weekly Completion Trend
+              <Text className="text-lg font-quicksandBold mb-4">
+                Task Overview
               </Text>
-              <BarChart
-                data={{
-                  labels: ["S", "M", "T", "W", "T", "F", "S"],
-                  datasets: [
-                    {
-                      data: stats.weeklyTrend,
-                    },
-                  ],
-                }}
-                width={screenWidth}
-                height={220}
-                yAxisLabel=""
-                chartConfig={{
-                  ...chartConfig,
-                  backgroundGradientFrom: "#F9FAFB",
-                  backgroundGradientTo: "#F9FAFB",
-                  color: (opacity = 1) => `rgba(79, 70, 229, ${opacity})`,
-                  barPercentage: 0.5,
-                }}
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 16,
-                }}
-                fromZero
-                showBarTops={false}
-                withInnerLines={false}
-                withOuterLines={false}
-              />
-              <View className="mt-2 flex-row justify-between items-center">
-                <Text className="text-gray-500 font-quicksand text-xs">
-                  Most productive: {stats.mostProductiveDay}
-                </Text>
-                <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full bg-indigo-500 mr-1"></View>
-                  <Text className="text-indigo-600 font-quicksand text-xs">
-                    Tasks completed
+
+              {/* Completion Stats */}
+              <View className="mb-4">
+                <View className="flex-row justify-between items-center mb-1">
+                  <Text className="text-gray-600 font-quicksand">
+                    Completion Rate
+                  </Text>
+                  <Text className="font-quicksandBold text-indigo-600">
+                    {stats.completionRate}%
+                  </Text>
+                </View>
+                <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <View
+                    className="h-full bg-indigo-500 rounded-full"
+                    style={{ width: `${stats.completionRate}%` }}
+                  />
+                </View>
+                <View className="flex-row justify-between mt-2">
+                  <Text className="text-sm text-gray-500">
+                    {stats.completed} completed • {stats.pending} remaining
+                  </Text>
+                  <Text className="text-sm text-gray-500">
+                    {stats.total} total
                   </Text>
                 </View>
               </View>
-            </View>
 
-            {/* Priority Distribution */}
-            <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100">
-              <Text className="text-lg font-quicksandBold mb-3">
-                Tasks by Priority
-              </Text>
-              <View className="flex-row">
-                <View className="w-1/2 items-center">
-                  <PieChart
-                    data={priorityData}
-                    width={screenWidth / 2}
-                    height={180}
-                    chartConfig={chartConfig}
-                    accessor={"count"}
-                    backgroundColor={"transparent"}
-                    paddingLeft={"0"}
-                    center={[0, 0]}
-                    absolute
-                    hasLegend={false}
-                  />
-                </View>
-                <View className="w-1/2 justify-center pl-4">
-                  {priorityData.map((item, index) => (
-                    <View key={index} className="flex-row items-center mb-2">
-                      <View
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <Text className="text-gray-700 font-quicksand">
-                        {item.name}: {item.count}
+              {/* Streak */}
+              <View className="mt-5 pt-4 border-t border-gray-100">
+                <View className="flex-row items-start justify-between px-1">
+                  <View className="flex-row items-center space-x-3 gap-2">
+                    <View className="bg-indigo-50 p-2.5 rounded-full">
+                      <Ionicons name="flame" size={18} color="#8B5CF6" />
+                    </View>
+                    <View>
+                      <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5">
+                        Current Streak
+                      </Text>
+                      <View className="flex-row items-baseline space-x-1.5">
+                        <Text className="text-2xl font-quicksandBold text-indigo-600">
+                          {stats.streak}
+                        </Text>
+                        <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5">
+                          {stats.streak === 1 ? "day" : "days"}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View className="items-end max-w-[45%]">
+                    <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5 text-right">
+                      Most Productive
+                    </Text>
+                    <View className="flex-row items-center space-x-1.5 bg-indigo-50 rounded-lg px-2.5 py-1.5">
+                      <Text
+                        className="text-gray-700 font-quicksandBold text-[13px] text-right"
+                        numberOfLines={3}
+                        ellipsizeMode="tail"
+                      >
+                        {stats.mostProductiveDay}
                       </Text>
                     </View>
-                  ))}
+                  </View>
                 </View>
+                {stats.streak > 0 && (
+                  <View className="mt-3 bg-indigo-50 rounded-lg p-2.5 mx-1">
+                    <Text className="text-indigo-700 font-quicksand text-xs text-center">
+                      {stats.streak >= 3 ? "🔥 " : "✨ "}
+                      {getStreakMessage(stats.streak)}
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
 
-            {/* Category Distribution */}
+            {/* Categories */}
             {Object.keys(stats.categoryCounts).length > 0 && (
               <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100">
                 <Text className="text-lg font-quicksandBold mb-3">
                   Tasks by Category
                 </Text>
-                <View className="flex-row flex-wrap">
+                <View className="space-y-3">
                   {Object.entries(stats.categoryCounts).map(
-                    ([category, count], index) => (
-                      <View
-                        key={index}
-                        className="flex-row items-center bg-gray-50 rounded-full px-3 py-1.5 mr-2 mb-2"
-                      >
+                    ([category, count], index) => {
+                      const colors = [
+                        "#4F46E5",
+                        "#10B981",
+                        "#F59E0B",
+                        "#EF4444",
+                        "#8B5CF6",
+                      ];
+                      const color = colors[index % colors.length];
+                      const percentage = Math.round(
+                        (count / stats.total) * 100
+                      );
+
+                      return (
                         <View
-                          className="w-2 h-2 rounded-full mr-1.5"
-                          style={{
-                            backgroundColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-                          }}
-                        />
-                        <Text className="text-gray-700 font-quicksand text-sm">
-                          {category}: {count}
-                        </Text>
-                      </View>
-                    )
+                          key={`category-${index}`}
+                          className="space-y-1 gap-4"
+                        >
+                          <View className="flex-row justify-between items-center">
+                            <View className="flex-row items-center">
+                              <View
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{ backgroundColor: color }}
+                              />
+                              <Text className="text-gray-700 font-quicksand">
+                                {category}
+                              </Text>
+                            </View>
+                            <Text className="text-gray-500 font-quicksand">
+                              {count} {count === 1 ? "task" : "tasks"} •{" "}
+                              {percentage}%
+                            </Text>
+                          </View>
+                          <View className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <View
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${percentage}%`,
+                                backgroundColor: color,
+                                opacity: 0.7,
+                              }}
+                            />
+                          </View>
+                        </View>
+                      );
+                    }
                   )}
                 </View>
               </View>
             )}
+
+            {/* Priority */}
+            <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100">
+              <Text className="text-lg font-quicksandBold mb-3">
+                Tasks by Priority
+              </Text>
+              <View className="space-y-3">
+                {["high", "medium", "low"].map((priority) => {
+                  // Initialize count to 0 if priority doesn't exist
+                  const count = stats.priorityCounts[priority] || 0;
+
+                  const priorityColors = {
+                    high: "#EF4444",
+                    medium: "#F59E0B",
+                    low: "#10B981",
+                  };
+
+                  const color = priorityColors[priority] || "#6B7280";
+                  const percentage =
+                    stats.total > 0
+                      ? Math.round((count / stats.total) * 100)
+                      : 0;
+                  const priorityLabel =
+                    priority.charAt(0).toUpperCase() + priority.slice(1);
+
+                  return (
+                    <View
+                      key={`priority-${priority}`}
+                      className="space-y-1 gap-4"
+                    >
+                      <View className="flex-row justify-between items-center">
+                        <View className="flex-row items-center">
+                          <View
+                            className="w-3 h-3 rounded-full mr-2"
+                            style={{ backgroundColor: color }}
+                          />
+                          <Text className="text-gray-700 font-quicksand">
+                            {priorityLabel} Priority
+                          </Text>
+                        </View>
+                        <Text className="text-gray-500 font-quicksand">
+                          {count} {count === 1 ? "task" : "tasks"} •{" "}
+                          {percentage}%
+                        </Text>
+                      </View>
+                      <View className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <View
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${percentage}%`,
+                            backgroundColor: color,
+                            opacity: 0.7,
+                          }}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
 
             {/* Productivity Tips */}
             <View className="bg-indigo-50 rounded-xl p-4 mb-4">
@@ -370,6 +441,14 @@ function getProductivityTip(completionRate, streak, mostProductiveDay) {
   } else {
     return "Start by completing small tasks to build momentum. You've got this!";
   }
+}
+
+function getStreakMessage(streak) {
+  if (streak === 0) return "Complete tasks to start a streak!";
+  if (streak === 1) return "Great start! Come back tomorrow to keep it going.";
+  if (streak < 5) return `You're on a roll! ${streak} days in a row!`;
+  if (streak < 10) return `Amazing! ${streak} days of productivity!`;
+  return `Incredible ${streak}-day streak! You're unstoppable!`;
 }
 
 export default AnalyticsModal;

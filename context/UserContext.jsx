@@ -70,6 +70,7 @@ export function UserProvider({ children }) {
       throw error;
     }
   };
+
   // Effect to load user from local storage and validate with Appwrite
   useEffect(() => {
     const loadAndValidateUser = async () => {
@@ -136,7 +137,7 @@ export function UserProvider({ children }) {
     }
   };
 
-  // Register new user
+  // Register new user (password flow - still supported)
   const register = async (email, password, name) => {
     setIsLoading(true);
     try {
@@ -156,7 +157,7 @@ export function UserProvider({ children }) {
       if (!newAccount) throw new Error("Failed to create account");
 
       // 2. Create a session
-      await account.createEmailPasswordSession(email, password);
+      await account.createEmailSession(email, password);
 
       // 3. Create user document in the database
       const avatarUrl = avatars.getInitialsURL(name);
@@ -199,7 +200,7 @@ export function UserProvider({ children }) {
     }
   };
 
-  // Login user
+  // Login user (password flow - still supported)
   const login = async (email, password) => {
     const netState = await NetInfo.fetch();
     if (!netState.isConnected) {
@@ -207,7 +208,7 @@ export function UserProvider({ children }) {
     }
     setIsLoading(true);
     try {
-      const session = await account.createEmailPasswordSession(email, password);
+      const session = await account.createEmailSession(email, password);
       const userData = await fetchUserDocument(session.userId);
       saveUser(userData);
       return userData;
@@ -215,6 +216,84 @@ export function UserProvider({ children }) {
       console.error("Login failed:", error);
       clearUser();
       throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Passwordless Email OTP: request token (phrase disabled by default)
+  // Accepts optional userId so resend can reuse the same ID for first-time users
+  const requestEmailOtp = async (email, { phrase = false, userId } = {}) => {
+    const netState = await NetInfo.fetch();
+    if (!netState.isConnected) {
+      throw new Error("No internet connection");
+    }
+    try {
+      const desiredId = userId ?? ID.unique();
+      // Returns Token with userId (and optional phrase if enabled)
+      const token = await account.createEmailToken(desiredId, email, phrase);
+      return { userId: token.userId, phrase: token.phrase };
+    } catch (error) {
+      console.error("requestEmailOtp error:", error);
+      // Re-throw a friendly message
+      throw new Error(
+        error?.message || "Failed to send OTP. Please try again."
+      );
+    }
+  };
+
+  // Passwordless Email OTP: verify token and create/get user document
+  const verifyEmailOtp = async ({ userId, code }) => {
+    const netState = await NetInfo.fetch();
+    if (!netState.isConnected) {
+      throw new Error("No internet connection");
+    }
+    setIsLoading(true);
+    try {
+      // Create a session using the OTP code as secret (object form for RN SDK)
+      await account.createSession({ userId, secret: code });
+
+      // Get the authenticated account
+      const currentAccount = await account.get();
+
+      // Try fetching user document; if missing, create it (first sign-in)
+      let userData;
+      try {
+        userData = await fetchUserDocument(currentAccount.$id);
+      } catch (err) {
+        // Create minimal profile
+        const fallbackName =
+          currentAccount.name && currentAccount.name.trim().length > 0
+            ? currentAccount.name
+            : currentAccount.email?.split("@")[0] || "User";
+        const avatarUrl = avatars.getInitialsURL(fallbackName);
+        const newDoc = await databases.createDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.userCollectionId,
+          ID.unique(),
+          {
+            accountId: currentAccount.$id,
+            name: fallbackName,
+            email: currentAccount.email,
+            avatar: avatarUrl,
+          }
+        );
+        userData = {
+          $id: newDoc.$id,
+          name: newDoc.name,
+          email: newDoc.email,
+          avatar: newDoc.avatar,
+          accountId: newDoc.accountId,
+        };
+      }
+
+      await saveUser(userData);
+      return userData;
+    } catch (error) {
+      console.error("verifyEmailOtp error:", error);
+      throw new Error(
+        error?.message || "Invalid or expired code. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -235,19 +314,48 @@ export function UserProvider({ children }) {
     return user !== null;
   };
 
-  return (
-    <UserContext.Provider
-      value={{
-        user,
-        isLoading,
-        isOffline,
-        register,
-        login,
-        logout,
-        isLoggedIn,
-      }}
-    >
-      {children}
-    </UserContext.Provider>
-  );
+  const deleteAccount = async (password) => {
+    try {
+      // 1. Verify the user's password by creating a new email session
+      await account.createEmailSession(user.email, password);
+
+      // 2. Delete user document from database
+      await databases.deleteDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.userCollectionId,
+        user.$id
+      );
+
+      // 3. Delete the account
+      await account.deleteSessions();
+      await account.deleteIdentity("current");
+
+      // 4. Clear local storage and state
+      await AsyncStorage.removeItem(USER_STORAGE_KEY);
+      setUser(null);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      if (error.code === 401) {
+        throw new Error("Incorrect password. Please try again.");
+      }
+      throw new Error("Failed to delete account. Please try again later.");
+    }
+  };
+
+  const value = {
+    user,
+    isLoading,
+    isOffline,
+    login,
+    register,
+    logout,
+    isLoggedIn,
+    deleteAccount,
+    requestEmailOtp,
+    verifyEmailOtp,
+  };
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
