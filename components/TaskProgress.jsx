@@ -4,51 +4,81 @@ import { TasksContext } from "../context/TasksContext";
 
 const TaskProgress = React.memo(() => {
   const { tasks } = useContext(TasksContext);
-  
-  const { totalTasks, completedTasks, progress, todaysDate } = useMemo(() => {
+
+  const { totalTasks, completedTasks, progress } = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((task) => task.isCompleted).length;
     return {
       totalTasks: total,
       completedTasks: completed,
-      progress: completed / total,
-      todaysDate: new Date().toLocaleDateString(),
+      progress: total > 0 ? completed / total : 0,
     };
   }, [tasks]);
+
+  const uncompletedTasks = totalTasks - completedTasks;
+
   return (
-    <View className="p-6 rounded-2xl my-4 mx-2">
-      <View className="flex-row justify-between items-start">
-        <View>
-          <Text className="text-xl font-bold text-gray-800 font-quicksandLight">
-            Task Progress
+    <View className="p-5 bg-white rounded-2xl my-4 mx-2 shadow-sm">
+      <View className="flex-row justify-between items-center mb-4">
+        <Text className="text-lg font-quicksandBold text-gray-800">
+          Task Progress
+        </Text>
+        <View className="px-3 py-1 bg-indigo-50 rounded-full">
+          <Text className="text-indigo-600 text-xs font-quicksandMedium">
+            {Math.round(progress * 100)}% Complete
           </Text>
-          <Text className="text-base text-gray-500 mt-1 font-quicksandMedium">
-            {completedTasks}/{totalTasks} task done
+        </View>
+      </View>
+
+      <View className="mb-3">
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-sm font-quicksandSemiBold text-gray-600">
+            Completed
           </Text>
-          <View className="bg-orange-100 px-3 py-1 rounded-full mt-2">
-            <Text className="text-orange-500 font-quicksandBold">
-              {todaysDate}
+          <Text className="text-sm font-quicksandSemiBold text-gray-600">
+            {completedTasks} of {totalTasks}
+          </Text>
+        </View>
+        <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <View
+            className="h-full bg-indigo-500 rounded-full"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </View>
+      </View>
+
+      <View className="flex-row justify-between">
+        <View className="items-center">
+          <View className="w-10 h-10 bg-green-50 rounded-lg items-center justify-center mb-1">
+            <Text className="text-green-600 font-quicksandBold">
+              {completedTasks}
             </Text>
           </View>
+          <Text className="text-xs text-gray-500 font-quicksand">Done</Text>
         </View>
-        <View className="w-24 h-24 items-center justify-center">
-          <View className="absolute w-24 h-24 rounded-full border-[12px] border-gray-200" />
-          <View
-            className="absolute w-24 h-24 rounded-full border-[12px] border-orange-400"
-            style={{
-              borderTopColor: "transparent",
-              transform: [{ rotate: `${45 + progress * 360}deg` }],
-            }}
-          />
-          <Text className="text-2xl font-bold text-gray-800">
-            {Math.round(progress * 100) || 0}%
-          </Text>
+
+        <View className="items-center">
+          <View className="w-10 h-10 bg-amber-50 rounded-lg items-center justify-center mb-1">
+            <Text className="text-amber-600 font-quicksandBold">
+              {uncompletedTasks}
+            </Text>
+          </View>
+          <Text className="text-xs text-gray-500 font-quicksand">Left</Text>
+        </View>
+
+        <View className="items-center">
+          <View className="w-10 h-10 bg-indigo-50 rounded-lg items-center justify-center mb-1">
+            <Text className="text-indigo-600 font-quicksandBold">
+              {totalTasks}
+            </Text>
+          </View>
+          <Text className="text-xs text-gray-500 font-quicksand">Total</Text>
         </View>
       </View>
     </View>
   );
 });
 
-TaskProgress.displayName = 'TaskProgress';
+TaskProgress.displayName = "TaskProgress";
 
 export default TaskProgress;

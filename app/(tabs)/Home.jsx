@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -56,7 +55,7 @@ const Home = () => {
                         (user?.name || "User") +
                         "&background=4F46E5&color=fff",
                   }}
-                  className="w-14 h-14 rounded-2xl mr-4 border-2 border-white shadow-sm"
+                  className="w-16 h-16 rounded-2xl mr-4 border-2 border-white shadow-sm"
                 />
               </View>
               <View>
@@ -68,14 +67,6 @@ const Home = () => {
                 </Text>
               </View>
             </View>
-            <TouchableOpacity className="relative p-2 bg-white rounded-xl shadow-sm">
-              <Ionicons
-                name="notifications-outline"
-                size={24}
-                color="#4F46E5"
-              />
-              <View className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></View>
-            </TouchableOpacity>
           </View>
 
           {/* Search Bar */}
@@ -108,16 +99,6 @@ const Home = () => {
 
             {/* Classes Section */}
             <View>
-              <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-lg font-quicksandBold text-gray-800">
-                  Your Classes
-                </Text>
-                <TouchableOpacity>
-                  <Text className="text-indigo-600 font-quicksandMedium">
-                    See All
-                  </Text>
-                </TouchableOpacity>
-              </View>
               <ClassesSection />
             </View>
           </ScrollView>

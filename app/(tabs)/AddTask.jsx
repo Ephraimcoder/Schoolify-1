@@ -101,13 +101,14 @@ const AddTask = () => {
     description,
     dueDate,
     dueTime,
+    isClass = false, // Add isClass parameter with default false
   }) => {
-    if (!alertEnabled) return;
+    // Allow notifications for classes even if alert toggle is off
+    if (!alertEnabled && !isClass) return;
 
-    // Combine date and time into a single Date object (if not already)
+    // Combine date and time into a single Date object
     const dueDateTime = new Date(dueDate);
     if (dueTime) {
-      // Merge dueDate and dueTime
       const time = new Date(dueTime);
       dueDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
     }
@@ -117,7 +118,10 @@ const AddTask = () => {
     const triggerTime = new Date(dueDateTime.getTime() - leadMinutes * 60000);
 
     // Don't schedule in the past
-    if (!triggerTime || triggerTime <= new Date()) return null;
+    if (!triggerTime || triggerTime <= new Date()) {
+      console.log("Skipping past notification time");
+      return null;
+    }
 
     try {
       // Request permissions if not already granted
@@ -151,16 +155,26 @@ const AddTask = () => {
       // Cancel any existing notification with this ID
       await Notifications.cancelScheduledNotificationAsync(id);
 
+      // Customize notification content based on whether it's a class or task
+      const notificationTitle = isClass
+        ? `📚 Your class ${title} is starting soon!`
+        : `🔔 Your Task ${title} id due soon`;
+
+      const notificationBody = isClass
+        ? `Your class is about to begin. Don't be late!`
+        : `Don't forget to complete your task!`;
+
       // Schedule the notification using the adjusted trigger time
       await Notifications.scheduleNotificationAsync({
         identifier: id,
         content: {
-          title: `🔔 Your Task ${title} is due soon`,
-          body: `Don't forget to complete it!`,
+          title: notificationTitle,
+          body: notificationBody,
           data: {
             id,
             title,
-            type: "task",
+            type: isClass ? "class" : "task",
+            isClass, // Include isClass in the notification data
           },
           sound: "default",
           priority: Notifications.AndroidNotificationPriority.HIGH,
@@ -277,13 +291,14 @@ const AddTask = () => {
 
     let notificationId = null;
 
-    if (alertEnabled) {
+    if (alertEnabled || formData.category === "Class") {
       notificationId = await scheduleTaskNotification({
         id: taskId || `task-${Date.now()}`,
         title: formData.title,
         description: formData.description,
         dueDate: formData.dueDate,
         dueTime: formData.dueTime,
+        isClass: formData.category === "Class",
       });
     }
 
@@ -393,13 +408,20 @@ const AddTask = () => {
 
             {/* Form */}
             <FormInput
-              placeholder="Task Title"
+              placeholder={
+                formData.category === "Class" ? "Class Name" : "Task Title"
+              }
               onChangeText={(text) => handleInputChange("title", text)}
               value={formData.title}
+              label={formData.category === "Class" ? "Class Name" : "Title"}
             />
 
             <TextInput
-              placeholder="Add your task details"
+              placeholder={
+                formData.category === "Class"
+                  ? "Add class description and important notes"
+                  : "Add your task details"
+              }
               placeholderTextColor="#A0A0A0"
               value={formData.description}
               onChangeText={(text) => handleInputChange("description", text)}
@@ -416,7 +438,9 @@ const AddTask = () => {
                   handleInputChange("dueDate", date.toISOString())
                 }
                 mode="date"
-                label="Due Date"
+                label={
+                  formData.category === "Class" ? "Class Date" : "Due Date"
+                }
                 minimumDate={new Date()}
               />
 
@@ -426,14 +450,18 @@ const AddTask = () => {
                   handleInputChange("dueTime", time.toISOString())
                 }
                 mode="time"
-                label="Due Time"
+                label={
+                  formData.category === "Class" ? "Class Time" : "Due Time"
+                }
                 is24Hour={false}
               />
             </View>
 
             {/* Category */}
             <View className="flex-row items-center">
-              <Text className="text-lg font-quicksandBold my-2">Course</Text>
+              <Text className="text-lg font-quicksandBold my-2">
+                Course / Category
+              </Text>
               <TouchableOpacity
                 className="ml-2 p-2 bg-gray-100 rounded"
                 onPress={() => handleOpenModal("category")}
@@ -502,7 +530,9 @@ const AddTask = () => {
             {/* Alert */}
             <View className="flex-row justify-between items-center my-6">
               <Text className="text-lg font-quicksandBold">
-                Get alert for this task
+                {formData.category === "Class"
+                  ? "Get alert for this class"
+                  : "Get alert for this task"}
               </Text>
               <Switch
                 trackColor={{ false: "#E5E7EB", true: "#FCA5A5" }}

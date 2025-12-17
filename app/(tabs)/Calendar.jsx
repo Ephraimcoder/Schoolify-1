@@ -12,14 +12,32 @@ const CalendarScreen = () => {
     new Date().toISOString().split("T")[0]
   );
 
+  // Helper function to normalize dates to the start of the day for comparison
+  const normalizeDate = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
   // Build markedDates with dots for each date with tasks (memoized)
   const markedDates = useMemo(() => {
+    const today = normalizeDate(new Date());
     const dates = {};
+
     tasks.forEach((task) => {
       if (task.dueDate && !task.isCompleted) {
-        const dateKey = new Date(task.dueDate).toISOString().split("T")[0];
+        const taskDate = normalizeDate(new Date(task.dueDate));
+        const dateKey = taskDate.toISOString().split("T")[0];
+
         if (!dates[dateKey]) {
-          dates[dateKey] = { marked: true, dotColor: "#FF6B47" };
+          // Check if the task is overdue (before today and not completed)
+          const isOverdue = taskDate < today;
+          dates[dateKey] = {
+            marked: true,
+            dotColor: isOverdue ? "#9CA3AF" : "#FF6B47",
+            textColor: isOverdue ? "#9CA3AF" : undefined,
+            disabled: false,
+          };
         }
       }
     });
@@ -111,7 +129,7 @@ const CalendarScreen = () => {
             contentContainerStyle={{ paddingBottom: 20 }}
             renderItem={({ item }) => (
               <TouchableOpacity
-                className="bg-white rounded-xl p-4 mb-3 shadow-sm"
+                className={`rounded-xl p-4 mb-3 shadow-sm ${normalizeDate(new Date(item.dueDate)) < normalizeDate(new Date()) ? "bg-gray-50" : "bg-white"}`}
                 onPress={() =>
                   router.push({
                     pathname: "/task-details/[id]",
@@ -121,14 +139,23 @@ const CalendarScreen = () => {
               >
                 <View className="flex-row justify-between items-start">
                   <Text
-                    className={`font-quicksandSemiBold text-base flex-1 ${
+                    className={`sfont-quicksandSemiBold text-base ${
                       item.isCompleted
                         ? "line-through text-gray-400"
-                        : "text-gray-800"
+                        : normalizeDate(new Date(item.dueDate)) <
+                            normalizeDate(new Date())
+                          ? "text-gray-500"
+                          : "text-gray-800"
                     }`}
                     numberOfLines={1}
                   >
                     {item.title}
+                    {normalizeDate(new Date(item.dueDate)) <
+                      normalizeDate(new Date()) && (
+                      <Text className="text-xs font-quicksandMedium text-red-500 ml-2">
+                        Overdue
+                      </Text>
+                    )}
                   </Text>
                   {item.dueDate && (
                     <View className="flex-row items-center ml-2">
