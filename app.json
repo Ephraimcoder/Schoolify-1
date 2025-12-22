@@ -2,7 +2,7 @@
   "expo": {
     "androidNavigationBar": {
       "visible": "immersive",
-      "backgroundColor": "transparent"
+      "backgroundColor": "#00000000"
     },
     "name": "Schoolify1",
     "slug": "Schoolify1",
@@ -30,6 +30,7 @@
     },
     "plugins": [
       "expo-router",
+      ["@lovesworking/watermelondb-expo-plugin-sdk-52-plus"],
       [
         "expo-splash-screen",
         {
@@ -39,7 +40,17 @@
           "backgroundColor": "#F4EBDC"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+     [ "expo-build-properties",
+     {
+        "android": {
+          "kotlinVersion": "2.0.21",
+          "packagingOptions": {
+            "pickFirst": ["**/libc++_shared.so"]
+          }
+        }
+      }
+    ]
     ],
     "experiments": {
       "typedRoutes": true
