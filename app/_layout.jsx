@@ -5,6 +5,7 @@ import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import * as Notifications from "expo-notifications";
 import { Stack, usePathname, useRouter } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -26,12 +27,23 @@ Notifications.setNotificationHandler({
 enableScreens(true);
 enableFreeze(true);
 
+// Keep the native splash up until we finish auth/onboarding routing
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 function RootLayoutContent() {
   const { user, isLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const notificationListener = useRef();
   const responseListener = useRef();
+  const splashHiddenRef = useRef(false);
+  const targetPathRef = useRef(null);
+
+  const hideSplash = () => {
+    if (splashHiddenRef.current) return;
+    splashHiddenRef.current = true;
+    SplashScreen.hideAsync().catch(() => {});
+  };
 
   // Handle notification taps
   useEffect(() => {
@@ -88,7 +100,10 @@ function RootLayoutContent() {
     const checkAndRoute = async () => {
       // If we have a user, immediately route to Home and skip async checks.
       if (user) {
-        if (!cancelled) router.replace("/(tabs)/Home");
+        if (!cancelled) {
+          targetPathRef.current = "/(tabs)/Home";
+          router.replace(targetPathRef.current);
+        }
         return;
       }
 
@@ -103,19 +118,26 @@ function RootLayoutContent() {
       if (!netState.isConnected) {
         // Offline and no cached user: route within auth, preserve offline param
         if (onboardingSeen === "true") {
+          targetPathRef.current = "/(auth)/sign-in";
           router.replace({
-            pathname: "/(auth)/sign-in",
+            pathname: targetPathRef.current,
             params: { offline: "true" },
           });
         } else {
-          router.replace({ pathname: "/(auth)", params: { offline: "true" } });
+          targetPathRef.current = "/(auth)";
+          router.replace({
+            pathname: targetPathRef.current,
+            params: { offline: "true" },
+          });
         }
       } else {
         // Online but no user yet
         if (onboardingSeen === "true") {
-          router.replace("/(auth)/sign-in");
+          targetPathRef.current = "/(auth)/sign-in";
+          router.replace(targetPathRef.current);
         } else {
-          router.replace("/(auth)");
+          targetPathRef.current = "/(auth)";
+          router.replace(targetPathRef.current);
         }
       }
     };
@@ -127,6 +149,17 @@ function RootLayoutContent() {
     };
   }, [user, isLoading, router]);
 
+  // Only hide the splash once the router has actually navigated to the intended path
+  useEffect(() => {
+    const target = targetPathRef.current;
+    if (!target) return;
+    // If pathname equals the target (or begins with it for dynamic segments), hide the splash
+    if (pathname === target || pathname.startsWith(target)) {
+      hideSplash();
+      targetPathRef.current = null;
+    }
+  }, [pathname]);
+
   // Main app layout
   return (
     <Stack screenOptions={{ headerShown: false, freezeOnBlur: true }}>
@@ -136,7 +169,7 @@ function RootLayoutContent() {
   );
 }
 
-const SplashScreen = () => {
+const AppLoader = () => {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <ActivityIndicator size="100" />
@@ -153,8 +186,9 @@ export default function RootLayout() {
     QuicksandLight: require("../assets/fonts/Quicksand-Light.ttf"),
   });
 
+  // Keep the native splash on-screen until fonts are loaded; we hide it in routing above
   if (!fontsLoaded) {
-    return <SplashScreen />;
+    return null;
   }
 
   return (

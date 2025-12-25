@@ -3,12 +3,15 @@ import { useRouter } from "expo-router";
 import React, { useContext, useMemo } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { TasksContext } from "../context/TasksContext";
+
+const { width } = Dimensions.get("window");
 
 const ClassCard = ({ item, onPress }) => {
   return (
@@ -27,12 +30,7 @@ const ClassCard = ({ item, onPress }) => {
           <Text className="text-sm text-gray-600 font-quicksandSemiBold mb-1">
             {item.priority} Priority
           </Text>
-          <Text className="text-xs text-gray-500 mb-2">
-            {new Date(item.dueDate).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}{" "}
-            •{" "}
+          <Text className="text-sm text-gray-500 font-quicksandMedium">
             {new Date(item.dueTime).toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
@@ -82,56 +80,72 @@ const ClassesSection = React.memo(() => {
     );
   }
 
-  if (classTasks.length === 0) {
-    return (
-      <View className="my-4 px-2">
-        <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-lg font-quicksandBold">My Classes</Text>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/AddTask")}>
-            <Text className="text-indigo-600 font-quicksandSemiBold">
-              Add Class
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View className="bg-indigo-50 p-4 rounded-lg">
-          <Text className="text-center text-gray-600">
-            No classes found. Add your first class task!
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View className="my-4">
       <View className="flex-row justify-between items-center mb-3 px-2">
         <Text className="text-lg font-quicksandBold">My Classes</Text>
         <TouchableOpacity
-          onPress={() => {
+          onPress={() =>
             router.push({
-              pathname: "/(tabs)/Tasks",
-              params: { filter: "Class" },
-            });
-          }}
+              pathname: "/(tabs)/AddTask",
+              params: { category: "Class" },
+            })
+          }
         >
           <Text className="text-indigo-600 font-quicksandSemiBold">
-            See All
+            Add Class
           </Text>
         </TouchableOpacity>
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 8 }}
-      >
-        {classTasks.slice(0, 5).map((task) => (
-          <ClassCard
-            key={task.id}
-            item={task}
-            onPress={() => handleClassPress(task)}
+
+      {classTasks.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 8 }}
+        >
+          {classTasks.slice(0, 5).map((task) => (
+            <ClassCard
+              key={task.id}
+              item={task}
+              onPress={() => handleClassPress(task)}
+            />
+          ))}
+        </ScrollView>
+      ) : (
+        <View
+          style={{
+            width: width - 32,
+            alignSelf: "center",
+            justifyContent: "center",
+            alignItems: "center",
+            paddingVertical: 32,
+          }}
+        >
+          <Ionicons
+            name="school-outline"
+            size={56}
+            color="#9CA3AF"
+            style={{ marginBottom: 12, opacity: 0.7 }}
           />
-        ))}
-      </ScrollView>
+          <Text className="text-gray-500 font-quicksandMedium text-center text-base">
+            You don't have any classes yet.
+          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(tabs)/AddTask",
+                params: { category: "Class" },
+              })
+            }
+            className="mt-4 px-6 py-2 bg-indigo-100 rounded-full"
+          >
+            <Text className="text-indigo-600 font-quicksandSemiBold">
+              Add Your First Class
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 });

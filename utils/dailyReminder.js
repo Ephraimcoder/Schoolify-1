@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { database } from '../database/database';
 
 const DAILY_REMINDER_TIME_KEY = '@Schoolify:dailyReminderTime';
 const DAILY_REMINDER_ENABLED_KEY = '@Schoolify:dailyReminderEnabled';
@@ -14,31 +14,33 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Request permissions for notifications
+const requestPermissions = async () => {
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+  return status === 'granted';
+};
+
 export const scheduleDailyReminder = async (hour, minute) => {
   try {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      throw new Error('Notification permissions not granted');
+    }
+
     // Cancel any existing notifications
     await Notifications.cancelAllScheduledNotificationsAsync();
 
-    // Request permissions (if not already granted)
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    
-    if (finalStatus !== 'granted') {
-      console.log('Notification permission not granted');
-      return false;
-    }
-
-    // Generate notification ID based on time to ensure uniqueness
-    const notificationId = `daily-reminder-${hour}-${minute}`;
-    
-    // Calculate the next occurrence of the specified time
+    // Set the time for the notification
     const now = new Date();
-    const scheduledTime = new Date();
+    const scheduledTime = new Date(now);
     scheduledTime.setHours(hour, minute, 0, 0);
 
     // If the time has already passed today, schedule for tomorrow
@@ -48,50 +50,78 @@ export const scheduleDailyReminder = async (hour, minute) => {
 
     // Schedule the notification
     await Notifications.scheduleNotificationAsync({
-      identifier: notificationId,
       content: {
-        title: '📚 Time to Schoolify!',
-        body: 'Open the app to check your tasks and stay on top of your studies!',
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-        channelId: Platform.OS === 'android' ? 'daily-reminders' : undefined,
-        data: {
-        type: 'daily-reminder',
-        },
+        title: "Daily Reminder",
+        body: "Don't forget to check your tasks for today!",
+        data: { type: 'daily-reminder' },
       },
-      // Use a specific Date for the first fire to avoid immediate trigger
-      trigger: scheduledTime,
+      trigger: {
+        hour,
+        minute,
+        repeats: true,
+      },
     });
 
-    // Save the reminder time
-    await AsyncStorage.setItem(DAILY_REMINDER_TIME_KEY, JSON.stringify({ hour, minute }));
-    await AsyncStorage.setItem(DAILY_REMINDER_ENABLED_KEY, 'true');
+    // Save the reminder time to WatermelonDB
+    const reminderPrefs = database.collections.get('reminder_prefs');
+    const existing = await reminderPrefs.query().fetch();
+    
+    await database.write(async () => {
+      if (existing.length > 0) {
+        await existing[0].update(pref => {
+          pref.hour = hour;
+          pref.minute = minute;
+          pref.enabled = true;
+        });
+      } else {
+        await reminderPrefs.create(pref => {
+          pref.hour = hour;
+          pref.minute = minute;
+          pref.enabled = true;
+        });
+      }
+    });
 
     return true;
   } catch (error) {
     console.error('Error scheduling daily reminder:', error);
-    return false;
+    throw error;
   }
 };
 
 export const cancelDailyReminder = async () => {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
-    await AsyncStorage.setItem(DAILY_REMINDER_ENABLED_KEY, 'false');
+    
+    // Update the reminder preferences in WatermelonDB
+    const reminderPrefs = database.collections.get('reminder_prefs');
+    const existing = await reminderPrefs.query().fetch();
+    
+    if (existing.length > 0) {
+      await database.write(async () => {
+        await existing[0].update(pref => {
+          pref.enabled = false;
+        });
+      });
+    }
+    
     return true;
   } catch (error) {
     console.error('Error cancelling daily reminder:', error);
-    return false;
+    throw error;
   }
 };
 
 export const getScheduledReminder = async () => {
   try {
-    const enabled = await AsyncStorage.getItem(DAILY_REMINDER_ENABLED_KEY);
-    const timeStr = await AsyncStorage.getItem(DAILY_REMINDER_TIME_KEY);
+    const reminderPrefs = database.collections.get('reminder_prefs');
+    const prefs = await reminderPrefs.query().fetch();
     
-    if (timeStr && enabled === 'true') {
-      return JSON.parse(timeStr);
+    if (prefs.length > 0 && prefs[0].enabled) {
+      return {
+        hour: prefs[0].hour,
+        minute: prefs[0].minute
+      };
     }
     return null;
   } catch (error) {

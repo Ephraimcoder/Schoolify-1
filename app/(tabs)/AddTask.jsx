@@ -74,7 +74,7 @@ const AddTask = () => {
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [modalType, setModalType] = useState(""); // 'category' or 'priority'
   const router = useRouter();
-  const { taskId } = useLocalSearchParams();
+  const { taskId, category: prefillCategory } = useLocalSearchParams();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -246,7 +246,14 @@ const AddTask = () => {
         } else {
           // Creating a new task
           resetForm();
-          setSelectedCategory("");
+          setSelectedCategory(prefillCategory || "");
+          // If a prefill category is provided via route params, set it in formData
+          if (prefillCategory) {
+            setFormData((prev) => ({
+              ...prev,
+              category: prefillCategory,
+            }));
+          }
           setSelectedPriority("Low");
           setSubTasks([]);
           setAlertEnabled(false);
@@ -257,7 +264,7 @@ const AddTask = () => {
         cancelled = true;
         interaction.cancel();
       };
-    }, [taskId, getTaskById])
+    }, [taskId, getTaskById, prefillCategory])
   );
 
   const handleInputChange = (field, value) => {
@@ -307,7 +314,7 @@ const AddTask = () => {
       ...formData,
       subTasks,
       alertEnabled,
-      // notificationId,
+      notificationId,
     };
 
     try {
@@ -318,7 +325,7 @@ const AddTask = () => {
       }
 
       // Clear form and navigate back
-      router.setParams({ taskId: undefined });
+      router.setParams({ taskId: undefined, category: undefined });
       resetForm();
       setSubTasks([]);
       setSelectedCategory("");
@@ -326,17 +333,21 @@ const AddTask = () => {
       setAlertEnabled(false);
       router.back();
 
-      toast.success("Task saved successfully!", {
-        width: 400,
-        duration: 4000,
-        styles: {
-          view: { padding: 20 },
-          text: { fontSize: 16, color: "green", fontFamily: "QuicksandBold" },
-        },
-      });
+      const isClass = formData.category === "Class";
+      toast.success(
+        isClass ? "Class created successfully!" : "Task saved successfully!",
+        {
+          width: 400,
+          duration: 4000,
+          styles: {
+            view: { padding: 20 },
+            text: { fontSize: 16, color: "green", fontFamily: "QuicksandBold" },
+          },
+        }
+      );
     } catch (error) {
       console.error("❌ Error saving task:", error);
-      toast.error("Failed to save task. Please try again.", {
+      toast.error("Failed to save. Please try again.", {
         styles: {
           view: { padding: 20, margin: 10 },
           text: { fontSize: 16, color: "red", fontFamily: "QuicksandBold" },
@@ -389,7 +400,7 @@ const AddTask = () => {
               <TouchableOpacity
                 className="bg-white p-2 rounded-full"
                 onPress={() => {
-                  router.setParams({ taskId: undefined });
+                  router.setParams({ taskId: undefined, category: undefined });
                   resetForm();
                   setSubTasks([]);
                   setSelectedCategory("");
@@ -567,7 +578,11 @@ const AddTask = () => {
               onPress={handleSubmit}
             >
               <Text className="text-white text-center font-quicksandBold text-lg">
-                {taskId ? "Edit Task" : "Create Task"}
+                {formData.category === "Class"
+                  ? "Create Class"
+                  : taskId
+                    ? "Edit Task"
+                    : "Create Task"}
               </Text>
             </TouchableOpacity>
           </ScrollView>

@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
   useCallback,
@@ -6,16 +5,10 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { database } from "../database/database";
 
 // Create the context
 export const TasksContext = createContext();
-
-// Storage keys
-const STORAGE_KEYS = {
-  TASKS: "@Schoolify/tasks",
-  CATEGORIES: "@Schoolify/categories",
-  PRIORITIES: "@Schoolify/priorities",
-};
 
 // Default data
 const DEFAULT_CATEGORIES = [
@@ -25,13 +18,31 @@ const DEFAULT_CATEGORIES = [
   { id: "4", name: "Chemistry" },
   { id: "5", name: "Biology" },
   { id: "6", name: "Computer Science" },
+  { id: "7", name: "Class" },
 ];
 
 const DEFAULT_PRIORITIES = [
-  { id: "1", name: "Low" },
-  { id: "2", name: "Medium" },
-  { id: "3", name: "High" },
+  { name: "Low", level: 1 },
+  { name: "Medium", level: 2 },
+  { name: "High", level: 3 },
 ];
+
+// Helper: map WM Task model -> UI shape consumed by components
+const mapTaskModelToUi = (m) => ({
+  id: m.id,
+  title: m.title || "",
+  description: m.description || "",
+  category: m.categoryName || "",
+  priority: m.priorityName || "",
+  dueDate: m.dueDate ? m.dueDate.toISOString() : null,
+  dueTime: m.dueTime ? m.dueTime.toISOString() : null,
+  isCompleted: !!m.isCompleted,
+  alertEnabled: !!m.alertEnabled,
+  subTasks: m.subtasksJson ? JSON.parse(m.subtasksJson) : [],
+  notificationId: m.notificationId || null,
+  date: m.createdAt ? m.createdAt.toISOString() : null,
+  color: m.color || undefined,
+});
 
 export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
@@ -49,6 +60,174 @@ export const TaskProvider = ({ children }) => {
     isCompleted: false,
     alertEnabled: false,
   });
+
+  const refreshTasks = useCallback(async () => {
+    const taskCol = database.collections.get("tasks");
+    const models = await taskCol.query().fetch();
+    setTasks(models.map(mapTaskModelToUi));
+  }, []);
+
+  // Load initial data from WatermelonDB
+  const loadInitialData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // Load tasks
+      const tasksCollection = database.collections.get("tasks");
+      const loadedTasks = await tasksCollection.query().fetch();
+      setTasks(loadedTasks.map(mapTaskModelToUi));
+
+      // Load categories
+      const categoriesCollection = database.collections.get("categories");
+      let loadedCategories = await categoriesCollection.query().fetch();
+
+      // If no categories exist, create default ones
+      if (loadedCategories.length === 0) {
+        await database.write(async () => {
+          for (const category of DEFAULT_CATEGORIES) {
+            await categoriesCollection.create((cat) => {
+              cat.name = category.name;
+            });
+          }
+        });
+        loadedCategories = await categoriesCollection.query().fetch();
+      }
+      setCategories(loadedCategories);
+
+      // Load priorities
+      const prioritiesCollection = database.collections.get("priorities");
+      let loadedPriorities = await prioritiesCollection.query().fetch();
+
+      // If no priorities exist, create default ones
+      if (loadedPriorities.length === 0) {
+        await database.write(async () => {
+          for (const priority of DEFAULT_PRIORITIES) {
+            await prioritiesCollection.create((prio) => {
+              prio.name = priority.name;
+              prio.level = priority.level;
+            });
+          }
+        });
+        loadedPriorities = await prioritiesCollection.query().fetch();
+      }
+      setPriorities(loadedPriorities);
+    } catch (error) {
+      console.error("Error loading initial data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Load data on component mount
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  // Add a new task
+  const addTask = useCallback(
+    async (taskData) => {
+      try {
+        const tasksCollection = database.collections.get("tasks");
+
+        await database.write(async () => {
+          await tasksCollection.create((task) => {
+            task.title = taskData.title;
+            task.description = taskData.description || "";
+            // If you pass category/priorities as names from UI, save denormalized labels
+            if (taskData.category) task.categoryName = taskData.category;
+            if (taskData.priority) task.priorityName = taskData.priority;
+            // Optional relational ids if you have them
+            if (taskData.categoryId)
+              task.category._raw.category_id = taskData.categoryId; // safe only if using relations explicitly
+            if (taskData.priorityId)
+              task.priority._raw.priority_id = taskData.priorityId;
+            task.dueDate = taskData.dueDate ? new Date(taskData.dueDate) : null;
+            task.dueTime = taskData.dueTime ? new Date(taskData.dueTime) : null;
+            task.isCompleted = !!taskData.isCompleted;
+            task.itemType = taskData.itemType || "task";
+            if (taskData.alertEnabled !== undefined)
+              task.alertEnabled = !!taskData.alertEnabled;
+            if (taskData.notificationId)
+              task.notificationId = String(taskData.notificationId);
+            if (taskData.subTasks)
+              task.subtasksJson = JSON.stringify(taskData.subTasks);
+          });
+        });
+
+        await refreshTasks();
+        return { success: true };
+      } catch (error) {
+        console.error("Error adding task:", error);
+        throw error;
+      }
+    },
+    [refreshTasks]
+  );
+
+  // Update an existing task
+  const updateTask = useCallback(
+    async (taskId, updates) => {
+      try {
+        const tasksCollection = database.collections.get("tasks");
+        const taskToUpdate = await tasksCollection.find(taskId);
+
+        await database.write(async () => {
+          await taskToUpdate.update((task) => {
+            if (updates.title !== undefined) task.title = updates.title;
+            if (updates.description !== undefined)
+              task.description = updates.description;
+            if (updates.category !== undefined)
+              task.categoryName = updates.category;
+            if (updates.priority !== undefined)
+              task.priorityName = updates.priority;
+            if (updates.dueDate !== undefined)
+              task.dueDate = updates.dueDate ? new Date(updates.dueDate) : null;
+            if (updates.dueTime !== undefined)
+              task.dueTime = updates.dueTime ? new Date(updates.dueTime) : null;
+            if (updates.isCompleted !== undefined)
+              task.isCompleted = !!updates.isCompleted;
+            if (updates.alertEnabled !== undefined)
+              task.alertEnabled = !!updates.alertEnabled;
+            if (updates.notificationId !== undefined)
+              task.notificationId = String(updates.notificationId);
+            if (updates.subTasks)
+              task.subtasksJson = JSON.stringify(updates.subTasks);
+            if (updates.itemType !== undefined)
+              task.itemType = updates.itemType;
+          });
+        });
+
+        await refreshTasks();
+        return { success: true };
+      } catch (error) {
+        console.error("Error updating task:", error);
+        throw error;
+      }
+    },
+    [refreshTasks]
+  );
+
+  // Delete a task
+  const deleteTask = useCallback(
+    async (taskId) => {
+      try {
+        const tasksCollection = database.collections.get("tasks");
+        const taskToDelete = await tasksCollection.find(taskId);
+
+        await database.write(async () => {
+          await taskToDelete.markAsDeleted();
+        });
+
+        await refreshTasks();
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        throw error;
+      }
+    },
+    [refreshTasks]
+  );
+
   const getTaskById = useCallback(
     (id) => {
       return tasks.find((task) => task.id === id);
@@ -56,192 +235,54 @@ export const TaskProvider = ({ children }) => {
     [tasks]
   );
 
-  // Load data from storage on initial render
-  useEffect(() => {
-    const loadData = async () => {
+  const handleAddTask = useCallback(
+    async (data) => {
+      const payload = data || { ...formData, subTasks };
+      if (!payload.title || !payload.title.trim()) return;
       try {
-        // Load tasks and ensure subTasks array exists
-        const tasksData = await AsyncStorage.getItem(STORAGE_KEYS.TASKS);
-        if (tasksData) {
-          const parsedTasks = JSON.parse(tasksData);
-          const tasksWithSubtasks = parsedTasks.map((task) => ({
-            ...task,
-            subTasks: task.subTasks || [], // Ensure subTasks is always an array
-          }));
-          setTasks(tasksWithSubtasks);
-        }
-
-        // Load categories or set default
-        const categoriesData = await AsyncStorage.getItem(
-          STORAGE_KEYS.CATEGORIES
-        );
-        setCategories(
-          categoriesData ? JSON.parse(categoriesData) : DEFAULT_CATEGORIES
-        );
-        if (!categoriesData) {
-          await AsyncStorage.setItem(
-            STORAGE_KEYS.CATEGORIES,
-            JSON.stringify(DEFAULT_CATEGORIES)
-          );
-        }
-
-        // Load priorities or set default
-        const prioritiesData = await AsyncStorage.getItem(
-          STORAGE_KEYS.PRIORITIES
-        );
-        setPriorities(
-          prioritiesData ? JSON.parse(prioritiesData) : DEFAULT_PRIORITIES
-        );
-        if (!prioritiesData) {
-          await AsyncStorage.setItem(
-            STORAGE_KEYS.PRIORITIES,
-            JSON.stringify(DEFAULT_PRIORITIES)
-          );
-        }
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setIsLoading(false);
+        await database.write(async () => {
+          const col = database.get("tasks");
+          await col.create((rec) => {
+            rec.title = payload.title || "";
+            if (payload.description) rec.description = payload.description;
+            rec.isCompleted = !!payload.isCompleted;
+            rec.itemType = payload.category === "Class" ? "class" : "task";
+            if (payload.category) rec.categoryName = payload.category;
+            if (payload.priority) rec.priorityName = payload.priority;
+            if (payload.dueDate) rec.dueDate = new Date(payload.dueDate);
+            if (payload.dueTime) rec.dueTime = new Date(payload.dueTime);
+            rec.alertEnabled = !!payload.alertEnabled;
+            if (payload.notificationId)
+              rec.notificationId = String(payload.notificationId);
+            if (payload.subTasks)
+              rec.subtasksJson = JSON.stringify(payload.subTasks);
+          });
+        });
+        await refreshTasks();
+        resetForm();
+      } catch (e) {
+        console.error("Error creating task:", e);
       }
-    };
+    },
+    [formData, subTasks, resetForm, refreshTasks]
+  );
 
-    loadData();
+  const addSubTask = useCallback((title) => {
+    const newSubTask = {
+      id: Date.now().toString(),
+      title,
+      isCompleted: false,
+    };
+    setSubTasks((prev) => [...prev, newSubTask]);
   }, []);
 
-  // Save tasks to storage whenever they change
-  const saveTasks = async (updatedTasks) => {
-    try {
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.TASKS,
-        JSON.stringify(updatedTasks)
-      );
-    } catch (error) {
-      console.error("Error saving tasks:", error);
-    }
-  };
+  const deleteSubTask = useCallback((id) => {
+    setSubTasks((prev) => prev.filter((subtask) => subtask.id !== id));
+  }, []);
 
-  // Save categories to storage
-  const saveCategories = async (updatedCategories) => {
-    try {
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CATEGORIES,
-        JSON.stringify(updatedCategories)
-      );
-    } catch (error) {
-      console.error("Error saving categories:", error);
-    }
-  };
-
-  // Save priorities to storage
-  const savePriorities = async (updatedPriorities) => {
-    try {
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.PRIORITIES,
-        JSON.stringify(updatedPriorities)
-      );
-    } catch (error) {
-      console.error("Error saving priorities:", error);
-    }
-  };
-
-  const handleAddTask = useCallback(() => {
-    if (formData.title.trim()) {
-      const newTask = {
-        ...formData,
-        id: Date.now().toString(),
-        date: new Date().toISOString(),
-        subTasks: subTasks, // Create a new array with all subtask data
-      };
-      const updatedTasks = [...tasks, newTask];
-      setTasks(updatedTasks);
-      saveTasks(updatedTasks);
-      resetForm();
-      clearSubTasks(); // Clear subtasks after adding the task
-    }
-  }, [formData, subTasks, tasks]);
-
-  const addTask = useCallback(
-    (task) => {
-      const updatedTasks = [...tasks, task];
-      setTasks(updatedTasks);
-      saveTasks(updatedTasks);
-    },
-    [tasks]
-  );
-
-  const deleteTask = useCallback(
-    (id) => {
-      const updatedTasks = tasks.filter((task) => task.id !== id);
-      setTasks(updatedTasks);
-      saveTasks(updatedTasks);
-    },
-    [tasks]
-  );
-
-  const updateTask = useCallback(
-    (id, updatedTask) => {
-      const updatedTasks = tasks.map((task) =>
-        task.id === id ? { ...task, ...updatedTask } : task
-      );
-      setTasks(updatedTasks);
-      saveTasks(updatedTasks);
-    },
-    [tasks]
-  );
-
-  // Add new category
-  const addCategory = useCallback(
-    (categoryName) => {
-      const newCategory = {
-        id: Date.now().toString(),
-        name: categoryName,
-      };
-      const updatedCategories = [...categories, newCategory];
-      setCategories(updatedCategories);
-      saveCategories(updatedCategories);
-      return newCategory;
-    },
-    [categories]
-  );
-
-  // Delete category
-  const deleteCategory = useCallback(
-    (id) => {
-      const updatedCategories = categories.filter(
-        (category) => category.id !== id
-      );
-      setCategories(updatedCategories);
-      saveCategories(updatedCategories);
-    },
-    [categories]
-  );
-
-  // Add new priority
-  const addPriority = useCallback(
-    (priorityName) => {
-      const newPriority = {
-        id: Date.now().toString(),
-        name: priorityName,
-      };
-      const updatedPriorities = [...priorities, newPriority];
-      setPriorities(updatedPriorities);
-      savePriorities(updatedPriorities);
-      return newPriority;
-    },
-    [priorities]
-  );
-
-  // Delete priority
-  const deletePriority = useCallback(
-    (id) => {
-      const updatedPriorities = priorities.filter(
-        (priority) => priority.id !== id
-      );
-      setPriorities(updatedPriorities);
-      savePriorities(updatedPriorities);
-    },
-    [priorities]
-  );
+  const clearSubTasks = useCallback(() => {
+    setSubTasks([]);
+  }, []);
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -256,52 +297,75 @@ export const TaskProvider = ({ children }) => {
     });
   }, []);
 
-  // Add subtask
-  const addSubTask = useCallback((title) => {
-    const newSubTask = {
-      id: Date.now().toString(),
-      title,
-      isCompleted: false,
-    };
-    setSubTasks((prev) => [...prev, newSubTask]);
-  }, []);
-
-  // Delete subtask
-  const deleteSubTask = useCallback((index) => {
-    setSubTasks((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  // Clear subtasks (useful when task is submitted)
-  const clearSubTasks = useCallback(() => {
-    setSubTasks([]);
-  }, []);
-
-  // Refresh tasks from storage (used by pull-to-refresh)
-  const refreshTasks = useCallback(async () => {
+  const addCategory = useCallback(async (categoryName) => {
     try {
-      const tasksData = await AsyncStorage.getItem(STORAGE_KEYS.TASKS);
-      if (tasksData) {
-        const parsed = JSON.parse(tasksData);
-        const tasksWithSubtasks = parsed.map((t) => ({
-          ...t,
-          subTasks: t.subTasks || [],
-        }));
-        setTasks(tasksWithSubtasks);
-      } else {
-        setTasks([]);
-      }
-    } catch (error) {
-      console.error("Error refreshing tasks:", error);
+      const col = database.get("categories");
+      let created;
+      await database.write(async () => {
+        created = await col.create((rec) => {
+          rec.name = categoryName;
+        });
+      });
+      return { id: created.id, name: categoryName };
+    } catch (e) {
+      console.error("Error adding category:", e);
+      return null;
     }
   }, []);
 
-  const contextValue = useMemo(
+  // Delete category
+  const deleteCategory = useCallback(async (id) => {
+    try {
+      await database.write(async () => {
+        const model = await database.get("categories").find(id);
+        await model.markAsDeleted();
+      });
+    } catch (e) {
+      console.error("Error deleting category:", e);
+    }
+  }, []);
+
+  // Add new priority
+  const addPriority = useCallback(async (priorityName) => {
+    try {
+      const col = database.get("priorities");
+      let created;
+      await database.write(async () => {
+        created = await col.create((rec) => {
+          rec.name = priorityName;
+          rec.level =
+            priorityName.toLowerCase() === "high"
+              ? 3
+              : priorityName.toLowerCase() === "medium"
+                ? 2
+                : 1;
+        });
+      });
+      return { id: created.id, name: priorityName };
+    } catch (e) {
+      console.error("Error adding priority:", e);
+      return null;
+    }
+  }, []);
+
+  // Delete priority
+  const deletePriority = useCallback(async (id) => {
+    try {
+      await database.write(async () => {
+        const model = await database.get("priorities").find(id);
+        await model.markAsDeleted();
+      });
+    } catch (e) {
+      console.error("Error deleting priority:", e);
+    }
+  }, []);
+
+  const value = useMemo(
     () => ({
       tasks,
       categories,
       priorities,
       isLoading,
-      loading: isLoading,
       subTasks,
       formData,
       setFormData,
@@ -346,7 +410,7 @@ export const TaskProvider = ({ children }) => {
   );
 
   return (
-    <TasksContext.Provider value={contextValue}>
+    <TasksContext.Provider value={value}>
       {!isLoading ? children : null}
     </TasksContext.Provider>
   );

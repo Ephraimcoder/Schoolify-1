@@ -17,6 +17,7 @@ const { width } = Dimensions.get("window");
 export default function Index() {
   const scrollViewRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isBooting, setIsBooting] = useState(true);
   const router = useRouter();
 
   const handleNext = async () => {
@@ -41,15 +42,21 @@ export default function Index() {
   };
 
   useEffect(() => {
+    let mounted = true;
     const checkOnboardingSeen = async () => {
       try {
         const onboardingSeen = await AsyncStorage.getItem("onboarding_seen");
         if (onboardingSeen === "true") {
           router.replace("/(auth)/sign-in");
+          return;
         }
       } catch {}
+      if (mounted) setIsBooting(false);
     };
     checkOnboardingSeen();
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 
   // Simple cross-platform shadow helper
@@ -63,6 +70,9 @@ export default function Index() {
     android: { elevation: 6 },
     default: {},
   });
+
+  // Until we confirm onboarding should be shown, render nothing to avoid flashes
+  if (isBooting) return null;
 
   return (
     <View className="flex-1 bg-amber-50">
