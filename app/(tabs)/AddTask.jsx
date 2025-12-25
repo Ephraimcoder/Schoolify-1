@@ -3,13 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Notifications from "expo-notifications";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   Animated,
   InteractionManager,
@@ -119,7 +113,7 @@ const AddTask = () => {
 
     // Don't schedule in the past
     if (!triggerTime || triggerTime <= new Date()) {
-      console.log("Skipping past notification time");
+      toast.error("Skipping past notification time");
       return null;
     }
 
@@ -135,7 +129,7 @@ const AddTask = () => {
       }
 
       if (finalStatus !== "granted") {
-        console.log("Notification permissions not granted");
+        toast.error("Notification permissions not granted");
         return null;
       }
 
@@ -186,12 +180,8 @@ const AddTask = () => {
         },
       });
 
-      console.log(
-        `Notification scheduled for ${triggerTime.toISOString()} (lead ${leadMinutes}m before ${dueDateTime.toISOString()})`
-      );
       return id;
     } catch (error) {
-      console.error("Error scheduling notification:", error);
       toast.error("Failed to set reminder");
       return null;
     }
@@ -200,9 +190,7 @@ const AddTask = () => {
   // Add notification handler for when app is in foreground
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        console.log("Notification received:", notification);
-      }
+      (notification) => {}
     );
 
     // Set notification handler
@@ -346,7 +334,6 @@ const AddTask = () => {
         }
       );
     } catch (error) {
-      console.error("❌ Error saving task:", error);
       toast.error("Failed to save. Please try again.", {
         styles: {
           view: { padding: 20, margin: 10 },

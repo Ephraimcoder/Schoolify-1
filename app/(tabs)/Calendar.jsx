@@ -1,6 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { TasksContext } from "../../context/TasksContext";
@@ -30,16 +30,29 @@ const CalendarScreen = () => {
         const dateKey = taskDate.toISOString().split("T")[0];
 
         if (!dates[dateKey]) {
-          // Check if the task is overdue (before today and not completed)
-          const isOverdue = taskDate < today;
           dates[dateKey] = {
             marked: true,
-            dotColor: isOverdue ? "#9CA3AF" : "#FF6B47",
-            textColor: isOverdue ? "#9CA3AF" : undefined,
-            disabled: false,
+            hasFutureTasks: false,
+            hasPastTasks: false,
           };
         }
+
+        // Track if this date has future or past tasks
+        if (taskDate >= today) {
+          dates[dateKey].hasFutureTasks = true;
+        } else {
+          dates[dateKey].hasPastTasks = true;
+        }
       }
+    });
+
+    // Apply colors based on task dates
+    Object.keys(dates).forEach((dateKey) => {
+      const dateInfo = dates[dateKey];
+      // Orange if there are future tasks, grey if only past tasks
+      dateInfo.dotColor = dateInfo.hasFutureTasks ? "#FF6B47" : "#9CA3AF";
+      dateInfo.textColor = dateInfo.hasFutureTasks ? undefined : "#9CA3AF";
+      dateInfo.disabled = false;
     });
 
     // Add selected styling

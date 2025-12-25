@@ -128,6 +128,11 @@ export function UserProvider({ children }) {
             accountId: localUser.appwrite_id,
             sessionId: localUser.session_id,
           });
+          // Set loading to false immediately for fast UI response
+          setIsLoading(false);
+        } else {
+          // No local user, set loading to false
+          setIsLoading(false);
         }
 
         // Check for pending logout
@@ -150,6 +155,7 @@ export function UserProvider({ children }) {
         // If a logout is pending (e.g. user logged out while offline), don't auto-login.
         const logoutPending = pendingLogout;
 
+        // Background validation with Appwrite (non-blocking)
         try {
           // If logout is pending, try to revoke the server session and keep user signed out.
           if (logoutPending) {
@@ -204,14 +210,13 @@ export function UserProvider({ children }) {
             console.log("Session validation error:", error);
           }
           // Don't clear user on network errors to allow offline usage
-        } finally {
-          // Ensure isLoading is set to false after the full validation process
-          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error loading user:", error);
-      } finally {
-        setIsLoading(false);
+        // Ensure loading is set to false even on error
+        if (isLoading) {
+          setIsLoading(false);
+        }
       }
     };
 

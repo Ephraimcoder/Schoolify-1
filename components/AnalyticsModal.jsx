@@ -1,5 +1,6 @@
+import { toast } from "@backpackapp-io/react-native-toast";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import {
   Dimensions,
   Modal,
@@ -11,20 +12,8 @@ import {
 
 export const AnalyticsModal = ({ visible, onClose, tasks }) => {
   const stats = useMemo(() => {
-    console.log("All tasks:", tasks); // Debug log
-
     const completed = tasks.filter((t) => t.isCompleted).length;
     const pending = tasks.length - completed;
-
-    // Debug: Log priority values from all tasks
-    tasks.forEach((task, index) => {
-      console.log(`Task ${index + 1}:`, {
-        id: task.id,
-        title: task.title,
-        priority: task.priority,
-        isCompleted: task.isCompleted,
-      });
-    });
 
     const priorityCounts = tasks.reduce((acc, task) => {
       if (task.priority) {
@@ -33,8 +22,6 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       }
       return acc;
     }, {});
-
-    console.log("Calculated priority counts:", priorityCounts); // Debug log
 
     // Calculate category distribution
     const categoryCounts = tasks.reduce((acc, task) => {
@@ -128,11 +115,6 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
   }
 
   function getMostProductiveDay(tasks) {
-    console.log(
-      "First task structure:",
-      tasks[0] ? JSON.stringify(tasks[0], null, 2) : "No tasks"
-    );
-
     const dayCount = {};
     const days = [
       "Sunday",
@@ -158,18 +140,16 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
             const day = date.getDay();
             dayCount[day] = (dayCount[day] || 0) + 1;
           } else {
-            console.log(
+            toast.error(
               `Task ${task.id} has invalid date format:`,
               completionDate
             );
           }
         } catch (e) {
-          console.warn("Error processing task date:", e);
+          toast.error("Error processing task date:", e);
         }
       }
     });
-
-    console.log("Day counts:", dayCount);
 
     // If no completed tasks, return a helpful message
     if (Object.keys(dayCount).length === 0) {

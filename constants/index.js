@@ -16,5 +16,11 @@ export const onboarding = [
         title: "Collaborate & Succeed",
         description: "Plan with classmates and hit every milestone together.",
         image: require("../assets/images/Tasks list.png")
+      },
+      {
+        id: 4,
+        title: "Personalize Your Experience",
+        description: "Set up your preferences for a tailored learning experience.",
+        image: require("../assets/images/Tasks list.png")
       }
 ]

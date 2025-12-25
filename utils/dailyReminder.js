@@ -56,8 +56,8 @@ export const scheduleDailyReminder = async (hour, minute) => {
         data: { type: 'daily-reminder' },
       },
       trigger: {
-        hour,
-        minute,
+        type: "date",
+        date: scheduledTime,
         repeats: true,
       },
     });

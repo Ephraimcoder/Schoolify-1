@@ -26,11 +26,11 @@ export default function Index() {
       setCurrentSlide(nextSlide);
       scrollViewRef.current?.scrollTo({ x: width * nextSlide, animated: true });
     } else {
-      // Finished onboarding
+      // Finished onboarding, go to personalization flow
       try {
         await AsyncStorage.setItem("onboarding_seen", "true");
       } catch {}
-      router.replace("/(auth)/sign-in");
+      router.replace("/(auth)/personalization/backup-settings");
     }
   };
 

@@ -101,13 +101,33 @@ export default function SignUp() {
           </Text>
         </View>
 
-        {/* Optional hero placeholder to echo onboarding style */}
+        {/* Illustration style hero card */}
         <View className="items-center mt-6">
           <View
             className="w-11/12 h-44 bg-white rounded-3xl items-center justify-center"
             style={[cardShadow]}
           >
-            <View className="w-14 h-14 rounded-full bg-orange-200" />
+            <View className="items-center">
+              {/* Graduation cap illustration */}
+              <View className="relative mb-4">
+                {/* Cap base */}
+                <View className="w-16 h-10 bg-orange-600 rounded-t-full" />
+                {/* Cap top */}
+                <View className="absolute -top-2 left-0 w-16 h-4 bg-orange-700 rounded-t-lg" />
+                {/* Tassel */}
+                <View className="absolute top-0 right-2 w-1 h-8 bg-orange-800" />
+                <View className="absolute top-6 right-1 w-3 h-3 bg-orange-500 rounded-full" />
+                {/* Board */}
+                <View className="absolute -top-4 left-6 w-4 h-8 bg-orange-600 rounded" />
+              </View>
+
+              <Text className="text-gray-800 font-quicksandBold text-lg text-center">
+                Start Your Journey!
+              </Text>
+              <Text className="text-gray-600 font-quicksandMedium text-sm text-center mt-1">
+                Create your account and begin learning
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -127,7 +147,7 @@ export default function SignUp() {
         {/* Header */}
         <View className="items-center mt-8">
           <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
-            Create Account 👋
+            Create Account
           </Text>
           <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
             Please register on our app, to {"\n"}continue using our service.
@@ -190,36 +210,36 @@ export default function SignUp() {
 
         {/* Bottom spacer for pinned CTA */}
         <View className="h-10" />
-      </ScrollView>
 
-      {/* Pinned bottom CTA + link */}
-      <View className="absolute left-6 right-6 bottom-6">
-        <TouchableOpacity
-          className="bg-orange-600 h-16 rounded-full items-center justify-center"
-          onPress={submit}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white font-quicksandBold text-lg">
-            {isSubmitting ? "Creating Account..." : "Continue"}
-          </Text>
-        </TouchableOpacity>
+        {/* CTA + link */}
+        <View className="mt-6">
+          <TouchableOpacity
+            className="bg-orange-600 h-16 rounded-full items-center justify-center"
+            onPress={submit}
+            disabled={isSubmitting}
+          >
+            <Text className="text-white font-quicksandBold text-lg">
+              {isSubmitting ? "Creating Account..." : "Continue"}
+            </Text>
+          </TouchableOpacity>
 
-        <View className="flex-row justify-center mt-3">
-          <Text
-            className="text-gray-600 text-base"
-            style={{ fontFamily: "Quicksand-Regular" }}
-          >
-            Already have an account?{" "}
-          </Text>
-          <Link
-            href="/(auth)/sign-in"
-            className="text-orange-500 font-quicksandBold text-base"
-            style={{ fontFamily: "Quicksand-Regular" }}
-          >
-            Sign in instead
-          </Link>
+          <View className="flex-row justify-center mt-3">
+            <Text
+              className="text-gray-600 text-base"
+              style={{ fontFamily: "Quicksand-Regular" }}
+            >
+              Already have an account?{" "}
+            </Text>
+            <Link
+              href="/(auth)/sign-in"
+              className="text-orange-500 font-quicksandBold text-base"
+              style={{ fontFamily: "Quicksand-Regular" }}
+            >
+              Sign in instead
+            </Link>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }

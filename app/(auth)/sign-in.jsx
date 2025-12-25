@@ -99,13 +99,30 @@ export default function SignIn() {
           </Text>
         </View>
 
-        {/* Optional hero placeholder to echo onboarding style */}
+        {/* Illustration style hero card */}
         <View className="items-center mt-6">
           <View
             className="w-11/12 h-44 bg-white rounded-3xl items-center justify-center"
             style={[cardShadow]}
           >
-            <View className="w-14 h-14 rounded-full bg-orange-200" />
+            <View className="items-center">
+              {/* Book illustration */}
+              <View className="relative mb-4">
+                <View className="w-16 h-12 bg-orange-500 rounded-lg shadow-md" />
+                <View className="absolute top-1 left-1 w-14 h-10 bg-orange-600 rounded-lg" />
+                <View className="absolute top-2 left-2 w-12 h-8 bg-white rounded" />
+                <View className="absolute top-3 left-3 w-10 h-1 bg-orange-200 rounded" />
+                <View className="absolute top-5 left-3 w-8 h-1 bg-orange-200 rounded" />
+                <View className="absolute top-7 left-3 w-9 h-1 bg-orange-200 rounded" />
+              </View>
+
+              <Text className="text-gray-800 font-quicksandBold text-lg text-center">
+                Welcome Back!
+              </Text>
+              <Text className="text-gray-600 font-quicksandMedium text-sm text-center mt-1">
+                Continue your learning journey
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -124,7 +141,7 @@ export default function SignIn() {
         {/* Header */}
         <View className="items-center mt-8">
           <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
-            Agent Login
+            Login
           </Text>
           <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
             Hey, Enter your details to get sign in{"\n"}to your account
@@ -176,46 +193,46 @@ export default function SignIn() {
 
         {/* Bottom spacing reserved for the pinned CTA */}
         <View className="h-10" />
+
+        {/* CTA + links */}
+        <View className="mt-6">
+          <TouchableOpacity
+            className="bg-orange-600 h-16 rounded-full items-center justify-center"
+            onPress={submit}
+            disabled={isSubmitting}
+          >
+            <Text className="text-white font-quicksandBold text-lg">
+              {isSubmitting ? "Signing In..." : "Sign In"}
+            </Text>
+          </TouchableOpacity>
+
+          <View className="flex-row justify-center mt-3">
+            <Link
+              href="/(auth)/otp-start"
+              className="text-orange-500 font-quicksandBold text-base"
+              style={{ fontFamily: "Quicksand-Regular" }}
+            >
+              Use Email OTP instead
+            </Link>
+          </View>
+
+          <View className="flex-row justify-center mt-2">
+            <Text
+              className="text-gray-600 text-base"
+              style={{ fontFamily: "Quicksand-Regular" }}
+            >
+              Don't have an account?{" "}
+            </Text>
+            <Link
+              href="/(auth)/sign-up"
+              className="text-orange-500 font-quicksandBold text-base"
+              style={{ fontFamily: "Quicksand-Regular" }}
+            >
+              Sign Up
+            </Link>
+          </View>
+        </View>
       </ScrollView>
-
-      {/* Pinned bottom CTA + links */}
-      <View className="absolute left-6 right-6 bottom-6">
-        <TouchableOpacity
-          className="bg-orange-600 h-16 rounded-full items-center justify-center"
-          onPress={submit}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white font-quicksandBold text-lg">
-            {isSubmitting ? "Signing In..." : "Sign In"}
-          </Text>
-        </TouchableOpacity>
-
-        <View className="flex-row justify-center mt-3">
-          <Link
-            href="/(auth)/otp-start"
-            className="text-orange-500 font-quicksandBold text-base"
-            style={{ fontFamily: "Quicksand-Regular" }}
-          >
-            Use Email OTP instead
-          </Link>
-        </View>
-
-        <View className="flex-row justify-center mt-2">
-          <Text
-            className="text-gray-600 text-base"
-            style={{ fontFamily: "Quicksand-Regular" }}
-          >
-            Don't have an account?{" "}
-          </Text>
-          <Link
-            href="/(auth)/sign-up"
-            className="text-orange-500 font-quicksandBold text-base"
-            style={{ fontFamily: "Quicksand-Regular" }}
-          >
-            Sign Up
-          </Link>
-        </View>
-      </View>
     </View>
   );
 }
