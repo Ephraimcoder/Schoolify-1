@@ -1,23 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useUser } from "../context/UserContext";
-import { getNotificationLeadMinutes } from "../utils/notificationPrefs";
 
 const PersonalDetails = () => {
   const router = useRouter();
   const { user } = useUser();
-  const [leadMinutes, setLeadMinutes] = useState(15);
-  const minuteOptions = [5, 10, 15, 30, 60, 120];
-
-  useEffect(() => {
-    (async () => {
-      const saved = await getNotificationLeadMinutes();
-      setLeadMinutes(saved);
-    })();
-  }, []);
 
   // Only show fields that we have data for
   const userInfo = [

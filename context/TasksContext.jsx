@@ -1,6 +1,7 @@
 import {
   createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
@@ -410,9 +411,114 @@ export const TaskProvider = ({ children }) => {
   );
 
   return (
-    <TasksContext.Provider value={value}>
-      {!isLoading ? children : null}
-    </TasksContext.Provider>
+    <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
+  );
+};
+
+// Custom hooks for optimized context usage
+export const useTasks = () => {
+  const context = useContext(TasksContext);
+  if (!context) {
+    throw new Error("useTasks must be used within a TaskProvider");
+  }
+
+  return useMemo(
+    () => ({
+      tasks: context.tasks,
+      isLoading: context.isLoading,
+      refreshTasks: context.refreshTasks,
+      getTaskById: context.getTaskById,
+    }),
+    [
+      context.tasks,
+      context.isLoading,
+      context.refreshTasks,
+      context.getTaskById,
+    ]
+  );
+};
+
+export const useForm = () => {
+  const context = useContext(TasksContext);
+  if (!context) {
+    throw new Error("useForm must be used within a TaskProvider");
+  }
+
+  return useMemo(
+    () => ({
+      formData: context.formData,
+      setFormData: context.setFormData,
+      resetForm: context.resetForm,
+      subTasks: context.subTasks,
+      setSubTasks: context.setSubTasks,
+      addSubTask: context.addSubTask,
+      deleteSubTask: context.deleteSubTask,
+      clearSubTasks: context.clearSubTasks,
+    }),
+    [
+      context.formData,
+      context.setFormData,
+      context.resetForm,
+      context.subTasks,
+      context.setSubTasks,
+      context.addSubTask,
+      context.deleteSubTask,
+      context.clearSubTasks,
+    ]
+  );
+};
+
+export const useCategories = () => {
+  const context = useContext(TasksContext);
+  if (!context) {
+    throw new Error("useCategories must be used within a TaskProvider");
+  }
+
+  return useMemo(
+    () => ({
+      categories: context.categories,
+      addCategory: context.addCategory,
+      deleteCategory: context.deleteCategory,
+    }),
+    [context.categories, context.addCategory, context.deleteCategory]
+  );
+};
+
+export const usePriorities = () => {
+  const context = useContext(TasksContext);
+  if (!context) {
+    throw new Error("usePriorities must be used within a TaskProvider");
+  }
+
+  return useMemo(
+    () => ({
+      priorities: context.priorities,
+      addPriority: context.addPriority,
+      deletePriority: context.deletePriority,
+    }),
+    [context.priorities, context.addPriority, context.deletePriority]
+  );
+};
+
+export const useTaskActions = () => {
+  const context = useContext(TasksContext);
+  if (!context) {
+    throw new Error("useTaskActions must be used within a TaskProvider");
+  }
+
+  return useMemo(
+    () => ({
+      addTask: context.addTask,
+      updateTask: context.updateTask,
+      deleteTask: context.deleteTask,
+      handleAddTask: context.handleAddTask,
+    }),
+    [
+      context.addTask,
+      context.updateTask,
+      context.deleteTask,
+      context.handleAddTask,
+    ]
   );
 };
 

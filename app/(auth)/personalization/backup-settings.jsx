@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useDatabase } from "@nozbe/watermelondb/react";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -25,12 +26,36 @@ const cardShadow = Platform.select({
 
 export default function BackupSettings() {
   const router = useRouter();
+  const database = useDatabase();
   const [backupEnabled, setBackupEnabled] = useState(true);
 
-  const handleNext = () => {
-    // TODO: Save to database
-    console.log("Backup enabled:", backupEnabled);
-    router.push("/(auth)/personalization/notification-timing");
+  const handleNext = async () => {
+    try {
+      // Save backup preference to database
+      const backupPrefs = database.collections.get("backup_prefs");
+      const existingPrefs = await backupPrefs.query().fetch();
+
+      await database.write(async () => {
+        if (existingPrefs.length > 0) {
+          // Update existing preference
+          await existingPrefs[0].update((pref) => {
+            pref.enabled = backupEnabled;
+          });
+        } else {
+          // Create new preference record
+          await backupPrefs.create((pref) => {
+            pref.enabled = backupEnabled;
+          });
+        }
+      });
+
+      console.log("Backup enabled saved to database:", backupEnabled);
+      router.push("/(auth)/personalization/notification-timing");
+    } catch (error) {
+      console.error("Error saving backup preference:", error);
+      // Still proceed even if database save fails
+      router.push("/(auth)/personalization/notification-timing");
+    }
   };
 
   const handleSkip = () => {
@@ -95,7 +120,7 @@ export default function BackupSettings() {
 
         {/* Settings Card */}
         <View className="mt-10">
-          <View className="bg-white rounded-3xl p-6">
+          <View className="bg-white rounded-3xl p-8">
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
                 <Text className="text-gray-800 font-quicksandBold text-lg">

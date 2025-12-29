@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   Animated,
   Image,
@@ -21,19 +21,23 @@ const Home = () => {
   const { user, isLoading } = useUser();
   const hours = date.getUTCHours();
 
-  let greeting;
-  if (hours < 12) {
-    greeting = "Good morning";
-  } else if (hours < 18) {
-    greeting = "Good afternoon";
-  } else {
-    greeting = "Good evening";
-  }
+  const greeting = useMemo(() => {
+    if (hours < 12) return "Good morning";
+    if (hours < 18) return "Good afternoon";
+    return "Good evening";
+  }, [hours]);
+
+  const avatarUrl = useMemo(() => {
+    return (
+      user?.avatar ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=4F46E5&color=fff`
+    );
+  }, [user?.avatar, user?.name]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 800,
+      duration: 400, // Reduced from 800ms
       useNativeDriver: true,
     }).start();
   }, [fadeAnim]);
@@ -48,13 +52,7 @@ const Home = () => {
             <View className="flex-row items-center">
               <View className="relative">
                 <Image
-                  source={{
-                    uri:
-                      user?.avatar ||
-                      "https://ui-avatars.com/api/?name=" +
-                        (user?.name || "User") +
-                        "&background=4F46E5&color=fff",
-                  }}
+                  source={{ uri: avatarUrl }}
                   className="w-16 h-16 rounded-2xl mr-4 border-2 border-white shadow-sm"
                 />
               </View>

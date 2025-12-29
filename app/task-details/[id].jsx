@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -23,16 +23,17 @@ const TaskDetails = () => {
   const { getTaskById, updateTask, deleteTask } = useContext(TasksContext);
   const [task, setTask] = useState(null);
 
-  useEffect(() => {
-    if (id) {
-      const taskData = getTaskById(id);
-      if (taskData) {
-        setTask(taskData);
-      } else {
-        router.back();
-      }
-    }
+  const taskData = useMemo(() => {
+    return id ? getTaskById(id) : null;
   }, [id, getTaskById]);
+
+  useEffect(() => {
+    if (taskData) {
+      setTask(taskData);
+    } else if (id) {
+      router.back();
+    }
+  }, [taskData, id, router]);
 
   const handleToggleComplete = () => {
     if (!task) return;

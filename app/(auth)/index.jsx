@@ -45,6 +45,15 @@ export default function Index() {
     let mounted = true;
     const checkOnboardingSeen = async () => {
       try {
+        // Check if user is already logged in first
+        const cachedUser = await AsyncStorage.getItem("@user_data");
+        if (cachedUser) {
+          // User is logged in, redirect to home
+          router.replace("/(tabs)/Home");
+          return;
+        }
+
+        // Then check onboarding status
         const onboardingSeen = await AsyncStorage.getItem("onboarding_seen");
         if (onboardingSeen === "true") {
           router.replace("/(auth)/sign-in");

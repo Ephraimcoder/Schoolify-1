@@ -1,18 +1,19 @@
 import { Toasts } from "@backpackapp-io/react-native-toast";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import NetInfo from "@react-native-community/netinfo";
+import { DatabaseProvider } from "@nozbe/watermelondb/react";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import * as Notifications from "expo-notifications";
 import { Stack, usePathname, useRouter } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableFreeze, enableScreens } from "react-native-screens";
 import { TaskProvider } from "../context/TasksContext";
 import { UserProvider, useUser } from "../context/UserContext";
+import { database } from "../database/database";
 import "../global.css";
+
+const USER_STORAGE_KEY = "@user_data";
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -27,23 +28,12 @@ Notifications.setNotificationHandler({
 enableScreens(true);
 enableFreeze(true);
 
-// Keep the native splash up until we finish auth/onboarding routing
-SplashScreen.preventAutoHideAsync().catch(() => {});
-
 function RootLayoutContent() {
   const { user, isLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const notificationListener = useRef();
   const responseListener = useRef();
-  const splashHiddenRef = useRef(false);
-  const targetPathRef = useRef(null);
-
-  const hideSplash = () => {
-    if (splashHiddenRef.current) return;
-    splashHiddenRef.current = true;
-    SplashScreen.hideAsync().catch(() => {});
-  };
 
   // Handle notification taps
   useEffect(() => {
@@ -92,89 +82,51 @@ function RootLayoutContent() {
     }
   }, []);
 
-  useEffect(() => {
-    if (isLoading) return;
+  // 1. THE GATEKEEPER
+  // While initializing (AsyncStorage + Appwrite), show the loader.
+  // We do NOT render the Stack yet. This prevents the "Auth" screens
+  // from mounting by default during the dev refresh.
+  if (isLoading) {
+    return <SplashScreen />;
+  }
 
-    let cancelled = false;
-
-    const checkAndRoute = async () => {
-      // If we have a user, immediately route to Home and skip async checks.
-      if (user) {
-        if (!cancelled) {
-          targetPathRef.current = "/(tabs)/Home";
-          router.replace(targetPathRef.current);
-        }
-        return;
-      }
-
-      // Otherwise, check connection and onboarding flag
-      const [netState, onboardingSeen] = await Promise.all([
-        NetInfo.fetch(),
-        AsyncStorage.getItem("onboarding_seen"),
-      ]);
-
-      if (cancelled) return;
-
-      if (!netState.isConnected) {
-        // Offline and no cached user: route within auth, preserve offline param
-        if (onboardingSeen === "true") {
-          targetPathRef.current = "/(auth)/sign-in";
-          router.replace({
-            pathname: targetPathRef.current,
-            params: { offline: "true" },
-          });
-        } else {
-          targetPathRef.current = "/(auth)";
-          router.replace({
-            pathname: targetPathRef.current,
-            params: { offline: "true" },
-          });
-        }
-      } else {
-        // Online but no user yet
-        if (onboardingSeen === "true") {
-          targetPathRef.current = "/(auth)/sign-in";
-          router.replace(targetPathRef.current);
-        } else {
-          targetPathRef.current = "/(auth)";
-          router.replace(targetPathRef.current);
-        }
-      }
-    };
-
-    checkAndRoute();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, isLoading, router]);
-
-  // Only hide the splash once the router has actually navigated to the intended path
-  useEffect(() => {
-    const target = targetPathRef.current;
-    if (!target) return;
-    // If pathname equals the target (or begins with it for dynamic segments), hide the splash
-    if (pathname === target || pathname.startsWith(target)) {
-      hideSplash();
-      targetPathRef.current = null;
-    }
-  }, [pathname]);
-
-  // Main app layout
+  // 2. THE SOURCE OF TRUTH (Declarative Routing)
+  // We use a ternary operator to swap the stack contents.
+  // When 'user' exists, (auth) is physically removed from the component tree.
   return (
     <Stack screenOptions={{ headerShown: false, freezeOnBlur: true }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(auth)" />
+      {user ? (
+        // IF USER: Only the Home/Tabs stack is available.
+        // It's impossible for (auth) to overlay because it isn't rendered.
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            animation: "fade", // Provides a professional transition
+          }}
+        />
+      ) : (
+        // IF NO USER: Only the Auth stack is available.
+        <Stack.Screen
+          name="(auth)"
+          options={{
+            animation: "fade",
+          }}
+        />
+      )}
     </Stack>
   );
 }
 
-const AppLoader = () => {
+const SplashScreen = () => {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <ActivityIndicator size="100" />
     </View>
   );
+};
+
+const DatabaseWrapper = ({ children }) => {
+  return <DatabaseProvider database={database}>{children}</DatabaseProvider>;
 };
 
 export default function RootLayout() {
@@ -186,33 +138,36 @@ export default function RootLayout() {
     QuicksandLight: require("../assets/fonts/Quicksand-Light.ttf"),
   });
 
-  // Keep the native splash on-screen until fonts are loaded; we hide it in routing above
+  // Show loading spinner only during initial font loading, not auth
   if (!fontsLoaded) {
-    return null;
+    return <SplashScreen />;
   }
 
+  // Don't show any loading screen for auth - let routing handle it
   return (
     <UserProvider>
-      <TaskProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <RootLayoutContent />
-          <Toasts
-            position="bottom"
-            offset={20}
-            renderToast={(toast) => (
-              <View
-                style={{
-                  width: "90%",
-                  alignSelf: "center",
-                  marginBottom: 20,
-                }}
-              >
-                {toast.message}
-              </View>
-            )}
-          />
-        </GestureHandlerRootView>
-      </TaskProvider>
+      <DatabaseWrapper>
+        <TaskProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <RootLayoutContent />
+            <Toasts
+              position="bottom"
+              offset={20}
+              renderToast={(toast) => (
+                <View
+                  style={{
+                    width: "90%",
+                    alignSelf: "center",
+                    marginBottom: 20,
+                  }}
+                >
+                  {toast.message}
+                </View>
+              )}
+            />
+          </GestureHandlerRootView>
+        </TaskProvider>
+      </DatabaseWrapper>
     </UserProvider>
   );
 }

@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Notifications from "expo-notifications";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   InteractionManager,
@@ -21,7 +21,13 @@ import FormInput from "../../components/FormInput";
 import ItemManagementModal from "../../components/ItemManagementModal";
 import SelectableButton from "../../components/SelectableButton";
 import SubtaskModal from "../../components/SubtaskModal";
-import { TasksContext } from "../../context/TasksContext";
+import {
+  useCategories,
+  useForm,
+  usePriorities,
+  useTaskActions,
+  useTasks,
+} from "../../context/TasksContext";
 import { getNotificationLeadMinutes } from "../../utils/notificationPrefs";
 
 const formatDate = (date) => {
@@ -41,25 +47,19 @@ const formatTime = (date) => {
 };
 
 const AddTask = () => {
+  const { getTaskById } = useTasks();
   const {
-    tasks,
     formData,
     setFormData,
-    categories,
-    priorities,
-    handleAddTask,
     resetForm,
     subTasks,
     setSubTasks,
     addSubTask,
     deleteSubTask,
-    getTaskById,
-    updateTask,
-    addCategory,
-    deleteCategory,
-    addPriority,
-    deletePriority,
-  } = useContext(TasksContext);
+  } = useForm();
+  const { categories, addCategory, deleteCategory } = useCategories();
+  const { priorities, addPriority, deletePriority } = usePriorities();
+  const { handleAddTask } = useTaskActions();
 
   const [selectedCategory, setSelectedCategory] = useState("Design");
   const [selectedPriority, setSelectedPriority] = useState("Low");
@@ -79,12 +79,6 @@ const AddTask = () => {
         duration: 300,
         useNativeDriver: true,
       }).start();
-
-      Notifications.getPermissionsAsync().then(({ status }) => {
-        if (status !== "granted") {
-          Notifications.requestPermissionsAsync().catch(() => {});
-        }
-      });
     });
     return () => interaction.cancel();
   }, [fadeAnim]);

@@ -12,30 +12,45 @@ const CalendarScreen = () => {
     new Date().toISOString().split("T")[0]
   );
 
-  // Helper function to normalize dates to the start of the day for comparison
+  // Helper function to normalize dates to the start of the day for comparison (timezone-safe)
   const normalizeDate = (date) => {
     const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
+    // Use local timezone methods instead of UTC
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const day = d.getDate();
+    return new Date(year, month, day);
   };
 
-  // Build markedDates with dots for each date with tasks (memoized)
-  const markedDates = useMemo(() => {
+  // Helper function to get date key in local timezone
+  const getDateKey = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Pre-process tasks for calendar (memoized)
+  const tasksByDate = useMemo(() => {
     const today = normalizeDate(new Date());
     const dates = {};
 
     tasks.forEach((task) => {
       if (task.dueDate && !task.isCompleted) {
         const taskDate = normalizeDate(new Date(task.dueDate));
-        const dateKey = taskDate.toISOString().split("T")[0];
+        const dateKey = getDateKey(task.dueDate); // Use timezone-safe date key
 
         if (!dates[dateKey]) {
           dates[dateKey] = {
             marked: true,
             hasFutureTasks: false,
             hasPastTasks: false,
+            taskIds: [],
           };
         }
+
+        dates[dateKey].taskIds.push(task.id);
 
         // Track if this date has future or past tasks
         if (taskDate >= today) {
@@ -45,6 +60,13 @@ const CalendarScreen = () => {
         }
       }
     });
+
+    return dates;
+  }, [tasks]);
+
+  // Build markedDates from pre-processed data (memoized)
+  const markedDates = useMemo(() => {
+    const dates = { ...tasksByDate };
 
     // Apply colors based on task dates
     Object.keys(dates).forEach((dateKey) => {
@@ -64,16 +86,16 @@ const CalendarScreen = () => {
     };
 
     return dates;
-  }, [tasks, selectedDate]);
+  }, [tasksByDate, selectedDate]);
 
-  // Filter tasks for the selected day (memoized)
+  // Filter tasks for the selected day (optimized)
   const tasksForDay = useMemo(() => {
-    return tasks.filter((task) => {
-      if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate).toISOString().split("T")[0];
-      return taskDate === selectedDate && !task.isCompleted;
-    });
-  }, [tasks, selectedDate]);
+    const dateTaskIds = tasksByDate[selectedDate]?.taskIds || [];
+    return tasks.filter(
+      (task) =>
+        dateTaskIds.includes(task.id) && !task.isCompleted && task.dueDate
+    );
+  }, [tasksByDate, selectedDate, tasks]);
 
   const formatTime = (timeString) => {
     if (!timeString) return "";

@@ -1,4 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useDatabase } from "@nozbe/watermelondb/react";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -25,14 +27,46 @@ const cardShadow = Platform.select({
 
 export default function DailyReminder() {
   const router = useRouter();
+  const database = useDatabase();
   const [dailyReminder, setDailyReminder] = useState(true);
   const [reminderTime, setReminderTime] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
 
-  const handleNext = () => {
-    // TODO: Save to database
-    console.log("Daily reminder enabled:", dailyReminder);
-    console.log("Reminder time:", reminderTime);
-    router.replace("/(auth)/sign-in");
+  const handleNext = async () => {
+    try {
+      // Save daily reminder preference to database
+      const reminderPrefs = database.collections.get("reminder_prefs");
+      const existingPrefs = await reminderPrefs.query().fetch();
+
+      await database.write(async () => {
+        if (existingPrefs.length > 0) {
+          // Update existing preference
+          await existingPrefs[0].update((pref) => {
+            pref.enabled = dailyReminder;
+            pref.hour = reminderTime.getHours();
+            pref.minute = reminderTime.getMinutes();
+          });
+        } else {
+          // Create new preference record
+          await reminderPrefs.create((pref) => {
+            pref.enabled = dailyReminder;
+            pref.hour = reminderTime.getHours();
+            pref.minute = reminderTime.getMinutes();
+          });
+        }
+      });
+
+      console.log("Daily reminder saved to database:", {
+        enabled: dailyReminder,
+        hour: reminderTime.getHours(),
+        minute: reminderTime.getMinutes(),
+      });
+      router.replace("/(auth)/sign-in");
+    } catch (error) {
+      console.error("Error saving daily reminder preference:", error);
+      // Still proceed even if database save fails
+      router.replace("/(auth)/sign-in");
+    }
   };
 
   const handleSkip = () => {
@@ -47,27 +81,15 @@ export default function DailyReminder() {
     });
   };
 
-  const handleTimeChange = () => {
-    // For now, just cycle through some common times
-    // In a real implementation, you'd use a time picker modal
-    const commonTimes = [
-      { hour: 7, minute: 0 }, // 7:00 AM
-      { hour: 8, minute: 0 }, // 8:00 AM
-      { hour: 9, minute: 0 }, // 9:00 AM
-      { hour: 18, minute: 0 }, // 6:00 PM
-      { hour: 19, minute: 0 }, // 7:00 PM
-      { hour: 20, minute: 0 }, // 8:00 PM
-    ];
+  const showTimePicker = () => {
+    setShowPicker(true);
+  };
 
-    const currentTime =
-      reminderTime.getHours() * 60 + reminderTime.getMinutes();
-    const nextTime =
-      commonTimes.find((time) => time.hour * 60 + time.minute > currentTime) ||
-      commonTimes[0];
-
-    const newTime = new Date();
-    newTime.setHours(nextTime.hour, nextTime.minute, 0, 0);
-    setReminderTime(newTime);
+  const onTimeChange = (event, selectedTime) => {
+    setShowPicker(false);
+    if (selectedTime) {
+      setReminderTime(selectedTime);
+    }
   };
 
   return (
@@ -158,7 +180,7 @@ export default function DailyReminder() {
                 </Text>
 
                 <TouchableOpacity
-                  onPress={handleTimeChange}
+                  onPress={showTimePicker}
                   className="bg-orange-50 p-4 rounded-2xl flex-row items-center justify-between"
                 >
                   <View className="flex-row items-center">
@@ -233,6 +255,16 @@ export default function DailyReminder() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Time Picker */}
+      {showPicker && (
+        <DateTimePicker
+          value={reminderTime}
+          mode="time"
+          display="default"
+          onChange={onTimeChange}
+        />
+      )}
     </SafeAreaView>
   );
 }

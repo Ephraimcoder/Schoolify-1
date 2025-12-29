@@ -1,4 +1,4 @@
-import { Q } from "@nozbe/watermelondb";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import { createContext, useContext, useEffect, useState } from "react";
 import {
@@ -9,10 +9,11 @@ import {
   ID,
   Query,
 } from "react-native-appwrite";
-import { database } from "../database/database";
 
 const USER_STORAGE_KEY = "@user_data";
 const LOGOUT_PENDING_KEY = "@logout_pending";
+const LAST_VALIDATION_KEY = "@last_validation";
+const VALIDATION_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
 
 const UserContext = createContext();
 
@@ -73,156 +74,86 @@ export function UserProvider({ children }) {
     }
   };
 
-  const saveUser = async (userData) => {
-    try {
-      setUser(userData);
-
-      // Upsert into WatermelonDB
-      const users = database.collections.get("users");
-      const existingUsers = await users
-        .query(Q.where("appwrite_id", userData.accountId))
-        .fetch();
-
-      await database.write(async () => {
-        if (existingUsers.length > 0) {
-          // Update existing user
-          await existingUsers[0].update((user) => {
-            user.name = userData.name;
-            user.email = userData.email;
-            user.avatar = userData.avatar || "";
-            user.session_id = userData.sessionId || "";
-            user.last_login_at = Date.now();
-          });
-        } else {
-          // Create new user
-          await users.create((newUser) => {
-            newUser.appwrite_id = userData.accountId;
-            newUser.name = userData.name;
-            newUser.email = userData.email;
-            newUser.avatar = userData.avatar || "";
-            newUser.session_id = userData.sessionId || "";
-            newUser.last_login_at = Date.now();
-          });
-        }
-      });
-    } catch (error) {
-      console.error("Error saving user:", error);
-      throw error;
-    }
-  };
-
   useEffect(() => {
     const loadAndValidateUser = async () => {
       try {
-        // Try to load user from WatermelonDB
-        const users = database.collections.get("users");
-        const userList = await users.query().fetch();
+        // 1. Load from local storage
+        const cachedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+        const lastValidation = await AsyncStorage.getItem(LAST_VALIDATION_KEY);
+        const now = Date.now();
+        const shouldValidate =
+          !lastValidation ||
+          now - parseInt(lastValidation) > VALIDATION_INTERVAL;
 
-        if (userList.length > 0) {
-          const localUser = userList[0];
-          setUser({
-            $id: localUser.id,
-            name: localUser.name,
-            email: localUser.email,
-            avatar: localUser.avatar,
-            accountId: localUser.appwrite_id,
-            sessionId: localUser.session_id,
-          });
-          // Set loading to false immediately for fast UI response
-          setIsLoading(false);
-        } else {
-          // No local user, set loading to false
-          setIsLoading(false);
-        }
+        let currentUserData = null;
 
-        // Check for pending logout
-        const pendingLogout = userList.some((u) => u.pending_logout);
-        if (pendingLogout) {
-          try {
-            await account.deleteSessions();
-            await database.write(async () => {
-              await userList[0].update((user) => {
-                user.pending_logout = false;
-              });
-            });
-          } catch (e) {
-            console.log("Pending logout: could not revoke session yet", e);
-          }
-          setUser(null);
-          return;
-        }
+        if (cachedUser) {
+          currentUserData = JSON.parse(cachedUser);
+          setUser(currentUserData);
 
-        // If a logout is pending (e.g. user logged out while offline), don't auto-login.
-        const logoutPending = pendingLogout;
-
-        // Background validation with Appwrite (non-blocking)
-        try {
-          // If logout is pending, try to revoke the server session and keep user signed out.
-          if (logoutPending) {
-            try {
-              await account.deleteSessions();
-              await database.write(async () => {
-                await userList[0].update((user) => {
-                  user.pending_logout = false;
-                });
-              });
-            } catch (e) {
-              console.log("Pending logout: could not revoke session yet", e);
-            }
-            // Ensure local user is cleared; avoid auto-login this cycle
-            await database.write(async () => {
-              await userList[0].destroyPermanently();
-            });
-            setUser(null);
+          // If cache is fresh, skip validation
+          if (!shouldValidate) {
+            setIsLoading(false);
             return;
           }
+        }
 
-          // Otherwise, attempt to validate the session with Appwrite in the background.
+        setIsLoading(false);
+
+        // 2. Validate with Appwrite (only if cache is old or missing)
+        try {
           const currentAccount = await account.get();
-
           if (currentAccount) {
-            // If a session exists, fetch the user's document
             const userData = await fetchUserDocument(currentAccount.$id);
-            saveUser(userData);
+            await saveUser(userData);
+            await AsyncStorage.setItem(LAST_VALIDATION_KEY, now.toString());
+            currentUserData = userData;
           } else {
-            // If no active session, clear the local cache
-            await database.write(async () => {
-              await userList[0].destroyPermanently();
-            });
-            setUser(null);
+            await clearUser();
+            currentUserData = null;
           }
         } catch (error) {
-          // Session validation failed (e.g., token expired, network error)
-          if (
-            error &&
-            error.code !== 0 &&
-            error.code !== "ECONNREFUSED" &&
-            error.code !== "ENETUNREACH"
-          ) {
-            setUser(null);
-            await database.write(async () => {
-              await userList[0].destroyPermanently();
-            });
-            console.log(
-              "Session expired or user deleted. Please log in again."
-            );
-          } else {
-            console.log("Session validation error:", error);
+          // Handle specific expiration errors
+          if (error?.code === 401) {
+            // Appwrite unauthorized
+            await clearUser();
+            currentUserData = null;
           }
-          // Don't clear user on network errors to allow offline usage
+          // For network errors, we keep the currentUserData we got from cache
         }
-      } catch (error) {
-        console.error("Error loading user:", error);
-        // Ensure loading is set to false even on error
-        if (isLoading) {
-          setIsLoading(false);
-        }
+
+        // 3. FINAL STEP: Update user state
+        setUser(currentUserData);
+      } catch (e) {
+        console.error("Initialization failed", e);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadAndValidateUser();
   }, []);
 
+  // Save user to AsyncStorage
+  const saveUser = async (userData) => {
+    try {
+      await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+      setUser(userData);
+    } catch (error) {
+      console.error("Failed to save user data", error);
+    }
+  };
+
+  // Clear user from AsyncStorage
+  const clearUser = async () => {
+    try {
+      await AsyncStorage.removeItem(USER_STORAGE_KEY);
+      await AsyncStorage.removeItem(LAST_VALIDATION_KEY);
+      setUser(null);
+    } catch (error) {
+      throw new Error();
+    }
+  };
   const register = async (email, password, name) => {
     setIsLoading(true);
     try {
@@ -298,13 +229,7 @@ export function UserProvider({ children }) {
       return userData;
     } catch (error) {
       console.error("Login failed:", error);
-      await database.write(async () => {
-        const users = database.collections.get("users");
-        const userList = await users.query().fetch();
-        if (userList.length > 0) {
-          await userList[0].destroyPermanently();
-        }
-      });
+      await clearUser();
       setUser(null);
       throw error;
     } finally {
@@ -389,34 +314,13 @@ export function UserProvider({ children }) {
 
   const logout = async () => {
     try {
-      // Mark logout as pending in WatermelonDB
-      const users = database.collections.get("users");
-      const userList = await users.query().fetch();
-
-      if (userList.length > 0) {
-        await database.write(async () => {
-          await userList[0].update((user) => {
-            user.pending_logout = true;
-          });
-        });
-      }
-
       // Clear local state
       setUser(null);
+      await clearUser();
 
       // Try to revoke session
       try {
         await account.deleteSessions();
-
-        // Clear the pending flag if logout was successful
-        if (userList.length > 0) {
-          await database.write(async () => {
-            await userList[0].update((user) => {
-              user.pending_logout = false;
-              user.session_id = "";
-            });
-          });
-        }
       } catch (e) {
         console.log("Could not revoke session, will retry on next app start");
       }
@@ -448,13 +352,7 @@ export function UserProvider({ children }) {
       await account.delete();
 
       // 4. Clear local storage and state
-      await database.write(async () => {
-        const users = database.collections.get("users");
-        const userList = await users.query().fetch();
-        if (userList.length > 0) {
-          await userList[0].destroyPermanently();
-        }
-      });
+      await clearUser();
       setUser(null);
 
       return { success: true };

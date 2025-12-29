@@ -1,15 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useContext, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SearchBar from "../../components/SearchBar";
 import TaskList from "../../components/taskList";
-import { TasksContext } from "../../context/TasksContext";
+import { useTasks } from "../../context/TasksContext";
 import { useUser } from "../../context/UserContext";
 
 const Tasks = () => {
-  const { tasks, loading, refreshTasks } = useContext(TasksContext);
+  const { tasks, loading, refreshTasks } = useTasks();
   const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -18,7 +18,7 @@ const Tasks = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Animation on mount
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
@@ -51,8 +51,8 @@ const Tasks = () => {
     });
   };
 
-  // Filter tasks based on search query
-  const getSearchResults = () => {
+  // Debounced search filtering
+  const searchResults = useMemo(() => {
     if (!searchQuery.trim()) {
       return { tasks: tasks, matchedSubtasks: [] };
     }
@@ -80,35 +80,20 @@ const Tasks = () => {
       // If task matches, include it
       if (taskMatches) {
         matchedTasks.push(task);
-      }
-
-      // If subtasks match, add them to the subtask results
-      if (matchingSubtasks.length > 0) {
-        matchingSubtasks.forEach((subtask) => {
-          matchedSubtasks.push({
-            subtask,
-            parentTask: task,
-            parentTaskId: task.id,
-            parentTaskTitle: task.title,
-            parentTaskColor: task.color || "#4F46E5",
-            parentTaskCategory: task.category,
-          });
-        });
-
-        // Also include parent task if not already included
-        if (!taskMatches) {
-          matchedTasks.push(task);
+        if (matchingSubtasks.length > 0) {
+          matchedSubtasks.push(...matchingSubtasks);
         }
+      } else if (matchingSubtasks.length > 0) {
+        // If only subtasks match, include the parent task
+        matchedTasks.push(task);
+        matchedSubtasks.push(...matchingSubtasks);
       }
     });
 
     return { tasks: matchedTasks, matchedSubtasks };
-  };
+  }, [tasks, searchQuery]);
 
-  const { tasks: filteredTasks, matchedSubtasks } = useMemo(
-    () => getSearchResults(),
-    [tasks, searchQuery]
-  );
+  const { tasks: filteredTasks, matchedSubtasks } = searchResults;
 
   // Group tasks by status or due date
   const tasksByDate = filteredTasks.reduce((acc, task) => {

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useDatabase } from "@nozbe/watermelondb/react";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -24,13 +25,37 @@ const cardShadow = Platform.select({
 
 export default function NotificationTiming() {
   const router = useRouter();
+  const database = useDatabase();
   const [leadMinutes, setLeadMinutes] = useState(15);
   const minuteOptions = [5, 10, 15, 30, 60, 120];
 
-  const handleNext = () => {
-    // TODO: Save to database
-    console.log("Notification lead minutes:", leadMinutes);
-    router.push("/(auth)/personalization/daily-reminder");
+  const handleNext = async () => {
+    try {
+      // Save notification preference to database
+      const notificationPrefs = database.collections.get("notification_prefs");
+      const existingPrefs = await notificationPrefs.query().fetch();
+
+      await database.write(async () => {
+        if (existingPrefs.length > 0) {
+          // Update existing preference
+          await existingPrefs[0].update((pref) => {
+            pref.leadMinutes = leadMinutes;
+          });
+        } else {
+          // Create new preference record
+          await notificationPrefs.create((pref) => {
+            pref.leadMinutes = leadMinutes;
+          });
+        }
+      });
+
+      console.log("Notification lead minutes saved to database:", leadMinutes);
+      router.push("/(auth)/personalization/daily-reminder");
+    } catch (error) {
+      console.error("Error saving notification preference:", error);
+      // Still proceed even if database save fails
+      router.push("/(auth)/personalization/daily-reminder");
+    }
   };
 
   const handleSkip = () => {

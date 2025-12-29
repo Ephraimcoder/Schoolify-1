@@ -34,14 +34,18 @@ const Settings = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        // Load all settings in parallel for better performance
+        const [savedLeadMinutes, savedReminder] = await Promise.all([
+          getNotificationLeadMinutes(),
+          getScheduledReminder(),
+        ]);
+
         // Load notification lead time
-        const savedLeadMinutes = await getNotificationLeadMinutes();
         if (savedLeadMinutes) {
           setLeadMinutes(savedLeadMinutes);
         }
 
         // Load daily reminder settings
-        const savedReminder = await getScheduledReminder();
         if (savedReminder) {
           setDailyReminder(true);
           setReminderTime(new Date());
