@@ -16,11 +16,13 @@ import {
   getCategoryStyle,
   getPriorityClasses,
 } from "../../utils/taskUtils";
+import { showError } from "../../utils/toast";
 
 const TaskDetails = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { getTaskById, updateTask, deleteTask } = useContext(TasksContext);
+  const { getTaskById, updateTask, deleteTask, addTask } =
+    useContext(TasksContext);
   const [task, setTask] = useState(null);
 
   const taskData = useMemo(() => {
@@ -62,12 +64,41 @@ const TaskDetails = () => {
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => {
-          deleteTask(task.id);
-          router.back();
+        onPress: async () => {
+          try {
+            await deleteTask(task.id);
+            router.back();
+          } catch (error) {
+            showError("Failed to delete task. Please try again.");
+          }
         },
       },
     ]);
+  };
+
+  const handleDuplicate = async () => {
+    if (!task) return;
+
+    try {
+      // Create a new task with same data but new date (tomorrow)
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Navigate to edit screen with duplicated data as parameters
+      router.push({
+        pathname: "/AddTask",
+        params: {
+          title: task.title,
+          description: task.description,
+          category: task.category,
+          priority: task.priority,
+          dueDate: tomorrow.toISOString(),
+          dueTime: task.dueTime || new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      showError("Failed to duplicate task. Please try again.");
+    }
   };
 
   const renderSubtask = ({ item, index }) => (
@@ -108,11 +139,14 @@ const TaskDetails = () => {
             <Ionicons name="arrow-back" size={24} color="#374151" />
           </TouchableOpacity>
           <Text className="text-xl font-quicksandBold text-gray-800">
-            Task Details
+            {task.category === "Class" ? "Class Details" : "Task Details"}
           </Text>
           <View className="flex-row">
             <TouchableOpacity onPress={handleEdit} className="p-2">
               <Ionicons name="create-outline" size={20} color="#3B82F6" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDuplicate} className="p-2">
+              <Ionicons name="copy-outline" size={20} color="#10B981" />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleDelete} className="p-2">
               <Ionicons name="trash-outline" size={20} color="#EF4444" />

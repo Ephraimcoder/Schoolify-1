@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Animated, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function SearchBar({
@@ -18,20 +18,20 @@ export default function SearchBar({
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  // const handlePress = () => {
+  //   Animated.sequence([
+  //     Animated.timing(scaleAnim, {
+  //       toValue: 0.95,
+  //       duration: 100,
+  //       useNativeDriver: true,
+  //     }),
+  //     Animated.timing(scaleAnim, {
+  //       toValue: 1,
+  //       duration: 100,
+  //       useNativeDriver: true,
+  //     }),
+  //   ]).start();
+  // };
 
   const handleChange = (t) => {
     if (!isControlled) setInternalValue(t);
@@ -89,14 +89,7 @@ export default function SearchBar({
           >
             <Ionicons name="close-circle" size={20} color="#9CA3AF" />
           </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={handlePress}
-            className="p-1.5 bg-gray-50 rounded-lg ml-2"
-          >
-            <Ionicons name="options-outline" size={20} color="#6B7280" />
-          </TouchableOpacity>
-        )}
+        ) : null}
       </Animated.View>
     </View>
   );

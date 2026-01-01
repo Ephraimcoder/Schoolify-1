@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Text, TouchableOpacity, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ScreenAnimation from "../../components/ScreenAnimation";
 import SearchBar from "../../components/SearchBar";
 import TaskList from "../../components/taskList";
 import { useTasks } from "../../context/TasksContext";
@@ -14,17 +15,7 @@ const Tasks = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [sortVisible, setSortVisible] = useState(false);
-  const [sortOption, setSortOption] = useState("dueDateAsc"); // default
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  // Animation on mount
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+  const [sortOption, setSortOption] = useState("dueDateDesc"); // default to latest first
 
   // Handle pull-to-refresh
   const onRefresh = async () => {
@@ -95,8 +86,42 @@ const Tasks = () => {
 
   const { tasks: filteredTasks, matchedSubtasks } = searchResults;
 
+  // Apply additional filters based on sortOption
+  const statusFilteredTasks = useMemo(() => {
+    const now = new Date();
+
+    switch (sortOption) {
+      case "classes":
+        return filteredTasks.filter((task) => task.category === "Class");
+
+      case "completed":
+        return filteredTasks.filter((task) => task.isCompleted);
+
+      case "incomplete":
+        return filteredTasks.filter((task) => !task.isCompleted);
+
+      case "overdue":
+        return filteredTasks.filter((task) => {
+          if (task.isCompleted || !task.dueDate) return false;
+
+          // Create date objects at midnight for proper comparison
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const dueDate = new Date(task.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+
+          // Task is overdue if due date is before today
+          return dueDate < today;
+        });
+
+      default:
+        return filteredTasks;
+    }
+  }, [filteredTasks, sortOption]);
+
   // Group tasks by status or due date
-  const tasksByDate = filteredTasks.reduce((acc, task) => {
+  const tasksByDate = statusFilteredTasks.reduce((acc, task) => {
     const date = task.dueDate
       ? new Date(task.dueDate).toDateString()
       : "No Date";
@@ -164,12 +189,12 @@ const Tasks = () => {
   const flatMode = sortOption === "createdNew" || sortOption === "createdOld";
   const flatTasks = useMemo(() => {
     if (!flatMode) return [];
-    const arr = [...filteredTasks];
+    const arr = [...statusFilteredTasks];
     if (sortOption === "createdNew") {
       return arr.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     }
     return arr.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-  }, [filteredTasks, sortOption, flatMode]);
+  }, [statusFilteredTasks, sortOption, flatMode]);
 
   // Helper for priority badge styling in inline cards
   const getPriorityClasses = (priority) => {
@@ -186,7 +211,7 @@ const Tasks = () => {
   };
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+    <ScreenAnimation duration={400}>
       <LinearGradient colors={["#FFFBF5", "#FEFBF6"]} className="flex-1">
         <SafeAreaView className="flex-1 px-4 mt-8">
           {/* Header */}
@@ -196,7 +221,8 @@ const Tasks = () => {
                 My Tasks
               </Text>
               <Text className="text-gray-500 font-quicksand">
-                {tasks.length} task{tasks.length !== 1 ? "s" : ""} in total
+                {statusFilteredTasks.length} task
+                {statusFilteredTasks.length !== 1 ? "s" : ""} in total
               </Text>
             </View>
             <TouchableOpacity
@@ -204,7 +230,7 @@ const Tasks = () => {
               className="flex-row items-center px-3 py-2 bg-white rounded-lg shadow-sm border border-gray-100"
               activeOpacity={0.8}
             >
-              <Ionicons name="funnel-outline" size={18} color="#4F46E5" />
+              <Ionicons name="options-outline" size={18} color="#4F46E5" />
               <Text className="ml-2 text-indigo-600 font-quicksandSemiBold text-sm">
                 Sort
               </Text>
@@ -237,6 +263,10 @@ const Tasks = () => {
                   { key: "createdOld", label: "Created: oldest first" },
                   { key: "priorityHighLow", label: "Priority: High → Low" },
                   { key: "priorityLowHigh", label: "Priority: Low → High" },
+                  { key: "classes", label: "📚 Classes only" },
+                  { key: "completed", label: "✅ Completed tasks" },
+                  { key: "incomplete", label: "⏳ Incomplete tasks" },
+                  { key: "overdue", label: "🔴 Overdue tasks" },
                 ].map((opt) => (
                   <TouchableOpacity
                     key={opt.key}
@@ -285,22 +315,53 @@ const Tasks = () => {
           )}
 
           {/* Tasks List */}
-          <TaskList
-            tasks={filteredTasks}
-            tasksByDate={tasksByDateSorted}
-            sortedDates={sortedDates}
-            getPriorityClasses={getPriorityClasses}
-            onRefresh={onRefresh}
-            refreshing={refreshing}
-            searchQuery={searchQuery}
-            renderHighlightedText={renderHighlightedText}
-            matchedSubtasks={matchedSubtasks}
-            flatMode={flatMode}
-            flatTasks={flatTasks}
-          />
+          {statusFilteredTasks.length === 0 ? (
+            <View className="flex-1 justify-center items-center py-20">
+              <Ionicons name="filter-outline" size={64} color="#9CA3AF" />
+              <Text className="text-gray-500 font-quicksandBold text-lg mt-4 mb-2">
+                No tasks found
+              </Text>
+              <Text className="text-gray-400 font-quicksand text-center px-8">
+                {sortOption === "classes" && "No classes available"}
+                {sortOption === "completed" && "No completed tasks yet"}
+                {sortOption === "incomplete" && "All tasks are completed!"}
+                {sortOption === "overdue" && "No overdue tasks - great job!"}
+                {searchQuery && `No tasks matching "${searchQuery}"`}
+                {!["classes", "completed", "incomplete", "overdue"].includes(
+                  sortOption
+                ) &&
+                  !searchQuery &&
+                  "No tasks available"}
+              </Text>
+              {searchQuery && (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery("")}
+                  className="mt-4 px-4 py-2 bg-indigo-100 rounded-lg"
+                >
+                  <Text className="text-indigo-600 font-quicksandSemiBold">
+                    Clear search
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <TaskList
+              tasks={statusFilteredTasks}
+              tasksByDate={tasksByDateSorted}
+              sortedDates={sortedDates}
+              getPriorityClasses={getPriorityClasses}
+              onRefresh={onRefresh}
+              refreshing={refreshing}
+              searchQuery={searchQuery}
+              renderHighlightedText={renderHighlightedText}
+              matchedSubtasks={matchedSubtasks}
+              flatMode={flatMode}
+              flatTasks={flatTasks}
+            />
+          )}
         </SafeAreaView>
       </LinearGradient>
-    </Animated.View>
+    </ScreenAnimation>
   );
 };
 

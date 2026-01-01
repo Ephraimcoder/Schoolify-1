@@ -89,9 +89,37 @@ export function UserProvider({ children }) {
 
         if (cachedUser) {
           currentUserData = JSON.parse(cachedUser);
+
+          // If cache is fresh, verify session matches cached user
+          if (!shouldValidate) {
+            try {
+              const currentAccount = await account.get();
+              if (
+                currentAccount &&
+                currentAccount.$id !== currentUserData.accountId
+              ) {
+                // Session user doesn't match cached user - force validation
+                console.log("Session user mismatch, forcing validation");
+                shouldValidate = true;
+              } else if (!currentAccount) {
+                // No session - clear cache
+                await clearUser();
+                currentUserData = null;
+                setIsLoading(false);
+                return;
+              }
+            } catch (sessionError) {
+              // Can't get session - clear cache for safety
+              await clearUser();
+              currentUserData = null;
+              setIsLoading(false);
+              return;
+            }
+          }
+
           setUser(currentUserData);
 
-          // If cache is fresh, skip validation
+          // If cache is fresh and session matches, skip validation
           if (!shouldValidate) {
             setIsLoading(false);
             return;
@@ -150,69 +178,14 @@ export function UserProvider({ children }) {
       await AsyncStorage.removeItem(USER_STORAGE_KEY);
       await AsyncStorage.removeItem(LAST_VALIDATION_KEY);
       setUser(null);
-    } catch (error) {
-      throw new Error();
-    }
-  };
-  const register = async (email, password, name) => {
-    setIsLoading(true);
-    try {
-      const netState = await NetInfo.fetch();
-      if (!netState.isConnected) {
-        throw new Error("No internet connection");
-      }
-
-      // 1. Create the account in Appwrite Auth
-      const newAccount = await account.create(
-        ID.unique(),
-        email,
-        password,
-        name
-      );
-
-      if (!newAccount) throw new Error("Failed to create account");
-
-      // 2. Create a session
-      await account.createEmailSession(email, password);
-
-      // 3. Create user document in the database
-      const avatarUrl = avatars.getInitialsURL(name);
-
-      const userDocument = {
-        accountId: newAccount.$id,
-        name,
-        email,
-        avatar: avatarUrl,
-      };
-
-      const newUser = await databases.createDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.userCollectionId,
-        ID.unique(),
-        userDocument
-      );
-
-      if (!newUser) {
-        // Clean up the account if document creation fails
+      // Also try to clear any existing sessions for security
+      try {
         await account.deleteSessions();
-        throw new Error("Failed to create user document");
+      } catch (sessionError) {
+        // Ignore session errors - might already be cleared
       }
-
-      // 4. Save only the essential user data locally
-      const userData = {
-        $id: newUser.$id,
-        name: newUser.name,
-        email: newUser.email,
-        avatar: newUser.avatar,
-        accountId: newUser.accountId,
-      };
-
-      await saveUser(userData);
-      return userData;
     } catch (error) {
-      throw new Error(error.message || "Registration failed");
-    } finally {
-      setIsLoading(false);
+      throw new Error("Failed to clear user data");
     }
   };
 
@@ -237,7 +210,10 @@ export function UserProvider({ children }) {
     }
   };
 
-  const requestEmailOtp = async (email, { phrase = false, userId } = {}) => {
+  const requestEmailOtp = async (
+    email,
+    { phrase = false, userId, isSignup = false } = {}
+  ) => {
     const netState = await NetInfo.fetch();
     if (!netState.isConnected) {
       throw new Error("No internet connection");
@@ -246,7 +222,7 @@ export function UserProvider({ children }) {
       const desiredId = userId ?? ID.unique();
       // Returns Token with userId (and optional phrase if enabled)
       const token = await account.createEmailToken(desiredId, email, phrase);
-      return { userId: token.userId, phrase: token.phrase };
+      return { userId: token.userId, phrase: token.phrase, isSignup };
     } catch (error) {
       console.error("requestEmailOtp error:", error);
       // Re-throw a friendly message
@@ -256,15 +232,55 @@ export function UserProvider({ children }) {
     }
   };
 
-  const verifyEmailOtp = async ({ userId, code }) => {
+  const verifyEmailOtp = async ({
+    userId,
+    code,
+    isSignup = false,
+    email,
+    password,
+    name,
+  }) => {
     const netState = await NetInfo.fetch();
     if (!netState.isConnected) {
       throw new Error("No internet connection");
     }
     setIsLoading(true);
     try {
-      // Create a session using the OTP code as secret (object form for RN SDK)
-      await account.createSession({ userId, secret: code });
+      if (isSignup) {
+        // For signup: create account first, then verify with OTP
+        const newAccount = await account.create(userId, email, password, name);
+
+        // Create session with OTP to verify
+        await account.createSession({ userId, secret: code });
+
+        // Create user document
+        const avatarUrl = avatars.getInitialsURL(name);
+        const newDoc = await databases.createDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.userCollectionId,
+          ID.unique(),
+          {
+            accountId: newAccount.$id,
+            name: name,
+            email: email,
+            avatar: avatarUrl,
+          }
+        );
+
+        const userData = {
+          $id: newDoc.$id,
+          name: newDoc.name,
+          email: newDoc.email,
+          avatar: newDoc.avatar,
+          accountId: newDoc.accountId,
+        };
+
+        await saveUser(userData);
+        return userData;
+      } else {
+        // For login: existing OTP flow
+        await account.createSession({ userId, secret: code });
+      }
 
       // Get the authenticated account
       const currentAccount = await account.get();
@@ -274,7 +290,7 @@ export function UserProvider({ children }) {
       try {
         userData = await fetchUserDocument(currentAccount.$id);
       } catch (err) {
-        // Create minimal profile
+        // Create minimal profile (shouldn't happen for signup, but fallback)
         const fallbackName =
           currentAccount.name && currentAccount.name.trim().length > 0
             ? currentAccount.name
@@ -370,7 +386,6 @@ export function UserProvider({ children }) {
     isLoading,
     isOffline,
     login,
-    register,
     logout,
     isLoggedIn,
     deleteAccount,

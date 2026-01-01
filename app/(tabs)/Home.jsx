@@ -1,22 +1,15 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useRef } from "react";
-import {
-  Animated,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useMemo } from "react";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ClassesSection from "../../components/ClassesSection";
+import ScreenAnimation from "../../components/ScreenAnimation";
 import TaskProgress from "../../components/TaskProgress";
 import TasksSection from "../../components/TasksSection";
 import { useUser } from "../../context/UserContext";
 
 const Home = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
   const date = new Date();
   const { user, isLoading } = useUser();
   const hours = date.getUTCHours();
@@ -34,17 +27,9 @@ const Home = () => {
     );
   }, [user?.avatar, user?.name]);
 
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400, // Reduced from 800ms
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
-
   const router = useRouter();
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+    <ScreenAnimation duration={400}>
       <LinearGradient colors={["#FFFBF5", "#FEFBF6"]} className="flex-1">
         <SafeAreaView className="flex-1 px-6 mt-2">
           {/* Header Section */}
@@ -102,7 +87,7 @@ const Home = () => {
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
-    </Animated.View>
+    </ScreenAnimation>
   );
 };
 

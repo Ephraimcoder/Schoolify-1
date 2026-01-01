@@ -57,7 +57,9 @@ const ClassesSection = React.memo(() => {
 
   // Filter and memoize class tasks
   const classTasks = useMemo(() => {
-    return tasks.filter((task) => task.category === "Class");
+    return tasks.filter(
+      (task) => task.category === "Class" && !task.isCompleted
+    );
   }, [tasks]);
 
   const handleClassPress = (classTask) => {
@@ -91,10 +93,9 @@ const ClassesSection = React.memo(() => {
               params: { category: "Class" },
             })
           }
+          className="w-10 h-10 bg-indigo-100 rounded-full items-center justify-center"
         >
-          <Text className="text-indigo-600 font-quicksandSemiBold">
-            Add Class
-          </Text>
+          <Ionicons name="add" size={20} color="#4F46E5" />
         </TouchableOpacity>
       </View>
 
@@ -141,7 +142,7 @@ const ClassesSection = React.memo(() => {
             className="mt-4 px-6 py-2 bg-indigo-100 rounded-full"
           >
             <Text className="text-indigo-600 font-quicksandSemiBold">
-              Add Your First Class
+              Add A Class
             </Text>
           </TouchableOpacity>
         </View>

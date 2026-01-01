@@ -5,6 +5,7 @@ import * as Notifications from "expo-notifications";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   InteractionManager,
   Platform,
@@ -59,7 +60,7 @@ const AddTask = () => {
   } = useForm();
   const { categories, addCategory, deleteCategory } = useCategories();
   const { priorities, addPriority, deletePriority } = usePriorities();
-  const { handleAddTask } = useTaskActions();
+  const { handleAddTask, updateTask } = useTaskActions();
 
   const [selectedCategory, setSelectedCategory] = useState("Design");
   const [selectedPriority, setSelectedPriority] = useState("Low");
@@ -67,8 +68,17 @@ const AddTask = () => {
   const [isSubtaskModalVisible, setIsSubtaskModalVisible] = useState(false);
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [modalType, setModalType] = useState(""); // 'category' or 'priority'
+  const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
-  const { taskId, category: prefillCategory } = useLocalSearchParams();
+  const {
+    taskId,
+    category: prefillCategory,
+    title,
+    description,
+    priority,
+    dueDate,
+    dueTime,
+  } = useLocalSearchParams();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -228,15 +238,33 @@ const AddTask = () => {
         } else {
           // Creating a new task
           resetForm();
-          setSelectedCategory(prefillCategory || "");
-          // If a prefill category is provided via route params, set it in formData
-          if (prefillCategory) {
-            setFormData((prev) => ({
-              ...prev,
-              category: prefillCategory,
-            }));
+
+          // Check if this is a duplicate task with pre-filled data
+          if (title || description || dueDate) {
+            setFormData({
+              title: title || "",
+              description: description || "",
+              category: prefillCategory || "",
+              priority: priority || "Low",
+              dueDate: dueDate || new Date().toISOString(),
+              dueTime: dueTime || new Date().toISOString(),
+              isCompleted: false,
+              alertEnabled: false,
+            });
+            setSelectedCategory(prefillCategory || "");
+            setSelectedPriority(priority || "Low");
+          } else {
+            // Regular new task
+            setSelectedCategory(prefillCategory || "");
+            // If a prefill category is provided via route params, set it in formData
+            if (prefillCategory) {
+              setFormData((prev) => ({
+                ...prev,
+                category: prefillCategory,
+              }));
+            }
+            setSelectedPriority("Low");
           }
-          setSelectedPriority("Low");
           setSubTasks([]);
           setAlertEnabled(false);
         }
@@ -246,7 +274,16 @@ const AddTask = () => {
         cancelled = true;
         interaction.cancel();
       };
-    }, [taskId, getTaskById, prefillCategory])
+    }, [
+      taskId,
+      getTaskById,
+      prefillCategory,
+      title,
+      description,
+      priority,
+      dueDate,
+      dueTime,
+    ])
   );
 
   const handleInputChange = (field, value) => {
@@ -300,6 +337,8 @@ const AddTask = () => {
     };
 
     try {
+      setIsSaving(true);
+
       if (taskId) {
         await updateTask(taskId, taskData);
       } else {
@@ -307,7 +346,15 @@ const AddTask = () => {
       }
 
       // Clear form and navigate back
-      router.setParams({ taskId: undefined, category: undefined });
+      router.setParams({
+        taskId: undefined,
+        category: undefined,
+        title: undefined,
+        description: undefined,
+        priority: undefined,
+        dueDate: undefined,
+        dueTime: undefined,
+      });
       resetForm();
       setSubTasks([]);
       setSelectedCategory("");
@@ -334,6 +381,8 @@ const AddTask = () => {
           text: { fontSize: 16, color: "red", fontFamily: "QuicksandBold" },
         },
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -381,7 +430,15 @@ const AddTask = () => {
               <TouchableOpacity
                 className="bg-white p-2 rounded-full"
                 onPress={() => {
-                  router.setParams({ taskId: undefined, category: undefined });
+                  router.setParams({
+                    taskId: undefined,
+                    category: undefined,
+                    title: undefined,
+                    description: undefined,
+                    priority: undefined,
+                    dueDate: undefined,
+                    dueTime: undefined,
+                  });
                   resetForm();
                   setSubTasks([]);
                   setSelectedCategory("");
@@ -555,16 +612,26 @@ const AddTask = () => {
 
             {/* Create Button */}
             <TouchableOpacity
-              className="bg-[#F26D6D] py-4 rounded-xl my-6"
+              className={`bg-[#F26D6D] py-4 rounded-xl my-6 ${isSaving ? "opacity-70" : ""}`}
               onPress={handleSubmit}
+              disabled={isSaving}
             >
-              <Text className="text-white text-center font-quicksandBold text-lg">
-                {formData.category === "Class"
-                  ? "Create Class"
-                  : taskId
-                    ? "Edit Task"
-                    : "Create Task"}
-              </Text>
+              {isSaving ? (
+                <View className="flex-row items-center justify-center">
+                  <ActivityIndicator size="small" color="#ffffff" />
+                  <Text className="text-white text-center font-quicksandBold text-lg ml-2">
+                    Saving...
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-white text-center font-quicksandBold text-lg">
+                  {formData.category === "Class"
+                    ? "Create Class"
+                    : taskId
+                      ? "Edit Task"
+                      : "Create Task"}
+                </Text>
+              )}
             </TouchableOpacity>
           </ScrollView>
 

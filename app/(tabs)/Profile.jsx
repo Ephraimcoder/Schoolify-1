@@ -1,10 +1,10 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AnalyticsModal } from "../../components/AnalyticsModal";
-import { TasksContext } from "../../context/TasksContext";
+import { useTasks } from "../../context/TasksContext";
 import { useUser } from "../../context/UserContext";
 
 const dummy = {
@@ -55,7 +55,7 @@ const StatCard = ({ icon, value, label, color = "#6B7280", onPress }) => (
 const Profile = () => {
   const router = useRouter();
   const { user, logout } = useUser();
-  const { tasks } = useContext(TasksContext);
+  const { tasks } = useTasks();
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   const stats = useMemo(
@@ -128,7 +128,14 @@ const Profile = () => {
         </Text>
         <View className="w-12">
           <TouchableOpacity
-            onPress={logout}
+            onPress={async () => {
+              try {
+                await logout();
+                router.replace("/(auth)/sign-in");
+              } catch (error) {
+                console.error("Logout error:", error);
+              }
+            }}
             className="w-12 h-12 rounded-full items-center justify-center"
           >
             <MaterialIcons name="logout" size={24} color="#EF4444" />

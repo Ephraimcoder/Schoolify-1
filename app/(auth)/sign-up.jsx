@@ -20,7 +20,7 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
-  const { register } = useUser();
+  const { register, requestEmailOtp } = useUser();
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -61,12 +61,25 @@ export default function SignUp() {
 
     setIsSubmitting(true);
     try {
-      await register(email, password, name);
-      showSuccess("Account created successfully!");
-      router.replace("/(tabs)/Home");
+      const response = await requestEmailOtp(email, { isSignup: true });
+      showSuccess("Verification code sent to your email!");
+
+      // Navigate to OTP verification with signup data
+      router.push({
+        pathname: "/(auth)/otp-verify",
+        params: {
+          userId: response.userId,
+          email: email,
+          isSignup: "true",
+          name: name,
+          password: password,
+        },
+      });
     } catch (error) {
-      console.error("Registration error:", error);
-      showError(error.message || "Failed to create account. Please try again.");
+      console.error("OTP request error:", error);
+      showError(
+        error.message || "Failed to send verification code. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -219,7 +232,7 @@ export default function SignUp() {
             disabled={isSubmitting}
           >
             <Text className="text-white font-quicksandBold text-lg">
-              {isSubmitting ? "Creating Account..." : "Continue"}
+              {isSubmitting ? "Sending Code..." : "Send Verification Code"}
             </Text>
           </TouchableOpacity>
 

@@ -1,13 +1,12 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
-import { TasksContext } from "../../context/TasksContext";
-
+import { useTasks } from "../../context/TasksContext";
 const CalendarScreen = () => {
   const router = useRouter();
-  const { tasks } = useContext(TasksContext);
+  const { tasks } = useTasks();
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );

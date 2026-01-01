@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { database } from "../database/database";
+import { showError } from "../utils/toast";
 
 // Create the context
 export const TasksContext = createContext();
@@ -63,14 +64,24 @@ export const TaskProvider = ({ children }) => {
   });
 
   const refreshTasks = useCallback(async () => {
-    const taskCol = database.collections.get("tasks");
-    const models = await taskCol.query().fetch();
-    setTasks(models.map(mapTaskModelToUi));
+    try {
+      const taskCol = database.collections.get("tasks");
+      const models = await taskCol.query().fetch();
+      setTasks(models.map(mapTaskModelToUi));
+    } catch (error) {
+      showError("Failed to refresh tasks. Please pull to refresh.");
+    }
   }, []);
 
   // Load initial data from WatermelonDB
   const loadInitialData = useCallback(async () => {
     try {
+      // Skip if data is already loaded
+      if (tasks.length > 0 && categories.length > 0 && priorities.length > 0) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
 
       // Load tasks
@@ -113,11 +124,11 @@ export const TaskProvider = ({ children }) => {
       }
       setPriorities(loadedPriorities);
     } catch (error) {
-      console.error("Error loading initial data:", error);
+      showError("Failed to load data. Please restart the app.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [tasks.length, categories.length, priorities.length]);
 
   // Load data on component mount
   useEffect(() => {
@@ -158,7 +169,7 @@ export const TaskProvider = ({ children }) => {
         await refreshTasks();
         return { success: true };
       } catch (error) {
-        console.error("Error adding task:", error);
+        showError("Failed to add task. Please try again.");
         throw error;
       }
     },
@@ -201,7 +212,7 @@ export const TaskProvider = ({ children }) => {
         await refreshTasks();
         return { success: true };
       } catch (error) {
-        console.error("Error updating task:", error);
+        showError("Failed to update task. Please try again.");
         throw error;
       }
     },
@@ -222,7 +233,7 @@ export const TaskProvider = ({ children }) => {
         await refreshTasks();
         return { success: true };
       } catch (error) {
-        console.error("Error deleting task:", error);
+        showError("Failed to delete task. Please try again.");
         throw error;
       }
     },
@@ -262,7 +273,7 @@ export const TaskProvider = ({ children }) => {
         await refreshTasks();
         resetForm();
       } catch (e) {
-        console.error("Error creating task:", e);
+        showError("Failed to add task. Please try again.");
       }
     },
     [formData, subTasks, resetForm, refreshTasks]
@@ -309,7 +320,7 @@ export const TaskProvider = ({ children }) => {
       });
       return { id: created.id, name: categoryName };
     } catch (e) {
-      console.error("Error adding category:", e);
+      showError("Failed to add category. Please try again.");
       return null;
     }
   }, []);
@@ -322,7 +333,7 @@ export const TaskProvider = ({ children }) => {
         await model.markAsDeleted();
       });
     } catch (e) {
-      console.error("Error deleting category:", e);
+      showError("Failed to delete category. Please try again.");
     }
   }, []);
 
@@ -344,7 +355,7 @@ export const TaskProvider = ({ children }) => {
       });
       return { id: created.id, name: priorityName };
     } catch (e) {
-      console.error("Error adding priority:", e);
+      showError("Failed to add priority. Please try again.");
       return null;
     }
   }, []);
@@ -357,7 +368,7 @@ export const TaskProvider = ({ children }) => {
         await model.markAsDeleted();
       });
     } catch (e) {
-      console.error("Error deleting priority:", e);
+      showError("Failed to delete priority. Please try again.");
     }
   }, []);
 

@@ -1,12 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useUser } from "../context/UserContext";
+import { useFadeAnimation } from "../hooks/useBackTransition";
 
 const PersonalDetails = () => {
   const router = useRouter();
   const { user } = useUser();
+  const fadeAnim = useFadeAnimation();
 
   // Only show fields that we have data for
   const userInfo = [
@@ -48,39 +56,46 @@ const PersonalDetails = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FEFBF6]">
+    <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-5 py-5 border-b border-gray-100 bg-white">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-12 h-12 rounded-full items-center justify-center"
-        >
-          <Ionicons name="arrow-back" size={28} color="#111827" />
-        </TouchableOpacity>
-        <Text className="text-xl font-quicksandBold text-gray-800">
-          Personal Details
-        </Text>
-        <View className="w-12" />
-      </View>
-
-      <ScrollView className="flex-1 px-6 pt-7">
-        <View className="bg-white rounded-2xl p-7 mb-7">
-          <View className="mb-7">
-            <Text className="text-2xl font-quicksandBold text-gray-900">
-              Account Information
-            </Text>
-          </View>
-
-          {userInfo.map((info, index) => (
-            <InfoRow
-              key={index}
-              label={info.label}
-              value={info.value}
-              icon={info.icon}
-            />
-          ))}
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
+          flex: 1,
+        }}
+      >
+        <View className="flex-row items-center justify-between px-5 py-5 border-b border-gray-100 bg-white">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-12 h-12 rounded-full items-center justify-center"
+          >
+            <Ionicons name="arrow-back" size={28} color="#111827" />
+          </TouchableOpacity>
+          <Text className="text-xl font-quicksandBold text-gray-800">
+            Personal Details
+          </Text>
+          <View className="w-12" />
         </View>
-      </ScrollView>
+
+        <ScrollView className="flex-1 px-6 pt-7">
+          <View className="bg-white rounded-2xl p-7 mb-7">
+            <View className="mb-7">
+              <Text className="text-2xl font-quicksandBold text-gray-900">
+                Account Information
+              </Text>
+            </View>
+
+            {userInfo.map((info, index) => (
+              <InfoRow
+                key={index}
+                label={info.label}
+                value={info.value}
+                icon={info.icon}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </Animated.View>
     </SafeAreaView>
   );
 };

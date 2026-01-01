@@ -16,7 +16,7 @@ import { showError, showSuccess, showWarning } from "../../utils/toast";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function OtpVerify() {
-  const { userId, email } = useLocalSearchParams();
+  const { userId, email, isSignup, name, password } = useLocalSearchParams();
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -68,8 +68,22 @@ export default function OtpVerify() {
 
     setIsSubmitting(true);
     try {
-      await verifyEmailOtp({ userId, code: trimmed });
-      showSuccess("Signed in successfully");
+      const isSignupFlow = isSignup === "true";
+      await verifyEmailOtp({
+        userId,
+        code: trimmed,
+        isSignup: isSignupFlow,
+        email: isSignupFlow ? email : undefined,
+        password: isSignupFlow ? password : undefined,
+        name: isSignupFlow ? name : undefined,
+      });
+
+      if (isSignupFlow) {
+        showSuccess("Account created successfully!");
+      } else {
+        showSuccess("Signed in successfully");
+      }
+
       router.replace("/(tabs)/Home");
     } catch (error) {
       console.error("OTP verify error:", error);
@@ -166,10 +180,12 @@ export default function OtpVerify() {
         {/* Header */}
         <View className="items-center mt-8">
           <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
-            Verify OTP
+            {isSignup === "true" ? "Create Account" : "Verify OTP"}
           </Text>
           <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
-            Enter the 6-digit code sent to {String(email)}
+            {isSignup === "true"
+              ? `Enter the 6-digit code sent to ${String(email)} to create your account`
+              : `Enter the 6-digit code sent to ${String(email)}`}
           </Text>
         </View>
 
@@ -216,7 +232,13 @@ export default function OtpVerify() {
           disabled={isSubmitting}
         >
           <Text className="text-white font-quicksandBold text-lg">
-            {isSubmitting ? "Verifying..." : "Verify & Continue"}
+            {isSubmitting
+              ? isSignup === "true"
+                ? "Creating Account..."
+                : "Verifying..."
+              : isSignup === "true"
+                ? "Create Account"
+                : "Verify & Continue"}
           </Text>
         </TouchableOpacity>
       </View>
