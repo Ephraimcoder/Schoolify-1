@@ -1,3 +1,4 @@
+import { Q } from "@nozbe/watermelondb";
 import {
   createContext,
   useCallback,
@@ -8,6 +9,7 @@ import {
 } from "react";
 import { database } from "../database/database";
 import { showError } from "../utils/toast";
+import { useUser } from "./UserContext";
 
 // Create the context
 export const TasksContext = createContext();
@@ -47,6 +49,7 @@ const mapTaskModelToUi = (m) => ({
 });
 
 export const TaskProvider = ({ children }) => {
+  const { user } = useUser();
   const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
@@ -66,12 +69,15 @@ export const TaskProvider = ({ children }) => {
   const refreshTasks = useCallback(async () => {
     try {
       const taskCol = database.collections.get("tasks");
-      const models = await taskCol.query().fetch();
+      const models = await taskCol
+        .query(Q.where("user_id", user?.accountId || ""))
+        .fetch();
       setTasks(models.map(mapTaskModelToUi));
     } catch (error) {
+      console.error("Refresh tasks error:", error);
       showError("Failed to refresh tasks. Please pull to refresh.");
     }
-  }, []);
+  }, [user?.accountId]);
 
   // Load initial data from WatermelonDB
   const loadInitialData = useCallback(async () => {
@@ -86,7 +92,9 @@ export const TaskProvider = ({ children }) => {
 
       // Load tasks
       const tasksCollection = database.collections.get("tasks");
-      const loadedTasks = await tasksCollection.query().fetch();
+      const loadedTasks = await tasksCollection
+        .query(Q.where("user_id", user?.accountId || ""))
+        .fetch();
       setTasks(loadedTasks.map(mapTaskModelToUi));
 
       // Load categories
@@ -128,7 +136,7 @@ export const TaskProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [tasks.length, categories.length, priorities.length]);
+  }, [tasks.length, categories.length, priorities.length, user?.accountId]);
 
   // Load data on component mount
   useEffect(() => {
@@ -163,6 +171,7 @@ export const TaskProvider = ({ children }) => {
               task.notificationId = String(taskData.notificationId);
             if (taskData.subTasks)
               task.subtasksJson = JSON.stringify(taskData.subTasks);
+            task.userId = user?.accountId || "";
           });
         });
 
@@ -173,7 +182,7 @@ export const TaskProvider = ({ children }) => {
         throw error;
       }
     },
-    [refreshTasks]
+    [refreshTasks, user?.accountId]
   );
 
   // Update an existing task
@@ -268,6 +277,7 @@ export const TaskProvider = ({ children }) => {
               rec.notificationId = String(payload.notificationId);
             if (payload.subTasks)
               rec.subtasksJson = JSON.stringify(payload.subTasks);
+            rec.userId = user?.accountId || "";
           });
         });
         await refreshTasks();
@@ -276,7 +286,7 @@ export const TaskProvider = ({ children }) => {
         showError("Failed to add task. Please try again.");
       }
     },
-    [formData, subTasks, resetForm, refreshTasks]
+    [formData, subTasks, resetForm, refreshTasks, user?.accountId]
   );
 
   const addSubTask = useCallback((title) => {
