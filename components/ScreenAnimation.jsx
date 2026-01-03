@@ -1,20 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Animated } from "react-native";
 
 const ScreenAnimation = ({ children, duration = 400 }) => {
-  const fadeAnim = useRef(new Animated.Value(0));
-  const slideAnim = useRef(new Animated.Value(30));
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(30));
 
   useEffect(() => {
+    // Reset animations to initial values
+    fadeAnim.setValue(0);
+    slideAnim.setValue(30);
+
     // Start animation immediately after mount
     const timer = setTimeout(() => {
       Animated.parallel([
-        Animated.timing(fadeAnim.current, {
+        Animated.timing(fadeAnim, {
           toValue: 1,
           duration,
           useNativeDriver: true,
         }),
-        Animated.timing(slideAnim.current, {
+        Animated.timing(slideAnim, {
           toValue: 0,
           duration,
           useNativeDriver: true,
@@ -23,13 +27,13 @@ const ScreenAnimation = ({ children, duration = 400 }) => {
     }, 100); // Small delay to ensure component is mounted
 
     return () => clearTimeout(timer);
-  }, [fadeAnim.current, slideAnim.current, duration]);
+  }, []); // Empty dependency array - run only on mount
 
   return (
     <Animated.View
       style={{
-        opacity: fadeAnim.current,
-        transform: [{ translateY: slideAnim.current }],
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }],
         flex: 1,
       }}
     >
