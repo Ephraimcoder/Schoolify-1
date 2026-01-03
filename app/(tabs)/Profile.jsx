@@ -1,23 +1,21 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import NetInfo from "@react-native-community/netinfo";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AnalyticsModal } from "../../components/AnalyticsModal";
-import { useTasks } from "../../context/TasksContext";
+import ScreenAnimation from "../../components/ScreenAnimation";
+import { useAppwriteSync, useTasks } from "../../context/TasksContext";
 import { useUser } from "../../context/UserContext";
-
-const dummy = {
-  name: "Masud Rana",
-  email: "masud.rana@example.com",
-  avatar:
-    "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?q=80&w=300&auto=format&fit=crop",
-  points: 12,
-  cashback: "AED 10.0",
-  options: [
-    { id: "personal", label: "Personal Details", icon: "person-outline" },
-  ],
-};
 
 const SectionItem = ({ icon, label, onPress }) => (
   <TouchableOpacity
@@ -56,7 +54,73 @@ const Profile = () => {
   const router = useRouter();
   const { user, logout } = useUser();
   const { tasks } = useTasks();
+  const [isOnline, setIsOnline] = useState(true);
+  const {
+    isSyncing,
+    syncError,
+    syncUnsyncedTasks,
+    mergeAppwriteTasks,
+    syncAllTasksIntelligently,
+  } = useAppwriteSync();
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("");
+
+  // Monitor network status
+  useEffect(() => {
+    const checkNetworkStatus = async () => {
+      const netInfo = await NetInfo.fetch();
+      setIsOnline(netInfo.isConnected);
+    };
+
+    checkNetworkStatus();
+
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsOnline(state.isConnected);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Intelligent sync handler
+  const handleSyncAllTasks = async () => {
+    if (!isOnline) {
+      Alert.alert(
+        "Offline",
+        "Sync requires an internet connection. Please check your network and try again."
+      );
+      return;
+    }
+
+    try {
+      setSyncStatus("🚀 Starting intelligent sync...");
+      const results = await syncAllTasksIntelligently();
+
+      if (results.success) {
+        const summary = results.summary;
+        setSyncStatus(
+          `✅ Sync Complete! ${summary.totalCreated} created, ${summary.totalUpdated} updated, ${summary.totalMerged} merged`
+        );
+        Alert.alert(
+          "Sync Complete",
+          `📊 Sync Summary:\n` +
+            `• Created: ${summary.totalCreated}\n` +
+            `• Updated: ${summary.totalUpdated}\n` +
+            `• Merged: ${summary.totalMerged}\n` +
+            `• Failed: ${summary.totalFailed}\n` +
+            `• Total Processed: ${summary.totalProcessed}`
+        );
+      } else {
+        setSyncStatus(`❌ Sync failed`);
+        Alert.alert(
+          "Sync Failed",
+          "Some tasks failed to sync. Check console for details."
+        );
+      }
+    } catch (error) {
+      setSyncStatus(`❌ Error: ${error.message}`);
+      Alert.alert("Error", error.message);
+    }
+  };
 
   const stats = useMemo(
     () => [
@@ -100,143 +164,215 @@ const Profile = () => {
   );
 
   const profile = {
-    name: user?.name || dummy.name,
-    email: user?.email || dummy.email,
+    name: user?.name || "",
+    email: user?.email || "",
     avatar:
       user?.avatar ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        user?.name || dummy.name
-      )}&background=4F46E5&color=fff`,
-    points: dummy.points,
-    cashback: dummy.cashback,
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=4F46E5&color=fff`,
     stats,
-    options: dummy.options,
+    options: [
+      { id: "personal", label: "Personal Details", icon: "person-outline" },
+    ],
   };
 
+  // Don't render if user is null (during logout)
+  if (!user) {
+    return null;
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-[#FEFBF6]">
-      {/* Header */}
-      <View className="flex-row justify-between items-center px-5 py-4 bg-white border-b border-gray-100">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-12 h-12 rounded-full items-center justify-center"
-        >
-          <Ionicons name="arrow-back" size={28} color="#111827" />
-        </TouchableOpacity>
-        <Text className="text-xl font-quicksandBold text-gray-900">
-          My Profile
-        </Text>
-        <View className="w-12">
+    <ScreenAnimation duration={400}>
+      <SafeAreaView className="flex-1 bg-[#FEFBF6]">
+        {/* Header */}
+        <View className="flex-row justify-between items-center px-5 py-4 bg-white border-b border-gray-100">
           <TouchableOpacity
-            onPress={async () => {
-              try {
-                await logout();
-                router.replace("/(auth)/sign-in");
-              } catch (error) {
-                console.error("Logout error:", error);
-              }
-            }}
+            onPress={() => router.back()}
             className="w-12 h-12 rounded-full items-center justify-center"
           >
-            <MaterialIcons name="logout" size={24} color="#EF4444" />
+            <Ionicons name="arrow-back" size={28} color="#111827" />
           </TouchableOpacity>
+          <Text className="text-xl font-quicksandBold text-gray-900">
+            My Profile
+          </Text>
+          <View className="w-12">
+            <TouchableOpacity
+              onPress={async () => {
+                try {
+                  await logout();
+                  router.replace("/(auth)/sign-in");
+                } catch (error) {
+                  console.error("Logout error:", error);
+                }
+              }}
+              className="w-12 h-12 rounded-full items-center justify-center"
+            >
+              <MaterialIcons name="logout" size={24} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      <View className="flex-1">
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingBottom: 100 }}
-        >
-          {/* Card header with avatar */}
-          <View className="mx-5 mt-2 bg-white rounded-3xl items-center p-6 border border-gray-100">
-            <Image
-              source={{ uri: profile.avatar }}
-              className="w-24 h-24 rounded-full"
-            />
-            <Text className="mt-3 text-xl font-quicksandBold text-gray-900">
-              {profile.name}
-            </Text>
-            <Text className="text-gray-500 font-quicksand text-sm">
-              {profile.email}
-            </Text>
-          </View>
-
-          {/* Stats grid */}
-          <View className="px-5 mt-6">
-            <View className="flex-row flex-wrap justify-between">
-              {profile.stats.map((stat) => (
-                <TouchableOpacity
-                  key={stat.id}
-                  onPress={stat.onPress}
-                  className="w-[48%] bg-white rounded-2xl p-4 mb-4 border border-gray-100"
-                >
-                  <View className="flex-row items-center justify-between">
-                    <View
-                      className="w-10 h-10 rounded-full items-center justify-center"
-                      style={{ backgroundColor: `${stat.color}20` }}
-                    >
-                      <Ionicons name={stat.icon} size={20} color={stat.color} />
-                    </View>
-                  </View>
-                  <Text className="text-2xl font-quicksandBold text-gray-900 mt-2">
-                    {stat.value}
-                  </Text>
-                  <Text className="text-gray-500 font-quicksand text-sm">
-                    {stat.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Options list */}
-          <View className="px-5 mt-5 mb-6">
-            {profile.options.map((opt) => (
-              <SectionItem
-                key={opt.id}
-                icon={opt.icon}
-                label={opt.label}
-                onPress={() => {
-                  if (opt.id === "personal") {
-                    router.push("/personal-details");
-                  }
-                }}
-              />
-            ))}
-
-            {/* Settings Button */}
-            <SectionItem
-              icon="settings-outline"
-              label="Settings"
-              onPress={() => router.push("/settings")}
-            />
-          </View>
-        </ScrollView>
-
-        {/* Delete Account Button - Fixed at bottom */}
-        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 py-4">
-          <TouchableOpacity
-            onPress={() => {
-              // Add delete account functionality here
-              alert("Delete account functionality will be implemented here");
-            }}
-            className="flex-row items-center justify-center bg-white rounded-2xl py-4 border border-red-100"
+        <View className="flex-1">
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ paddingBottom: 100 }}
           >
-            <MaterialIcons name="delete-outline" size={20} color="#EF4444" />
-            <Text className="ml-2 text-red-500 font-quicksandBold">
-              Delete Account
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+            {/* Card header with avatar */}
+            <View className="mx-5 mt-2 bg-white rounded-3xl items-center p-6 border border-gray-100">
+              <Image
+                source={{ uri: profile.avatar }}
+                className="w-24 h-24 rounded-full"
+              />
+              <Text className="mt-3 text-xl font-quicksandBold text-gray-900">
+                {profile.name || "User"}
+              </Text>
+              <Text className="text-gray-500 font-quicksand text-sm">
+                {profile.email || "No email"}
+              </Text>
+            </View>
 
-      <AnalyticsModal
-        visible={showAnalytics}
-        onClose={() => setShowAnalytics(false)}
-        tasks={tasks}
-      />
-    </SafeAreaView>
+            {/* Stats grid */}
+            <View className="px-5 mt-6">
+              <View className="flex-row flex-wrap justify-between">
+                {profile.stats.map((stat) => (
+                  <TouchableOpacity
+                    key={stat.id}
+                    onPress={stat.onPress}
+                    className="w-[48%] bg-white rounded-2xl p-4 mb-4 border border-gray-100"
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <View
+                        className="w-10 h-10 rounded-full items-center justify-center"
+                        style={{ backgroundColor: `${stat.color}20` }}
+                      >
+                        <Ionicons
+                          name={stat.icon}
+                          size={20}
+                          color={stat.color}
+                        />
+                      </View>
+                    </View>
+                    <Text className="text-2xl font-quicksandBold text-gray-900 mt-2">
+                      {stat.value}
+                    </Text>
+                    <Text className="text-gray-500 font-quicksand text-sm">
+                      {stat.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Options list */}
+            <View className="px-5 mt-5 mb-6">
+              {profile.options.map((opt) => (
+                <SectionItem
+                  key={opt.id}
+                  icon={opt.icon}
+                  label={opt.label}
+                  onPress={() => {
+                    if (opt.id === "personal") {
+                      router.push("/personal-details");
+                    }
+                  }}
+                />
+              ))}
+
+              {/* Settings Button */}
+              <SectionItem
+                icon="settings-outline"
+                label="Settings"
+                onPress={() => router.push("/settings")}
+              />
+            </View>
+
+            {/* Appwrite Sync Test Section */}
+            <View className="px-5 mt-5 mb-6">
+              <View className="bg-white rounded-2xl p-4 border border-gray-100">
+                <Text className="text-lg font-quicksandBold text-gray-900 mb-3">
+                  Sync Tasks To Cloud
+                </Text>
+
+                {/* Sync Status */}
+                {syncStatus ? (
+                  <View className="bg-gray-50 rounded-lg p-3 mb-3">
+                    <Text className="text-sm font-quicksand text-gray-700">
+                      {syncStatus}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {/* Sync Error */}
+                {syncError ? (
+                  <View className="bg-red-50 rounded-lg p-3 mb-3">
+                    <Text className="text-sm font-quicksand text-red-700">
+                      Error: {syncError}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {/* Loading Indicator */}
+                {isSyncing && (
+                  <View className="flex-row items-center justify-center py-3 mb-3">
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <Text className="ml-2 text-sm font-quicksand text-blue-600">
+                      Syncing with Appwrite...
+                    </Text>
+                  </View>
+                )}
+
+                {/* Sync Buttons */}
+                <View className="space-y-3 gap-2">
+                  <TouchableOpacity
+                    onPress={handleSyncAllTasks}
+                    disabled={isSyncing || !isOnline}
+                    className={`py-3 rounded-lg flex-row items-center justify-center ${
+                      isSyncing || !isOnline ? "bg-gray-300" : "bg-purple-500"
+                    }`}
+                  >
+                    <Ionicons name="sync" size={18} color="white" />
+                    <Text className="ml-2 text-white font-quicksandSemiBold">
+                      Intelligent Full Sync
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text className="text-xs text-gray-500 mt-3 text-center">
+                  {!isOnline ? (
+                    <Text className="text-yellow-600 font-quicksandMedium">
+                      ⚠️ Offline: Sync requires internet connection
+                    </Text>
+                  ) : (
+                    "Manual sync only - no automatic operations"
+                  )}
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Delete Account Button - Fixed at bottom */}
+          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 py-4">
+            <TouchableOpacity
+              onPress={() => {
+                // Add delete account functionality here
+                alert("Delete account functionality will be implemented here");
+              }}
+              className="flex-row items-center justify-center bg-white rounded-2xl py-4 border border-red-100"
+            >
+              <MaterialIcons name="delete-outline" size={20} color="#EF4444" />
+              <Text className="ml-2 text-red-500 font-quicksandBold">
+                Delete Account
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <AnalyticsModal
+          visible={showAnalytics}
+          onClose={() => setShowAnalytics(false)}
+          tasks={tasks}
+        />
+      </SafeAreaView>
+    </ScreenAnimation>
   );
 };
 

@@ -78,6 +78,8 @@ export default appSchema({
         // Timestamps
         { name: "created_at", type: "number" },
         { name: "updated_at", type: "number" },
+        { name: "last_synced_at", type: "number", isOptional: true },
+        { name: "appwrite_id", type: "string", isOptional: true },
       ],
     }),
   ],

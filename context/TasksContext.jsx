@@ -8,6 +8,11 @@ import {
   useState,
 } from "react";
 import { database } from "../database/database";
+import {
+  mergeAppwriteOnlyTasks,
+  performIntelligentSync,
+  syncUnsyncedTasksToAppwrite,
+} from "../helpers/appwriteSyncHelper";
 import { showError } from "../utils/toast";
 import { useUser } from "./UserContext";
 
@@ -54,6 +59,8 @@ export const TaskProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [priorities, setPriorities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(null);
   const [subTasks, setSubTasks] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -215,6 +222,9 @@ export const TaskProvider = ({ children }) => {
               task.subtasksJson = JSON.stringify(updates.subTasks);
             if (updates.itemType !== undefined)
               task.itemType = updates.itemType;
+
+            // Ensure the task is marked as modified for sync detection
+            // WatermelonDB will automatically update the internal timestamps
           });
         });
 
@@ -382,12 +392,94 @@ export const TaskProvider = ({ children }) => {
     }
   }, []);
 
+  // Manual Appwrite Sync Functions using helper
+
+  /**
+   * Intelligent sync: Only sync unsynced/changed tasks
+   */
+  const syncUnsyncedTasks = useCallback(async () => {
+    if (!user?.accountId) {
+      throw new Error("User not authenticated");
+    }
+
+    setIsSyncing(true);
+    setSyncError(null);
+
+    try {
+      const results = await syncUnsyncedTasksToAppwrite(user.accountId);
+
+      // Refresh local tasks after sync
+      await refreshTasks();
+
+      return results;
+    } catch (error) {
+      setSyncError(error.message);
+      throw error;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user?.accountId, refreshTasks]);
+
+  /**
+   * Merge Appwrite-only tasks to local
+   */
+  const mergeAppwriteTasks = useCallback(async () => {
+    if (!user?.accountId) {
+      throw new Error("User not authenticated");
+    }
+
+    setIsSyncing(true);
+    setSyncError(null);
+
+    try {
+      const results = await mergeAppwriteOnlyTasks(user.accountId);
+
+      // Refresh local tasks after merge
+      await refreshTasks();
+
+      return results;
+    } catch (error) {
+      setSyncError(error.message);
+      throw error;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user?.accountId, refreshTasks]);
+
+  /**
+   * Full intelligent sync: Both directions
+   */
+  const syncAllTasksIntelligently = useCallback(async () => {
+    if (!user?.accountId) {
+      throw new Error("User not authenticated");
+    }
+
+    setIsSyncing(true);
+    setSyncError(null);
+
+    try {
+      const results = await performIntelligentSync(user.accountId);
+
+      // Refresh local tasks after full sync
+      await refreshTasks();
+
+      return results;
+    } catch (error) {
+      setSyncError(error.message);
+      throw error;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user?.accountId, refreshTasks]);
+
   const value = useMemo(
     () => ({
       tasks,
       categories,
       priorities,
       isLoading,
+      isSyncing,
+      syncError,
       subTasks,
       formData,
       setFormData,
@@ -406,12 +498,18 @@ export const TaskProvider = ({ children }) => {
       deleteCategory,
       addPriority,
       deletePriority,
+      // Intelligent sync functions
+      syncUnsyncedTasks,
+      mergeAppwriteTasks,
+      syncAllTasksIntelligently,
     }),
     [
       tasks,
       categories,
       priorities,
       isLoading,
+      isSyncing,
+      syncError,
       subTasks,
       formData,
       handleAddTask,
@@ -428,6 +526,9 @@ export const TaskProvider = ({ children }) => {
       deleteCategory,
       addPriority,
       deletePriority,
+      syncUnsyncedTasks,
+      mergeAppwriteTasks,
+      syncAllTasksIntelligently,
     ]
   );
 
@@ -437,6 +538,30 @@ export const TaskProvider = ({ children }) => {
 };
 
 // Custom hooks for optimized context usage
+export const useAppwriteSync = () => {
+  const context = useContext(TasksContext);
+  if (!context) {
+    throw new Error("useAppwriteSync must be used within a TaskProvider");
+  }
+
+  return useMemo(
+    () => ({
+      isSyncing: context.isSyncing,
+      syncError: context.syncError,
+      syncUnsyncedTasks: context.syncUnsyncedTasks,
+      mergeAppwriteTasks: context.mergeAppwriteTasks,
+      syncAllTasksIntelligently: context.syncAllTasksIntelligently,
+    }),
+    [
+      context.isSyncing,
+      context.syncError,
+      context.syncUnsyncedTasks,
+      context.mergeAppwriteTasks,
+      context.syncAllTasksIntelligently,
+    ]
+  );
+};
+
 export const useTasks = () => {
   const context = useContext(TasksContext);
   if (!context) {

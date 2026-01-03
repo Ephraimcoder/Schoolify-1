@@ -1,6 +1,7 @@
+import NetInfo from "@react-native-community/netinfo";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ClassesSection from "../../components/ClassesSection";
@@ -8,11 +9,27 @@ import ScreenAnimation from "../../components/ScreenAnimation";
 import TaskProgress from "../../components/TaskProgress";
 import TasksSection from "../../components/TasksSection";
 import { useUser } from "../../context/UserContext";
-
 const Home = () => {
   const date = new Date();
   const { user, isLoading } = useUser();
+  const [isOnline, setIsOnline] = useState(true);
   const hours = date.getUTCHours();
+
+  // Monitor network status
+  useEffect(() => {
+    const checkNetworkStatus = async () => {
+      const netInfo = await NetInfo.fetch();
+      setIsOnline(netInfo.isConnected);
+    };
+
+    checkNetworkStatus();
+
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsOnline(state.isConnected);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const greeting = useMemo(() => {
     if (hours < 12) return "Good morning";
@@ -49,6 +66,17 @@ const Home = () => {
                   {user?.name || "Welcome back"}
                 </Text>
               </View>
+            </View>
+
+            {/* Network Status Indicator */}
+            <View
+              className={`px-3 py-1 rounded-full ${isOnline ? "bg-green-100" : "bg-yellow-100"}`}
+            >
+              <Text
+                className={`text-xs font-quicksandMedium ${isOnline ? "text-green-700" : "text-yellow-700"}`}
+              >
+                {isOnline ? "Online" : "Offline"}
+              </Text>
             </View>
           </View>
 

@@ -49,4 +49,6 @@ export default class Task extends Model {
   // Timestamps
   @readonly @date("created_at") createdAt;
   @readonly @date("updated_at") updatedAt;
+  @date("last_synced_at") lastSyncedAt;
+  @text("appwrite_id") appwriteId;
 }

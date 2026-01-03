@@ -12,8 +12,8 @@ import {
 
 const USER_STORAGE_KEY = "@user_data";
 const LOGOUT_PENDING_KEY = "@logout_pending";
-const LAST_VALIDATION_KEY = "@last_validation";
-const VALIDATION_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
+const LAST_SESSION_CHECK_KEY = "@last_session_check";
+const SESSION_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 const UserContext = createContext();
 
@@ -31,6 +31,7 @@ const appwriteConfig = {
   platform: "com.jms.schoolify",
   databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
   userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID,
+  tasksCollectionId: process.env.EXPO_PUBLIC_APPWRITE_TASKS_COLLECTION_ID,
 };
 
 // Initialize the Appwrite client
@@ -79,75 +80,61 @@ export function UserProvider({ children }) {
       try {
         // 1. Load from local storage
         const cachedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
-        const lastValidation = await AsyncStorage.getItem(LAST_VALIDATION_KEY);
+        const lastSessionCheck = await AsyncStorage.getItem(
+          LAST_SESSION_CHECK_KEY
+        );
         const now = Date.now();
-        const shouldValidate =
-          !lastValidation ||
-          now - parseInt(lastValidation) > VALIDATION_INTERVAL;
+
+        const shouldCheckSession =
+          !lastSessionCheck ||
+          now - parseInt(lastSessionCheck) > SESSION_CHECK_INTERVAL;
 
         let currentUserData = null;
 
         if (cachedUser) {
           currentUserData = JSON.parse(cachedUser);
 
-          // If cache is fresh, verify session matches cached user
-          if (!shouldValidate) {
-            try {
-              const currentAccount = await account.get();
-              if (
-                currentAccount &&
-                currentAccount.$id !== currentUserData.accountId
-              ) {
-                // Session user doesn't match cached user - force validation
-                console.log("Session user mismatch, forcing validation");
-                shouldValidate = true;
-              } else if (!currentAccount) {
-                // No session - clear cache
-                await clearUser();
-                currentUserData = null;
-                setIsLoading(false);
-                return;
-              }
-            } catch (sessionError) {
-              // Can't get session - clear cache for safety
+          // If cache is fresh, verify session matches cached user (only every 24 hours)
+          if (!shouldCheckSession) {
+            // Skip session check - use cached data
+            setUser(currentUserData);
+            setIsLoading(false);
+            return;
+          }
+
+          // Check session (only every 24 hours)
+          try {
+            const currentAccount = await account.get();
+            await AsyncStorage.setItem(LAST_SESSION_CHECK_KEY, now.toString());
+
+            if (
+              currentAccount &&
+              currentAccount.$id !== currentUserData.accountId
+            ) {
+              // Session user doesn't match cached user - clear cache
+              console.log("Session user mismatch, clearing cache");
+              await clearUser();
+              currentUserData = null;
+              setIsLoading(false);
+              return;
+            } else if (!currentAccount) {
+              // No session - clear cache
               await clearUser();
               currentUserData = null;
               setIsLoading(false);
               return;
             }
-          }
-
-          setUser(currentUserData);
-
-          // If cache is fresh and session matches, skip validation
-          if (!shouldValidate) {
+          } catch (sessionError) {
+            // Can't get session - clear cache for safety
+            await clearUser();
+            currentUserData = null;
             setIsLoading(false);
             return;
           }
-        }
 
-        setIsLoading(false);
-
-        // 2. Validate with Appwrite (only if cache is old or missing)
-        try {
-          const currentAccount = await account.get();
-          if (currentAccount) {
-            const userData = await fetchUserDocument(currentAccount.$id);
-            await saveUser(userData);
-            await AsyncStorage.setItem(LAST_VALIDATION_KEY, now.toString());
-            currentUserData = userData;
-          } else {
-            await clearUser();
-            currentUserData = null;
-          }
-        } catch (error) {
-          // Handle specific expiration errors
-          if (error?.code === 401) {
-            // Appwrite unauthorized
-            await clearUser();
-            currentUserData = null;
-          }
-          // For network errors, we keep the currentUserData we got from cache
+          setUser(currentUserData);
+          setIsLoading(false);
+          return;
         }
 
         // 3. FINAL STEP: Update user state
@@ -176,7 +163,7 @@ export function UserProvider({ children }) {
   const clearUser = async () => {
     try {
       await AsyncStorage.removeItem(USER_STORAGE_KEY);
-      await AsyncStorage.removeItem(LAST_VALIDATION_KEY);
+      await AsyncStorage.removeItem(LAST_SESSION_CHECK_KEY);
       setUser(null);
       // Also try to clear any existing sessions for security
       try {

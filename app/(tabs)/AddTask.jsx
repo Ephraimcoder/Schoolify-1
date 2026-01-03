@@ -3,10 +3,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Notifications from "expo-notifications";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Animated,
   InteractionManager,
   Platform,
   ScrollView,
@@ -20,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePickerButton from "../../components/DateTimePickerButton";
 import FormInput from "../../components/FormInput";
 import ItemManagementModal from "../../components/ItemManagementModal";
+import ScreenAnimation from "../../components/ScreenAnimation";
 import SelectableButton from "../../components/SelectableButton";
 import SubtaskModal from "../../components/SubtaskModal";
 import {
@@ -79,19 +79,6 @@ const AddTask = () => {
     dueDate,
     dueTime,
   } = useLocalSearchParams();
-
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const interaction = InteractionManager.runAfterInteractions(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    });
-    return () => interaction.cancel();
-  }, [fadeAnim]);
 
   const scheduleTaskNotification = async ({
     id,
@@ -416,7 +403,7 @@ const AddTask = () => {
   };
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+    <ScreenAnimation duration={400}>
       <LinearGradient colors={["#FFFBF5", "#FEFBF6"]} className="flex-1">
         <SafeAreaView className="flex-1">
           <ScrollView
@@ -653,7 +640,7 @@ const AddTask = () => {
           />
         </SafeAreaView>
       </LinearGradient>
-    </Animated.View>
+    </ScreenAnimation>
   );
 };
 
