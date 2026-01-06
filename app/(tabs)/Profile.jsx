@@ -60,6 +60,7 @@ const Profile = () => {
     syncError,
     syncUnsyncedTasks,
     mergeAppwriteTasks,
+    syncDeletedTasks,
     syncAllTasksIntelligently,
   } = useAppwriteSync();
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -98,13 +99,14 @@ const Profile = () => {
       if (results.success) {
         const summary = results.summary;
         setSyncStatus(
-          `✅ Sync Complete! ${summary.totalCreated} created, ${summary.totalUpdated} updated, ${summary.totalMerged} merged`
+          `✅ Sync Complete! ${summary.totalCreated} created, ${summary.totalUpdated} updated, ${summary.totalDeleted} deleted, ${summary.totalMerged} merged`
         );
         Alert.alert(
           "Sync Complete",
           `📊 Sync Summary:\n` +
             `• Created: ${summary.totalCreated}\n` +
             `• Updated: ${summary.totalUpdated}\n` +
+            `• Deleted: ${summary.totalDeleted}\n` +
             `• Merged: ${summary.totalMerged}\n` +
             `• Failed: ${summary.totalFailed}\n` +
             `• Total Processed: ${summary.totalProcessed}`
@@ -115,6 +117,36 @@ const Profile = () => {
           "Sync Failed",
           "Some tasks failed to sync. Check console for details."
         );
+      }
+    } catch (error) {
+      setSyncStatus(`❌ Error: ${error.message}`);
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  // Handle deletion sync
+  const handleSyncDeletedTasks = async () => {
+    if (!isOnline) {
+      Alert.alert(
+        "Offline",
+        "Sync requires an internet connection. Please check your network and try again."
+      );
+      return;
+    }
+
+    try {
+      setSyncStatus("🗑️ Syncing deleted tasks...");
+      const results = await syncDeletedTasks();
+
+      if (results.success) {
+        setSyncStatus(`✅ Deleted ${results.deleted} tasks from cloud`);
+        Alert.alert(
+          "Delete Sync Complete",
+          `🗑️ Successfully deleted ${results.deleted} tasks from cloud storage`
+        );
+      } else {
+        setSyncStatus(`❌ Delete sync failed`);
+        Alert.alert("Delete Sync Failed", "Failed to sync deletions to cloud.");
       }
     } catch (error) {
       setSyncStatus(`❌ Error: ${error.message}`);
@@ -332,6 +364,19 @@ const Profile = () => {
                     <Ionicons name="sync" size={18} color="white" />
                     <Text className="ml-2 text-white font-quicksandSemiBold">
                       Intelligent Full Sync
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleSyncDeletedTasks}
+                    disabled={isSyncing || !isOnline}
+                    className={`py-3 rounded-lg flex-row items-center justify-center ${
+                      isSyncing || !isOnline ? "bg-gray-300" : "bg-red-500"
+                    }`}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="white" />
+                    <Text className="ml-2 text-white font-quicksandSemiBold">
+                      Sync Deleted Tasks
                     </Text>
                   </TouchableOpacity>
                 </View>

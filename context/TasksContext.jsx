@@ -11,6 +11,7 @@ import { database } from "../database/database";
 import {
   mergeAppwriteOnlyTasks,
   performIntelligentSync,
+  syncDeletedTasksToAppwrite,
   syncUnsyncedTasksToAppwrite,
 } from "../helpers/appwriteSyncHelper";
 import { showError } from "../utils/toast";
@@ -447,6 +448,32 @@ export const TaskProvider = ({ children }) => {
   }, [user?.accountId, refreshTasks]);
 
   /**
+   * Sync deletions from local to Appwrite
+   */
+  const syncDeletedTasks = useCallback(async () => {
+    if (!user?.accountId) {
+      throw new Error("User not authenticated");
+    }
+
+    setIsSyncing(true);
+    setSyncError(null);
+
+    try {
+      const results = await syncDeletedTasksToAppwrite(user.accountId);
+
+      // Refresh local tasks after deletion sync
+      await refreshTasks();
+
+      return results;
+    } catch (error) {
+      setSyncError(error.message);
+      throw error;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user?.accountId, refreshTasks]);
+
+  /**
    * Full intelligent sync: Both directions
    */
   const syncAllTasksIntelligently = useCallback(async () => {
@@ -501,6 +528,7 @@ export const TaskProvider = ({ children }) => {
       // Intelligent sync functions
       syncUnsyncedTasks,
       mergeAppwriteTasks,
+      syncDeletedTasks,
       syncAllTasksIntelligently,
     }),
     [
@@ -528,6 +556,7 @@ export const TaskProvider = ({ children }) => {
       deletePriority,
       syncUnsyncedTasks,
       mergeAppwriteTasks,
+      syncDeletedTasks,
       syncAllTasksIntelligently,
     ]
   );
@@ -550,6 +579,7 @@ export const useAppwriteSync = () => {
       syncError: context.syncError,
       syncUnsyncedTasks: context.syncUnsyncedTasks,
       mergeAppwriteTasks: context.mergeAppwriteTasks,
+      syncDeletedTasks: context.syncDeletedTasks,
       syncAllTasksIntelligently: context.syncAllTasksIntelligently,
     }),
     [
@@ -557,6 +587,7 @@ export const useAppwriteSync = () => {
       context.syncError,
       context.syncUnsyncedTasks,
       context.mergeAppwriteTasks,
+      context.syncDeletedTasks,
       context.syncAllTasksIntelligently,
     ]
   );

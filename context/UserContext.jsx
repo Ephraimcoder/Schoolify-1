@@ -25,13 +25,20 @@ export function useUser() {
   return context;
 }
 
+const endpoint = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT;
+const projectId = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID;
+const platform = "com.jms.schoolify";
+const databaseId = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
+const userCollectionId = process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID;
+const tasksCollectionId = process.env.EXPO_PUBLIC_APPWRITE_TASKS_COLLECTION_ID;
+
 const appwriteConfig = {
-  endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
-  projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
-  platform: "com.jms.schoolify",
-  databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
-  userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID,
-  tasksCollectionId: process.env.EXPO_PUBLIC_APPWRITE_TASKS_COLLECTION_ID,
+  endpoint: endpoint,
+  projectId: projectId,
+  platform: platform,
+  databaseId: databaseId,
+  userCollectionId: userCollectionId,
+  tasksCollectionId: tasksCollectionId,
 };
 
 // Initialize the Appwrite client

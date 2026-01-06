@@ -9,7 +9,20 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+
+    "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "EXPO_PUBLIC_APPWRITE_ENDPOINT",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_NAME": "EXPO_PUBLIC_APPWRITE_PROJECT_NAME",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID":"EXPO_PUBLIC_APPWRITE_PROJECT_ID",
+        "EXPO_PUBLIC_APPWRITE_DATABASE_ID":"EXPO_PUBLIC_APPWRITE_DATABASE_ID",
+        "EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID":"EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID",
+        "EXPO_PUBLIC_APPWRITE_TASKS_COLLECTION_ID":"EXPO_PUBLIC_APPWRITE_TASKS_COLLECTION_ID"
+      }
     },
     "production": {
       "autoIncrement": true

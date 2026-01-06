@@ -5,23 +5,26 @@
       "backgroundColor": "#00000000"
     },
     "name": "Schoolify",
-    "slug": "Schoolify",
+    "slug": "Schoolify1",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Schoolify main logo.png",
-    "scheme": "Schoolify",
+    "scheme": ["schoolify"],
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
+    "jsEngine": "jsc",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Schoolify main logo.png",
-        "backgroundColor": "#E6DCC3"
+        "backgroundColor": "#d6cbb8"
       },
       "edgeToEdgeEnabled": false,
-      "package": "com.ephraimcoder.Schoolify"
+      "package": "com.ephraimcoder.Schoolify",
+      "jsEngine": "jsc",
+      "newArchEnabled": false
     },
     "web": {
       "bundler": "metro",
@@ -30,14 +33,17 @@
     },
     "plugins": [
       "expo-router",
-      ["@lovesworking/watermelondb-expo-plugin-sdk-52-plus"],
+      ["@lovesworking/watermelondb-expo-plugin-sdk-52-plus", {
+      "jscFlavor": "android-jsc-intl"
+    }], 
+
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/Schoolify main logo.png",
           "imageWidth": 250,
           "resizeMode": "contain",
-          "backgroundColor": "#E6DCC3"
+          "backgroundColor": "#d6cbb8"
         }
       ],
       "expo-secure-store",

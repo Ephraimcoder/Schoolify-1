@@ -12,6 +12,7 @@ import { showError, showSuccess } from "../utils/toast";
  * Get tasks that need to be synced to Appwrite
  * - Tasks without appwriteId (never synced)
  * - Tasks with local changes (last_modified > last_synced_at)
+ * - Tasks marked for deletion
  */
 export const getUnsyncedTasks = async (userId) => {
   try {
@@ -27,16 +28,51 @@ export const getUnsyncedTasks = async (userId) => {
         return true;
       }
 
-      // Modified tasks (updated_at > last_synced_at)
-      const lastModified = task._raw.updated_at || 0;
+      // Modified tasks (last_modified > last_synced_at)
+      const lastModified = task._raw.last_modified || 0;
       const lastSynced = task.lastSyncedAt?.getTime() || 0;
 
       return lastModified > lastSynced;
     });
 
+    console.log(
+      `Found ${unsyncedTasks.length} tasks that need syncing out of ${allTasks.length} total`
+    );
     return unsyncedTasks;
   } catch (error) {
-    showError("Error getting unsynced tasks: " + error.message);
+    console.error("Error getting unsynced tasks:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get tasks that need to be deleted from Appwrite
+ * - Tasks that are marked as deleted locally but still exist in Appwrite
+ */
+export const getTasksToDeleteFromAppwrite = async (userId) => {
+  try {
+    const tasksCollection = database.collections.get("tasks");
+
+    // Get all Appwrite tasks
+    const appwriteTasks =
+      await appwriteSyncService.fetchTasksFromAppwrite(userId);
+
+    // Get all local tasks (including deleted ones)
+    const localTasks = await tasksCollection
+      .query(Q.where("user_id", userId || ""))
+      .fetch();
+
+    // Find tasks that exist in Appwrite but not locally (deleted locally)
+    const tasksToDelete = appwriteTasks.filter((appwriteTask) => {
+      return !localTasks.some(
+        (localTask) => localTask.appwriteId === appwriteTask.$id
+      );
+    });
+
+    console.log(`Found ${tasksToDelete.length} tasks to delete from Appwrite`);
+    return tasksToDelete;
+  } catch (error) {
+    console.error("Error getting tasks to delete:", error);
     throw error;
   }
 };
@@ -220,8 +256,56 @@ const updateLocalTaskSyncTimestamp = async (taskId) => {
 };
 
 /**
- * Fetch Appwrite-only tasks and merge them locally
+ * Delete tasks from Appwrite that were deleted locally
  */
+export const syncDeletedTasksToAppwrite = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    console.log("🗑️ Syncing deleted tasks to Appwrite...");
+
+    // Get tasks that need to be deleted from Appwrite
+    const tasksToDelete = await getTasksToDeleteFromAppwrite(userId);
+
+    if (tasksToDelete.length === 0) {
+      console.log("✅ No tasks to delete from Appwrite");
+      return { success: true, deleted: 0 };
+    }
+
+    let deletedCount = 0;
+    let failedCount = 0;
+
+    // Delete each task from Appwrite
+    for (const appwriteTask of tasksToDelete) {
+      try {
+        console.log(`🗑️ Deleting task from Appwrite: ${appwriteTask.title}`);
+        await appwriteSyncService.deleteTaskFromAppwrite(appwriteTask.$id);
+        deletedCount++;
+      } catch (error) {
+        console.error(
+          `❌ Failed to delete task "${appwriteTask.title}":`,
+          error
+        );
+        failedCount++;
+      }
+    }
+
+    console.log(
+      `🗑️ Delete sync completed: ${deletedCount} deleted, ${failedCount} failed`
+    );
+
+    return {
+      success: failedCount === 0,
+      deleted: deletedCount,
+      failed: failedCount,
+    };
+  } catch (error) {
+    console.error("❌ Failed to sync deleted tasks:", error);
+    throw error;
+  }
+};
 export const mergeAppwriteOnlyTasks = async (userId) => {
   try {
     if (!userId) {
@@ -287,119 +371,45 @@ export const mergeAppwriteOnlyTasks = async (userId) => {
 };
 
 /**
- * Full intelligent sync: Both directions with proper conflict resolution
+ * Full intelligent sync: Both directions with deletion support
  */
 export const performIntelligentSync = async (userId) => {
   try {
-    // Step 1: Get all Appwrite tasks for comparison
-    const appwriteTasks =
-      await appwriteSyncService.fetchTasksFromAppwrite(userId);
+    console.log("🚀 Starting intelligent full sync...");
 
-    // Step 2: Get all local tasks
-    const tasksCollection = database.collections.get("tasks");
-    const localTasks = await tasksCollection
-      .query(Q.where("user_id", userId || ""))
-      .fetch();
+    // Step 1: Sync unsynced local tasks to Appwrite
+    const syncResults = await syncUnsyncedTasksToAppwrite(userId);
 
-    const results = {
-      localToAppwrite: { created: [], updated: [], failed: [], skipped: 0 },
-      appwriteToLocal: { updated: [], merged: [], failed: [], skipped: 0 },
-      conflicts: [],
-    };
-
-    // Step 3: Compare and sync Appwrite → Local for existing tasks
-    for (const appwriteTask of appwriteTasks) {
-      const localTask = localTasks.find(
-        (local) => local.appwriteId === appwriteTask.$id
-      );
-
-      if (localTask) {
-        // Task exists in both places - check for conflicts
-        const localLastSynced = localTask.lastSyncedAt?.getTime() || 0;
-        // Use Appwrite's built-in $updatedAt field instead of last_synced_at
-        const appwriteLastSynced = appwriteTask.$updatedAt
-          ? new Date(appwriteTask.$updatedAt).getTime()
-          : appwriteTask.last_synced_at || 0;
-
-        if (appwriteLastSynced > localLastSynced) {
-          // Appwrite is newer - update local
-          try {
-            await database.write(async () => {
-              await localTask.update((task) => {
-                task.title = appwriteTask.title;
-                task.description = appwriteTask.description;
-                task.isCompleted = appwriteTask.is_completed;
-                task.categoryName = appwriteTask.categoryName;
-                task.priorityName = appwriteTask.priorityName;
-                task.itemType = appwriteTask.itemType;
-                task.alertEnabled = appwriteTask.alert_enabled;
-                task.subtasksJson = appwriteTask.subtasks_json;
-                task.dueDate = appwriteTask.due_date
-                  ? new Date(appwriteTask.due_date)
-                  : null;
-                task.dueTime = appwriteTask.due_time
-                  ? new Date(appwriteTask.due_time)
-                  : null;
-                task.lastSyncedAt = new Date();
-              });
-            });
-            results.appwriteToLocal.updated.push(appwriteTask);
-            results.conflicts.push({
-              type: "appwrite_won",
-              taskId: appwriteTask.$id,
-              reason: "Appwrite task was newer",
-            });
-          } catch (error) {
-            showError(`Failed to update local task: ${error.message}`);
-            results.appwriteToLocal.failed.push({
-              task: appwriteTask,
-              error: error.message,
-            });
-          }
-        } else if (localLastSynced > appwriteLastSynced) {
-          // Local is newer - will be handled in next step
-          results.conflicts.push({
-            type: "local_pending",
-            taskId: appwriteTask.$id,
-            reason: "Local task is newer, will push to Appwrite",
-          });
-        }
-      }
-    }
-
-    // Step 4: Sync unsynced local tasks to Appwrite
-    const localSyncResults = await syncUnsyncedTasksToAppwrite(userId);
-    results.localToAppwrite = localSyncResults;
-
-    // Step 5: Merge Appwrite-only tasks to local
+    // Step 2: Merge Appwrite-only tasks to local
     const mergeResults = await mergeAppwriteOnlyTasks(userId);
-    results.appwriteToLocal.merged = mergeResults.merged;
+
+    // Step 3: Sync deletions from local to Appwrite
+    const deleteResults = await syncDeletedTasksToAppwrite(userId);
 
     const finalResults = {
-      success: localSyncResults.success && mergeResults.success,
-      ...results,
+      success:
+        syncResults.success && mergeResults.success && deleteResults.success,
+      localToAppwrite: syncResults,
+      appwriteToLocal: mergeResults,
+      deletions: deleteResults,
       summary: {
-        totalCreated: localSyncResults.created.length,
-        totalUpdated:
-          localSyncResults.updated.length +
-          results.appwriteToLocal.updated.length,
-        totalFailed:
-          localSyncResults.failed.length +
-          results.appwriteToLocal.failed.length,
+        totalCreated: syncResults.created.length,
+        totalUpdated: syncResults.updated.length,
+        totalDeleted: deleteResults.deleted,
+        totalFailed: syncResults.failed.length + deleteResults.failed,
         totalMerged: mergeResults.merged,
         totalProcessed:
-          localSyncResults.created.length +
-          localSyncResults.updated.length +
-          results.appwriteToLocal.updated.length +
+          syncResults.created.length +
+          syncResults.updated.length +
+          deleteResults.deleted +
           mergeResults.merged,
-        conflictsResolved: results.conflicts.length,
       },
     };
 
-    showSuccess("Intelligent sync completed successfully");
+    console.log("🎉 Intelligent sync completed:", finalResults.summary);
     return finalResults;
   } catch (error) {
-    showError("Intelligent sync failed: " + error.message);
+    console.error("❌ Intelligent sync failed:", error);
     throw error;
   }
 };
