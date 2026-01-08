@@ -1,10 +1,13 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import ScreenAnimation from "../../components/ScreenAnimation";
+import CalendarTaskList from "../../components/calendar/CalendarTaskList";
+import DateUtils from "../../components/calendar/DateUtils";
 import { useTasks } from "../../context/TasksContext";
+
 const CalendarScreen = () => {
   const router = useRouter();
   const { tasks } = useTasks();
@@ -12,90 +15,9 @@ const CalendarScreen = () => {
     new Date().toISOString().split("T")[0]
   );
 
-  // Helper function to normalize dates to the start of the day for comparison (timezone-safe)
-  const normalizeDate = (date) => {
-    const d = new Date(date);
-    // Use local timezone methods instead of UTC
-    const year = d.getFullYear();
-    const month = d.getMonth();
-    const day = d.getDate();
-    return new Date(year, month, day);
-  };
-
-  // Helper function to get date key in local timezone
-  const getDateKey = (date) => {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  // Pre-process tasks for calendar (memoized)
-  const tasksByDate = useMemo(() => {
-    const today = normalizeDate(new Date());
-    const dates = {};
-
-    tasks.forEach((task) => {
-      if (task.dueDate && !task.isCompleted) {
-        const taskDate = normalizeDate(new Date(task.dueDate));
-        const dateKey = getDateKey(task.dueDate); // Use timezone-safe date key
-
-        if (!dates[dateKey]) {
-          dates[dateKey] = {
-            marked: true,
-            hasFutureTasks: false,
-            hasPastTasks: false,
-            taskIds: [],
-          };
-        }
-
-        dates[dateKey].taskIds.push(task.id);
-
-        // Track if this date has future or past tasks
-        if (taskDate >= today) {
-          dates[dateKey].hasFutureTasks = true;
-        } else {
-          dates[dateKey].hasPastTasks = true;
-        }
-      }
-    });
-
-    return dates;
-  }, [tasks]);
-
-  // Build markedDates from pre-processed data (memoized)
-  const markedDates = useMemo(() => {
-    const dates = { ...tasksByDate };
-
-    // Apply colors based on task dates
-    Object.keys(dates).forEach((dateKey) => {
-      const dateInfo = dates[dateKey];
-      // Orange if there are future tasks, grey if only past tasks
-      dateInfo.dotColor = dateInfo.hasFutureTasks ? "#FF6B47" : "#9CA3AF";
-      dateInfo.textColor = dateInfo.hasFutureTasks ? undefined : "#9CA3AF";
-      dateInfo.disabled = false;
-    });
-
-    // Add selected styling
-    dates[selectedDate] = {
-      ...(dates[selectedDate] || {}),
-      selected: true,
-      selectedColor: "#FF6B47",
-      selectedTextColor: "#FFFFFF",
-    };
-
-    return dates;
-  }, [tasksByDate, selectedDate]);
-
-  // Filter tasks for the selected day (optimized)
-  const tasksForDay = useMemo(() => {
-    const dateTaskIds = tasksByDate[selectedDate]?.taskIds || [];
-    return tasks.filter(
-      (task) =>
-        dateTaskIds.includes(task.id) && !task.isCompleted && task.dueDate
-    );
-  }, [tasksByDate, selectedDate, tasks]);
+  // Use optimized DateUtils component
+  const { tasksByDate, markedDates, tasksForDay, formattedSelectedDate } =
+    DateUtils({ tasks, selectedDate });
 
   const formatTime = (timeString) => {
     if (!timeString) return "";
@@ -146,11 +68,7 @@ const CalendarScreen = () => {
         <View className="flex-1">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-lg font-quicksandSemiBold text-gray-800">
-              {new Date(selectedDate).toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
+              {formattedSelectedDate}
             </Text>
             <Text className="text-sm font-quicksandMedium text-gray-500">
               {tasksForDay.length} {tasksForDay.length === 1 ? "task" : "tasks"}
@@ -158,95 +76,10 @@ const CalendarScreen = () => {
           </View>
 
           {tasksForDay.length > 0 ? (
-            <FlatList
-              data={tasksForDay}
-              keyExtractor={(item) => item.id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  className={`rounded-xl p-4 mb-3 shadow-sm ${normalizeDate(new Date(item.dueDate)) < normalizeDate(new Date()) ? "bg-gray-50" : "bg-white"}`}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/task-details/[id]",
-                      params: { id: item.id },
-                    })
-                  }
-                >
-                  <View className="flex-row justify-between items-start">
-                    <Text
-                      className={`sfont-quicksandSemiBold text-base ${
-                        item.isCompleted
-                          ? "line-through text-gray-400"
-                          : normalizeDate(new Date(item.dueDate)) <
-                              normalizeDate(new Date())
-                            ? "text-gray-500"
-                            : "text-gray-800"
-                      }`}
-                      numberOfLines={1}
-                    >
-                      {item.title}
-                      {normalizeDate(new Date(item.dueDate)) <
-                        normalizeDate(new Date()) && (
-                        <Text className="text-xs font-quicksandMedium text-red-500 ml-2">
-                          Overdue
-                        </Text>
-                      )}
-                    </Text>
-                    {item.dueDate && (
-                      <View className="flex-row items-center ml-2">
-                        <MaterialIcons
-                          name="access-time"
-                          size={14}
-                          color="#6B7280"
-                        />
-                        <Text className="text-xs font-quicksandMedium text-gray-500 ml-1">
-                          {(() => {
-                            const date = new Date(item.dueDate);
-                            return date.toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            });
-                          })()}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  {item.description && (
-                    <Text
-                      className="text-sm font-quicksand text-gray-500 mt-1"
-                      numberOfLines={2}
-                    >
-                      {item.description}
-                    </Text>
-                  )}
-
-                  {item.priority && (
-                    <View
-                      className={`self-start mt-2 px-2 py-1 rounded-full ${
-                        item.priority === "High"
-                          ? "bg-red-100"
-                          : item.priority === "Medium"
-                            ? "bg-yellow-100"
-                            : "bg-blue-100"
-                      }`}
-                    >
-                      <Text
-                        className={`text-xs font-quicksandSemiBold ${
-                          item.priority === "High"
-                            ? "text-red-800"
-                            : item.priority === "Medium"
-                              ? "text-yellow-800"
-                              : "text-blue-800"
-                        }`}
-                      >
-                        {item.priority} Priority
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              )}
+            <CalendarTaskList
+              tasksForDay={tasksForDay}
+              selectedDate={selectedDate}
+              normalizeDate={(date) => date.toISOString().split("T")[0]}
             />
           ) : (
             <View className="flex-1 justify-center items-center py-10">
@@ -255,7 +88,7 @@ const CalendarScreen = () => {
                 No tasks for this day
               </Text>
               <Text className="text-gray-400 font-quicksand text-center mt-1">
-                Tap the + button to add a new task
+                Tap on + button to add a new task
               </Text>
             </View>
           )}

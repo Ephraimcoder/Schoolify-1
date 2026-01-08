@@ -40,5 +40,6 @@ yarn-error.*
 
 #todos
 todos.md
+SYNC_CONFLICT_RESOLUTION.md
 
 app-example

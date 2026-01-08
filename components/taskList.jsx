@@ -21,6 +21,11 @@ const TaskItem = React.memo(
     onPress,
     fullWidth = false,
   }) => {
+    // Guard against undefined task
+    if (!task) {
+      return null;
+    }
+
     const color = isSubtask ? parentTaskColor : task.color || "#4F46E5";
 
     return (
@@ -43,7 +48,7 @@ const TaskItem = React.memo(
                   style={{ color }}
                   numberOfLines={1}
                 >
-                  From: {task.parentTaskTitle}
+                  From: {task.parentTaskTitle || "Unknown"}
                 </Text>
               </View>
               <View className="self-start mb-2">
@@ -51,7 +56,7 @@ const TaskItem = React.memo(
                   className="text-[10px] font-quicksandSemiBold px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: `${color}20`, color }}
                 >
-                  {task.parentTaskCategory}
+                  {task.parentTaskCategory || "No Category"}
                 </Text>
               </View>
               <View className="flex-row items-start mb-2">
@@ -61,8 +66,13 @@ const TaskItem = React.memo(
                   numberOfLines={3}
                   ellipsizeMode="tail"
                 >
-                  {renderHighlightedText?.(task.subtask.title, searchQuery) ||
-                    task.subtask.title}
+                  {renderHighlightedText?.(
+                    task.subtask?.title || task.title, // Use subtask.title or fallback
+                    searchQuery
+                  ) ||
+                    task.subtask?.title ||
+                    task.title ||
+                    "No title"}
                 </Text>
               </View>
             </>
@@ -95,7 +105,7 @@ const TaskItem = React.memo(
                 {searchQuery
                   ? renderHighlightedText?.(task.title, searchQuery) ||
                     task.title
-                  : task.title}
+                  : task.title || "No title"}
               </Text>
               <View className="flex-row items-center justify-between mt-2 pt-2 border-t border-gray-100">
                 <View className="flex-row items-center">
@@ -131,9 +141,9 @@ const TaskItem = React.memo(
 );
 
 export const TaskList = ({
-  tasks,
-  tasksByDate,
-  sortedDates,
+  tasks = [],
+  tasksByDate = {},
+  sortedDates = [],
   getPriorityClasses,
   onRefresh,
   refreshing,
@@ -147,32 +157,40 @@ export const TaskList = ({
 
   // Handle task press
   const handleTaskPress = useCallback((taskId) => {
-    router.push(`/task-details/${taskId}`);
+    if (taskId) {
+      router.push(`/task-details/${taskId}`);
+    }
   }, []);
 
   // Memoize the renderItem function
   const renderTaskItem = useMemo(
     () => ({
-      task: ({ item }) => (
-        <TaskItem
-          task={item}
-          searchQuery={searchQuery}
-          renderHighlightedText={renderHighlightedText}
-          getPriorityClasses={getPriorityClasses}
-          onPress={() => handleTaskPress(item.id)}
-          fullWidth={flatMode}
-        />
-      ),
-      subtask: ({ item }) => (
-        <TaskItem
-          task={item}
-          isSubtask
-          searchQuery={searchQuery}
-          renderHighlightedText={renderHighlightedText}
-          parentTaskColor={item.parentTaskColor}
-          onPress={() => handleTaskPress(item.parentTaskId)}
-        />
-      ),
+      task: ({ item }) => {
+        if (!item) return null;
+        return (
+          <TaskItem
+            task={item}
+            searchQuery={searchQuery}
+            renderHighlightedText={renderHighlightedText}
+            getPriorityClasses={getPriorityClasses}
+            onPress={() => handleTaskPress(item.id)}
+            fullWidth={flatMode}
+          />
+        );
+      },
+      subtask: ({ item }) => {
+        if (!item) return null;
+        return (
+          <TaskItem
+            task={item}
+            isSubtask
+            searchQuery={searchQuery}
+            renderHighlightedText={renderHighlightedText}
+            parentTaskColor={item.parentTaskColor}
+            onPress={() => handleTaskPress(item.parentTaskId)}
+          />
+        );
+      },
     }),
     [
       searchQuery,

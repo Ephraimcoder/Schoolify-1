@@ -32,12 +32,29 @@ export const getUnsyncedTasks = async (userId) => {
       const lastModified = task._raw.last_modified || 0;
       const lastSynced = task.lastSyncedAt?.getTime() || 0;
 
+      // 🚀 Handle null lastSyncedAt (newly created/modified tasks)
+      // If lastSyncedAt is null, it definitely needs syncing
+      if (task.lastSyncedAt === null) {
+        return true;
+      }
+
       return lastModified > lastSynced;
     });
 
     console.log(
       `Found ${unsyncedTasks.length} tasks that need syncing out of ${allTasks.length} total`
     );
+
+    // 🚀 Debug: Log details of tasks needing sync
+    unsyncedTasks.forEach((task, index) => {
+      console.log(`Task ${index + 1}: "${task.title}"`, {
+        appwriteId: task.appwriteId,
+        lastModified: task._raw.last_modified,
+        lastSyncedAt: task.lastSyncedAt,
+        needsSync: true,
+      });
+    });
+
     return unsyncedTasks;
   } catch (error) {
     console.error("Error getting unsynced tasks:", error);

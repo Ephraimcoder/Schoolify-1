@@ -1,6 +1,6 @@
 import { toast } from "@backpackapp-io/react-native-toast";
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Dimensions,
   Modal,
@@ -11,7 +11,11 @@ import {
 } from "react-native";
 
 export const AnalyticsModal = ({ visible, onClose, tasks }) => {
+  const [isCalculating, setIsCalculating] = useState(false);
+
   const stats = useMemo(() => {
+    setIsCalculating(true);
+
     const completed = tasks.filter((t) => t.isCompleted).length;
     const pending = tasks.length - completed;
 
@@ -53,7 +57,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       }
     });
 
-    return {
+    const result = {
       total: tasks.length,
       completed,
       pending,
@@ -65,6 +69,11 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       streak: calculateStreak(tasks),
       mostProductiveDay: getMostProductiveDay(tasks),
     };
+
+    // Simulate async processing for better UX
+    setTimeout(() => setIsCalculating(false), 100);
+
+    return result;
   }, [tasks]);
 
   function calculateStreak(tasks) {
@@ -193,217 +202,302 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} className="mt-2">
-            {/* Task Overview */}
-            <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100">
-              <Text className="text-lg font-quicksandBold mb-4">
-                Task Overview
-              </Text>
-
-              {/* Completion Stats */}
-              <View className="mb-4">
-                <View className="flex-row justify-between items-center mb-1">
-                  <Text className="text-gray-600 font-quicksand">
-                    Completion Rate
-                  </Text>
-                  <Text className="font-quicksandBold text-indigo-600">
-                    {stats.completionRate}%
-                  </Text>
-                </View>
-                <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <View
-                    className="h-full bg-indigo-500 rounded-full"
-                    style={{ width: `${stats.completionRate}%` }}
-                  />
-                </View>
-                <View className="flex-row justify-between mt-2">
-                  <Text className="text-sm text-gray-500">
-                    {stats.completed} completed • {stats.pending} remaining
-                  </Text>
-                  <Text className="text-sm text-gray-500">
-                    {stats.total} total
-                  </Text>
-                </View>
+            {/* Loading State */}
+            {isCalculating ? (
+              <View className="flex-1 items-center justify-center py-20">
+                <View className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                <Text className="text-gray-500 font-quicksand">
+                  Calculating analytics...
+                </Text>
+                <Text className="text-gray-400 font-quicksand text-sm mt-2">
+                  Please wait a moment
+                </Text>
               </View>
+            ) : (
+              <>
+                {/* Task Overview */}
+                <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                  <Text className="text-lg font-quicksandBold mb-4">
+                    Task Overview
+                  </Text>
 
-              {/* Streak */}
-              <View className="mt-5 pt-4 border-t border-gray-100">
-                <View className="flex-row items-start justify-between px-1">
-                  <View className="flex-row items-center space-x-3 gap-2">
-                    <View className="bg-indigo-50 p-2.5 rounded-full">
-                      <Ionicons name="flame" size={18} color="#8B5CF6" />
-                    </View>
-                    <View>
-                      <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5">
-                        Current Streak
-                      </Text>
-                      <View className="flex-row items-baseline space-x-1.5">
-                        <Text className="text-2xl font-quicksandBold text-indigo-600">
-                          {stats.streak}
+                  {/* Stats Cards */}
+                  <View className="flex-row gap-4 mb-6">
+                    <View className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                      <View className="flex-row items-center mb-2">
+                        <View className="w-8 h-8 bg-blue-500 rounded-full items-center justify-center mr-3">
+                          <Ionicons
+                            name="checkmark-done"
+                            size={16}
+                            color="white"
+                          />
+                        </View>
+                        <Text className="text-blue-600 text-sm font-quicksandMedium">
+                          Completed
                         </Text>
-                        <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5">
-                          {stats.streak === 1 ? "day" : "days"}
+                      </View>
+                      <Text className="text-blue-700 text-2xl font-quicksandBold">
+                        {stats.completed}
+                      </Text>
+                    </View>
+
+                    <View className="flex-1 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                      <View className="flex-row items-center mb-2">
+                        <View className="w-8 h-8 bg-orange-500 rounded-full items-center justify-center mr-3">
+                          <Ionicons name="time" size={16} color="white" />
+                        </View>
+                        <Text className="text-orange-600 text-sm font-quicksandMedium">
+                          Pending
+                        </Text>
+                      </View>
+                      <Text className="text-orange-700 text-2xl font-quicksandBold">
+                        {stats.pending}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Completion Stats */}
+                  <View className="mb-4">
+                    <View className="flex-row justify-between items-center mb-2">
+                      <Text className="text-gray-700 font-quicksandMedium">
+                        Completion Rate
+                      </Text>
+                      <View className="bg-indigo-100 px-3 py-1 rounded-full">
+                        <Text className="font-quicksandBold text-indigo-700 text-sm">
+                          {stats.completionRate}%
                         </Text>
                       </View>
                     </View>
-                  </View>
-                  <View className="items-end max-w-[45%]">
-                    <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5 text-right">
-                      Most Productive
-                    </Text>
-                    <View className="flex-row items-center space-x-1.5 bg-indigo-50 rounded-lg px-2.5 py-1.5">
-                      <Text
-                        className="text-gray-700 font-quicksandBold text-[13px] text-right"
-                        numberOfLines={3}
-                        ellipsizeMode="tail"
-                      >
-                        {stats.mostProductiveDay}
+                    <View className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                      <View
+                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full shadow-sm"
+                        style={{ width: `${stats.completionRate}%` }}
+                      />
+                    </View>
+                    <View className="flex-row justify-between mt-3">
+                      <Text className="text-sm text-gray-600 font-quicksand">
+                        {stats.completed} completed • {stats.pending} remaining
+                      </Text>
+                      <Text className="text-sm text-gray-600 font-quicksand">
+                        {stats.total} total
                       </Text>
                     </View>
                   </View>
+
+                  {/* Streak */}
+                  <View className="mt-5 pt-4 border-t border-gray-100">
+                    <View className="flex-row items-start justify-between px-1">
+                      <View className="flex-row items-center space-x-3 gap-2">
+                        <View className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-full shadow-sm">
+                          <Ionicons name="flame" size={18} color="white" />
+                        </View>
+                        <View>
+                          <Text className="text-gray-600 font-quicksandMedium text-[13px] mb-0.5">
+                            Current Streak
+                          </Text>
+                          <View className="flex-row items-baseline space-x-1.5">
+                            <Text className="text-2xl font-quicksandBold text-purple-600">
+                              {stats.streak}
+                            </Text>
+                            <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5">
+                              {stats.streak === 1 ? "day" : "days"}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <View className="items-end max-w-[45%]">
+                        <Text className="text-gray-600 font-quicksandMedium text-[13px] mb-0.5 text-right">
+                          Most Productive
+                        </Text>
+                        <View className="flex-row items-center space-x-1.5 bg-gradient-to-r from-green-50 to-green-100 rounded-lg px-3 py-2 border border-green-200">
+                          <Ionicons name="calendar" size={14} color="#10B981" />
+                          <Text
+                            className="text-green-700 font-quicksandBold text-[13px] text-right"
+                            numberOfLines={3}
+                            ellipsizeMode="tail"
+                          >
+                            {stats.mostProductiveDay}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    {stats.streak > 0 && (
+                      <View className="mt-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-3 mx-1 border border-purple-200">
+                        <Text className="text-purple-700 font-quicksand text-xs text-center">
+                          {stats.streak >= 3 ? "🔥 " : "✨ "}
+                          {getStreakMessage(stats.streak)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                {stats.streak > 0 && (
-                  <View className="mt-3 bg-indigo-50 rounded-lg p-2.5 mx-1">
-                    <Text className="text-indigo-700 font-quicksand text-xs text-center">
-                      {stats.streak >= 3 ? "🔥 " : "✨ "}
-                      {getStreakMessage(stats.streak)}
+
+                {/* Categories */}
+                {Object.keys(stats.categoryCounts).length > 0 && (
+                  <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                    <Text className="text-lg font-quicksandBold mb-4">
+                      Tasks by Category
                     </Text>
+                    <View className="space-y-4 gap-2">
+                      {Object.entries(stats.categoryCounts).map(
+                        ([category, count], index) => {
+                          const colors = [
+                            "#4F46E5",
+                            "#10B981",
+                            "#F59E0B",
+                            "#EF4444",
+                            "#8B5CF6",
+                            "#3B82F6", // added new color
+                            "#F97316", // added new color
+                          ];
+                          const color = colors[index % colors.length];
+                          const percentage = Math.round(
+                            (count / stats.total) * 100
+                          );
+
+                          return (
+                            <View
+                              key={`category-${index}`}
+                              className="space-y-2"
+                            >
+                              <View className="flex-row justify-between items-center">
+                                <View className="flex-row items-center">
+                                  <View
+                                    className="w-4 h-4 rounded-full mr-3 shadow-sm"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                  <Text className="text-gray-700 font-quicksandMedium">
+                                    {category}
+                                  </Text>
+                                </View>
+                                <View className="flex-row items-center space-x-2">
+                                  <View
+                                    className="px-2 py-1 rounded-full"
+                                    style={{ backgroundColor: `${color}20` }}
+                                  >
+                                    <Text
+                                      className="text-xs font-quicksandBold"
+                                      style={{ color }}
+                                    >
+                                      {percentage}%
+                                    </Text>
+                                  </View>
+                                  <Text className="text-gray-600 font-quicksand text-sm">
+                                    {count} {count === 1 ? "task" : "tasks"}
+                                  </Text>
+                                </View>
+                              </View>
+                              <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <View
+                                  className="h-full rounded-full shadow-sm"
+                                  style={{
+                                    width: `${percentage}%`,
+                                    backgroundColor: color,
+                                    opacity: 0.8,
+                                  }}
+                                />
+                              </View>
+                            </View>
+                          );
+                        }
+                      )}
+                    </View>
                   </View>
                 )}
-              </View>
-            </View>
 
-            {/* Categories */}
-            {Object.keys(stats.categoryCounts).length > 0 && (
-              <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100">
-                <Text className="text-lg font-quicksandBold mb-3">
-                  Tasks by Category
-                </Text>
-                <View className="space-y-3">
-                  {Object.entries(stats.categoryCounts).map(
-                    ([category, count], index) => {
-                      const colors = [
-                        "#4F46E5",
-                        "#10B981",
-                        "#F59E0B",
-                        "#EF4444",
-                        "#8B5CF6",
-                      ];
-                      const color = colors[index % colors.length];
-                      const percentage = Math.round(
-                        (count / stats.total) * 100
-                      );
+                {/* Priority */}
+                <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                  <Text className="text-lg font-quicksandBold mb-4">
+                    Tasks by Priority
+                  </Text>
+                  <View className="space-y-3">
+                    {["high", "medium", "low"].map((priority) => {
+                      // Initialize count to 0 if priority doesn't exist
+                      const count = stats.priorityCounts[priority] || 0;
+
+                      const priorityColors = {
+                        high: "#EF4444",
+                        medium: "#F59E0B",
+                        low: "#10B981",
+                      };
+
+                      const color = priorityColors[priority] || "#6B7280";
+                      const percentage =
+                        stats.total > 0
+                          ? Math.round((count / stats.total) * 100)
+                          : 0;
+                      const priorityLabel =
+                        priority.charAt(0).toUpperCase() + priority.slice(1);
 
                       return (
                         <View
-                          key={`category-${index}`}
-                          className="space-y-1 gap-4"
+                          key={`priority-${priority}`}
+                          className="space-y-2 gap-2"
                         >
                           <View className="flex-row justify-between items-center">
                             <View className="flex-row items-center">
                               <View
-                                className="w-3 h-3 rounded-full mr-2"
+                                className="w-4 h-4 rounded-full mr-3 shadow-sm"
                                 style={{ backgroundColor: color }}
                               />
-                              <Text className="text-gray-700 font-quicksand">
-                                {category}
+                              <Text className="text-gray-700 font-quicksandMedium">
+                                {priorityLabel} Priority
                               </Text>
                             </View>
-                            <Text className="text-gray-500 font-quicksand">
-                              {count} {count === 1 ? "task" : "tasks"} •{" "}
-                              {percentage}%
-                            </Text>
+                            <View className="flex-row items-center space-x-2">
+                              <View
+                                className="px-2 py-1 rounded-full"
+                                style={{ backgroundColor: `${color}20` }}
+                              >
+                                <Text
+                                  className="text-xs font-quicksandBold"
+                                  style={{ color }}
+                                >
+                                  {percentage}%
+                                </Text>
+                              </View>
+                              <Text className="text-gray-600 font-quicksand text-sm">
+                                {count} {count === 1 ? "task" : "tasks"}
+                              </Text>
+                            </View>
                           </View>
-                          <View className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
                             <View
-                              className="h-full rounded-full"
+                              className="h-full rounded-full shadow-sm"
                               style={{
                                 width: `${percentage}%`,
                                 backgroundColor: color,
-                                opacity: 0.7,
+                                opacity: 0.8,
                               }}
                             />
                           </View>
                         </View>
                       );
-                    }
-                  )}
+                    })}
+                  </View>
                 </View>
-              </View>
+
+                {/* Productivity Tips */}
+                <View className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-xl p-4 mb-4 border border-indigo-200 shadow-sm">
+                  <Text className="font-quicksandBold text-indigo-800 mb-2 flex-row items-center">
+                    <Ionicons
+                      name="bulb"
+                      size={16}
+                      color="#4F46E5"
+                      className="mr-2"
+                    />
+                    Productivity Tip
+                  </Text>
+                  <Text className="text-indigo-700 font-quicksand text-sm">
+                    {getProductivityTip(
+                      stats.completionRate,
+                      stats.streak,
+                      stats.mostProductiveDay
+                    )}
+                  </Text>
+                </View>
+              </>
             )}
-
-            {/* Priority */}
-            <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100">
-              <Text className="text-lg font-quicksandBold mb-3">
-                Tasks by Priority
-              </Text>
-              <View className="space-y-3">
-                {["high", "medium", "low"].map((priority) => {
-                  // Initialize count to 0 if priority doesn't exist
-                  const count = stats.priorityCounts[priority] || 0;
-
-                  const priorityColors = {
-                    high: "#EF4444",
-                    medium: "#F59E0B",
-                    low: "#10B981",
-                  };
-
-                  const color = priorityColors[priority] || "#6B7280";
-                  const percentage =
-                    stats.total > 0
-                      ? Math.round((count / stats.total) * 100)
-                      : 0;
-                  const priorityLabel =
-                    priority.charAt(0).toUpperCase() + priority.slice(1);
-
-                  return (
-                    <View
-                      key={`priority-${priority}`}
-                      className="space-y-1 gap-4"
-                    >
-                      <View className="flex-row justify-between items-center">
-                        <View className="flex-row items-center">
-                          <View
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: color }}
-                          />
-                          <Text className="text-gray-700 font-quicksand">
-                            {priorityLabel} Priority
-                          </Text>
-                        </View>
-                        <Text className="text-gray-500 font-quicksand">
-                          {count} {count === 1 ? "task" : "tasks"} •{" "}
-                          {percentage}%
-                        </Text>
-                      </View>
-                      <View className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <View
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${percentage}%`,
-                            backgroundColor: color,
-                            opacity: 0.7,
-                          }}
-                        />
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Productivity Tips */}
-            <View className="bg-indigo-50 rounded-xl p-4 mb-4">
-              <Text className="font-quicksandBold text-indigo-800 mb-2">
-                💡 Productivity Tip
-              </Text>
-              <Text className="text-indigo-700 font-quicksand text-sm">
-                {getProductivityTip(
-                  stats.completionRate,
-                  stats.streak,
-                  stats.mostProductiveDay
-                )}
-              </Text>
-            </View>
           </ScrollView>
         </View>
       </View>

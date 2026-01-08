@@ -6,7 +6,7 @@ const ScreenAnimation = ({ children, duration = 400 }) => {
   const [slideAnim] = useState(new Animated.Value(30));
 
   useEffect(() => {
-    // Reset animations to initial values
+    // Reset animations to initial values every time component mounts/re-renders
     fadeAnim.setValue(0);
     slideAnim.setValue(30);
 
@@ -27,7 +27,7 @@ const ScreenAnimation = ({ children, duration = 400 }) => {
     }, 100); // Small delay to ensure component is mounted
 
     return () => clearTimeout(timer);
-  }, []); // Empty dependency array - run only on mount
+  }, []); // Run every time the component mounts
 
   return (
     <Animated.View

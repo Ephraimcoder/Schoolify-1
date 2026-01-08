@@ -180,6 +180,9 @@ export const TaskProvider = ({ children }) => {
             if (taskData.subTasks)
               task.subtasksJson = JSON.stringify(taskData.subTasks);
             task.userId = user?.accountId || "";
+
+            // 🚀 Ensure new tasks have no lastSyncedAt so they're detected as needing sync
+            task.lastSyncedAt = null;
           });
         });
 
@@ -224,8 +227,9 @@ export const TaskProvider = ({ children }) => {
             if (updates.itemType !== undefined)
               task.itemType = updates.itemType;
 
-            // Ensure the task is marked as modified for sync detection
-            // WatermelonDB will automatically update the internal timestamps
+            // 🚀 Force sync detection by clearing lastSyncedAt
+            // This ensures the task will be detected as needing sync
+            task.lastSyncedAt = null;
           });
         });
 
@@ -289,6 +293,9 @@ export const TaskProvider = ({ children }) => {
             if (payload.subTasks)
               rec.subtasksJson = JSON.stringify(payload.subTasks);
             rec.userId = user?.accountId || "";
+
+            // 🚀 Ensure new tasks have no lastSyncedAt so they're detected as needing sync
+            rec.lastSyncedAt = null;
           });
         });
         await refreshTasks();
