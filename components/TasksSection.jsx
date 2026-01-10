@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useContext, useMemo } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { TasksContext } from "../context/TasksContext";
+import { useTheme } from "../context/ThemeContext";
 import TaskCard from "./TaskCard";
-
 // Priority order for sorting (higher number = higher priority)
 const PRIORITY_ORDER = {
   High: 3,
@@ -13,12 +13,19 @@ const PRIORITY_ORDER = {
 
 const TasksSection = React.memo(() => {
   const { tasks } = useContext(TasksContext);
+  const { isDark } = useTheme();
 
-  // Filter, sort by priority, and limit tasks
+  // Filter, sort by priority, and limit tasks for TODAY only
   const filteredAndSortedTasks = useMemo(() => {
+    const today = new Date().toDateString();
     return tasks
-
-      .filter((task) => task.category !== "Class")
+      .filter((task) => {
+        // Only show non-class, incomplete tasks that are due today
+        if (task.category === "Class") return false;
+        if (!task.dueDate) return false;
+        if (task.isCompleted) return false;
+        return new Date(task.dueDate).toDateString() === today;
+      })
       .sort((a, b) => {
         // Sort by priority (High > Medium > Low)
         const priorityA = PRIORITY_ORDER[a.priority] || 0;
@@ -49,11 +56,22 @@ const TasksSection = React.memo(() => {
             <Ionicons
               name="checkmark-done-circle-outline"
               size={48}
-              color="#9CA3AF"
+              color={isDark ? "#6B7280" : "#9CA3AF"}
               className="mb-2"
             />
-            <Text className="text-gray-500 font-quicksandSemiBold text-center">
-              You haven't created any tasks yet.
+            <Text
+              className={`font-quicksandSemiBold text-center ${
+                isDark ? "text-gray-300" : "text-gray-500"
+              }`}
+            >
+              No tasks due today!
+            </Text>
+            <Text
+              className={`font-quicksand text-center text-sm mt-1 ${
+                isDark ? "text-gray-400" : "text-gray-400"
+              }`}
+            >
+              Great job staying on top of things 🎉
             </Text>
           </View>
         )}

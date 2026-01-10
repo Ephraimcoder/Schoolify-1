@@ -1,14 +1,21 @@
 import { Toasts } from "@backpackapp-io/react-native-toast";
 import { DatabaseProvider } from "@nozbe/watermelondb/react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import * as Notifications from "expo-notifications";
 import { Stack, usePathname, useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { ActivityIndicator, Platform, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  useColorScheme,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableFreeze, enableScreens } from "react-native-screens";
 import { TaskProvider } from "../context/TasksContext";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { UserProvider, useUser } from "../context/UserContext";
 import { database } from "../database/database";
 import "../global.css";
@@ -28,12 +35,44 @@ Notifications.setNotificationHandler({
 enableScreens(true);
 enableFreeze(true);
 
+// Simplified loading component - providers handle their own loading states
+const UnifiedLoading = ({ children }) => {
+  const { colors } = useTheme();
+  const [fontsLoaded] = useFonts({
+    QuicksandRegular: require("../assets/fonts/Quicksand-Regular.ttf"),
+    QuicksandBold: require("../assets/fonts/Quicksand-Bold.ttf"),
+    QuicksandSemiBold: require("../assets/fonts/Quicksand-SemiBold.ttf"),
+    QuicksandMedium: require("../assets/fonts/Quicksand-Medium.ttf"),
+    QuicksandLight: require("../assets/fonts/Quicksand-Light.ttf"),
+  });
+
+  // Simple loading state - just wait for fonts
+  if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background[0],
+        }}
+      >
+        <ActivityIndicator size="100" color={colors.text} />
+      </View>
+    );
+  }
+
+  return children;
+};
+
 function RootLayoutContent() {
-  const { user, isLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const notificationListener = useRef();
   const responseListener = useRef();
+  const systemColorScheme = useColorScheme();
+  const { isDark, colors } = useTheme();
 
   // Handle notification taps
   useEffect(() => {
@@ -53,11 +92,7 @@ function RootLayoutContent() {
         console.log("Notification tapped:", { id, type });
 
         // Handle different notification types
-        if (
-          id &&
-          type === "task" &&
-          !pathname.includes(`/task-details/${id}`)
-        ) {
+        if (id && type === "task") {
           router.push(`/task-details/${id}`);
         } else if (type === "daily-reminder") {
           router.push("/(tabs)/Home");
@@ -72,7 +107,7 @@ function RootLayoutContent() {
         responseListener.current.remove();
       }
     };
-  }, [pathname, router]);
+  }, [router]);
 
   // Hide Android navigation bar
   useEffect(() => {
@@ -82,17 +117,31 @@ function RootLayoutContent() {
     }
   }, []);
 
-  // 1. THE GATEKEEPER
-  // While initializing (AsyncStorage + Appwrite), show the loader.
-  // We do NOT render the Stack yet. This prevents the "Auth" screens
-  // from mounting by default during the dev refresh.
-  if (isLoading) {
-    return <SplashScreen />;
-  }
+  // Set status bar style based on theme
+  useEffect(() => {
+    const setStatusBarStyle = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem("theme");
+        const isDarkTheme =
+          savedTheme === "dark" ||
+          (!savedTheme && systemColorScheme === "dark");
 
-  // 2. THE SOURCE OF TRUTH (Declarative Routing)
-  // We use a ternary operator to swap the stack contents.
-  // When 'user' exists, (auth) is physically removed from the component tree.
+        if (Platform.OS === "ios") {
+          if (isDarkTheme) {
+            NavigationBar.setBarStyleAsync("dark-content");
+          } else {
+            NavigationBar.setBarStyleAsync("light-content");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to set status bar style", error);
+      }
+    };
+
+    setStatusBarStyle();
+  }, []);
+
+  // Direct routing without intermediate loading states
   return (
     <Stack screenOptions={{ headerShown: false, freezeOnBlur: true }}>
       {user ? (
@@ -101,7 +150,7 @@ function RootLayoutContent() {
         <Stack.Screen
           name="(tabs)"
           options={{
-            animation: "fade", // Provides a professional transition
+            animation: "none", // Remove animation for faster tab switching
           }}
         />
       ) : (
@@ -109,7 +158,7 @@ function RootLayoutContent() {
         <Stack.Screen
           name="(auth)"
           options={{
-            animation: "fade",
+            animation: "fade", // Provides a professional transition
           }}
         />
       )}
@@ -117,57 +166,52 @@ function RootLayoutContent() {
   );
 }
 
-const SplashScreen = () => {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <ActivityIndicator size="100" />
-    </View>
-  );
-};
-
 const DatabaseWrapper = ({ children }) => {
   return <DatabaseProvider database={database}>{children}</DatabaseProvider>;
 };
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    QuicksandRegular: require("../assets/fonts/Quicksand-Regular.ttf"),
-    QuicksandBold: require("../assets/fonts/Quicksand-Bold.ttf"),
-    QuicksandSemiBold: require("../assets/fonts/Quicksand-SemiBold.ttf"),
-    QuicksandMedium: require("../assets/fonts/Quicksand-Medium.ttf"),
-    QuicksandLight: require("../assets/fonts/Quicksand-Light.ttf"),
-  });
-
-  // Show loading spinner only during initial font loading, not auth
-  if (!fontsLoaded) {
-    return <SplashScreen />;
-  }
-
-  // Don't show any loading screen for auth - let routing handle it
   return (
-    <UserProvider>
-      <DatabaseWrapper>
-        <TaskProvider>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <RootLayoutContent />
-            <Toasts
-              position="bottom"
-              offset={20}
-              renderToast={(toast) => (
-                <View
-                  style={{
-                    width: "90%",
-                    alignSelf: "center",
-                    marginBottom: 20,
-                  }}
-                >
-                  {toast.message}
-                </View>
-              )}
-            />
-          </GestureHandlerRootView>
-        </TaskProvider>
-      </DatabaseWrapper>
-    </UserProvider>
+    <ThemeProvider>
+      <UserProvider>
+        <UnifiedLoading>
+          <DatabaseWrapper>
+            <TaskProvider>
+              <RootLayoutWrapper />
+            </TaskProvider>
+          </DatabaseWrapper>
+        </UnifiedLoading>
+      </UserProvider>
+    </ThemeProvider>
   );
 }
+
+const RootLayoutWrapper = () => {
+  const { isDark } = useTheme();
+
+  return (
+    <GestureHandlerRootView
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#1F2937" : "#FFFBF5",
+      }}
+    >
+      <RootLayoutContent />
+      <Toasts
+        position="bottom"
+        offset={20}
+        renderToast={(toast) => (
+          <View
+            style={{
+              width: "90%",
+              alignSelf: "center",
+              marginBottom: 20,
+            }}
+          >
+            {toast.message}
+          </View>
+        )}
+      />
+    </GestureHandlerRootView>
+  );
+};

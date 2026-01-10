@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 // Memoized Task Item Component
 const TaskItem = React.memo(
@@ -21,6 +22,8 @@ const TaskItem = React.memo(
     onPress,
     fullWidth = false,
   }) => {
+    const { isDark } = useTheme();
+
     // Guard against undefined task
     if (!task) {
       return null;
@@ -35,13 +38,25 @@ const TaskItem = React.memo(
         onPress={onPress}
       >
         <View
-          className={`${isSubtask ? "bg-amber-50" : "bg-white"} rounded-2xl shadow-sm p-4 border-l-4`}
+          className={`${
+            isSubtask
+              ? isDark
+                ? "bg-amber-900"
+                : "bg-amber-50"
+              : isDark
+                ? "bg-gray-800"
+                : "bg-white"
+          } rounded-2xl shadow-sm p-4 border-l-4`}
           style={{ borderLeftColor: color }}
         >
           {/* Task/Subtask content */}
           {isSubtask ? (
             <>
-              <View className="flex-row items-center mb-2 pb-2 border-b border-amber-100">
+              <View
+                className={`flex-row items-center mb-2 pb-2 border-b ${
+                  isDark ? "border-amber-800" : "border-amber-100"
+                }`}
+              >
                 <Ionicons name="arrow-up-circle" size={14} color={color} />
                 <Text
                   className="text-[10px] font-quicksandSemiBold ml-1 flex-1"
@@ -60,9 +75,15 @@ const TaskItem = React.memo(
                 </Text>
               </View>
               <View className="flex-row items-start mb-2">
-                <View className="w-4 h-4 rounded border border-gray-400 mr-2 mt-0.5" />
+                <View
+                  className={`w-4 h-4 rounded border mr-2 mt-0.5 ${
+                    isDark ? "border-gray-600" : "border-gray-400"
+                  }`}
+                />
                 <Text
-                  className="text-sm font-quicksandBold text-gray-900 flex-1"
+                  className={`text-sm font-quicksandBold flex-1 ${
+                    isDark ? "text-gray-100" : "text-gray-900"
+                  }`}
                   numberOfLines={3}
                   ellipsizeMode="tail"
                 >
@@ -98,7 +119,9 @@ const TaskItem = React.memo(
                 )}
               </View>
               <Text
-                className="text-sm font-quicksandBold text-gray-900 mb-1"
+                className={`text-sm font-quicksandBold mb-1 ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
                 numberOfLines={2}
                 ellipsizeMode="tail"
               >
@@ -107,10 +130,18 @@ const TaskItem = React.memo(
                     task.title
                   : task.title || "No title"}
               </Text>
-              <View className="flex-row items-center justify-between mt-2 pt-2 border-t border-gray-100">
+              <View
+                className={`flex-row items-center justify-between mt-2 pt-2 border-t ${
+                  isDark ? "border-gray-700" : "border-gray-100"
+                }`}
+              >
                 <View className="flex-row items-center">
                   <Ionicons name="calendar-outline" size={12} color="#6B7280" />
-                  <Text className="text-[10px] text-gray-600 font-quicksandSemiBold ml-1">
+                  <Text
+                    className={`text-[10px] font-quicksandSemiBold ml-1 ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     {task.dueDate
                       ? new Date(task.dueDate).toLocaleDateString("en-US", {
                           weekday: "short",
@@ -154,6 +185,7 @@ export const TaskList = ({
   flatTasks = [],
 }) => {
   const router = useRouter();
+  const { isDark } = useTheme();
 
   // Handle task press
   const handleTaskPress = useCallback((taskId) => {
@@ -238,10 +270,18 @@ export const TaskList = ({
               <View className="flex-row items-center mb-3">
                 <View className="h-6 w-1 bg-amber-500 rounded-r mr-2" />
                 <Ionicons name="list" size={18} color="#F59E0B" />
-                <Text className="text-gray-700 font-quicksandBold ml-2">
+                <Text
+                  className={`font-quicksandBold ml-2 ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
                   Matched Subtasks
                 </Text>
-                <Text className="ml-2 text-gray-400 text-sm font-quicksand">
+                <Text
+                  className={`ml-2 text-sm font-quicksand ${
+                    isDark ? "text-gray-400" : "text-gray-400"
+                  }`}
+                >
                   ({matchedSubtasks.length} subtask
                   {matchedSubtasks.length !== 1 ? "s" : ""})
                 </Text>
@@ -276,7 +316,11 @@ export const TaskList = ({
     <View key={date} className="mb-6">
       <View className="flex-row items-center mb-3">
         <View className="h-6 w-1 bg-indigo-500 rounded-r mr-2" />
-        <Text className="text-gray-700 font-quicksandBold">
+        <Text
+          className={`font-quicksandBold ${
+            isDark ? "text-gray-300" : "text-gray-700"
+          }`}
+        >
           {date === "No Date"
             ? "No Due Date"
             : new Date(date).toLocaleDateString("en-US", {
@@ -285,7 +329,11 @@ export const TaskList = ({
                 day: "numeric",
               })}
         </Text>
-        <Text className="ml-2 text-gray-400 text-sm font-quicksand">
+        <Text
+          className={`ml-2 text-sm font-quicksand ${
+            isDark ? "text-gray-400" : "text-gray-400"
+          }`}
+        >
           ({tasksByDate[date].length} task
           {tasksByDate[date].length !== 1 ? "s" : ""})
         </Text>

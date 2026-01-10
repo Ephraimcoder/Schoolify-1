@@ -7,7 +7,7 @@ import {
 } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { StyleSheet, View } from "react-native";
-
+import { useTheme } from "../../context/ThemeContext";
 const AddTaskIcon = ({ focused }) => (
   <View style={styles.addTaskContainer}>
     <MaterialCommunityIcons name="plus" size={32} color="white" />
@@ -15,25 +15,34 @@ const AddTaskIcon = ({ focused }) => (
 );
 
 const TabsLayout = () => {
+  const { isDark, colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: "#FF6B47",
-        tabBarInactiveTintColor: "#9CA3AF",
+        tabBarInactiveTintColor: isDark ? "#6B7280" : "#9CA3AF",
         tabBarShowLabel: false,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#FEFBF6",
-          borderTopWidth: 0,
+          backgroundColor: isDark ? colors.background[1] : colors.background[0],
+          borderTopWidth: isDark ? 1 : 0,
+          borderTopColor: isDark ? colors.border : "transparent",
           height: 60,
           paddingBottom: 5,
           paddingTop: 10,
         },
-        // Performance tweaks
-        lazy: true,
-        detachInactiveScreens: true,
-        freezeOnBlur: true,
+        // Performance and transition tweaks
+        lazy: false, // Keep screens loaded for faster navigation
+        detachInactiveScreens: false, // Prevent screen destruction
+        freezeOnBlur: false, // Keep screens responsive
         tabBarHideOnKeyboard: true,
+        animationEnabled: true,
+        animationTypeForReplace: "push",
+        // Add scene container style to prevent white flash
+        sceneStyle: {
+          backgroundColor: isDark ? colors.background[0] : colors.background[0],
+        },
       }}
     >
       <Tabs.Screen
@@ -59,8 +68,6 @@ const TabsLayout = () => {
         options={{
           title: "",
           tabBarIcon: ({ focused }) => <AddTaskIcon focused={focused} />,
-          // Heavy screen: free memory and state when not focused
-          unmountOnBlur: true,
         }}
       />
       <Tabs.Screen

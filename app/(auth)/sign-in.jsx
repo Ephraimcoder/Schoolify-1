@@ -11,15 +11,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import ScreenAnimation from "../../components/ScreenAnimation";
+import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
 import { showError, showSuccess, showWarning } from "../../utils/toast";
-import ScreenAnimation from "../../components/ScreenAnimation";
 export default function SignIn() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const { login } = useUser();
+  const { isDark } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -84,7 +86,7 @@ export default function SignIn() {
 
   return (
     <ScreenAnimation duration={400}>
-      <View className="flex-1 bg-amber-50">
+      <View className={`flex-1 ${isDark ? "bg-gray-900" : "bg-amber-50"}`}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 24,
@@ -95,7 +97,11 @@ export default function SignIn() {
         >
           {/* Brand header */}
           <View className="items-center">
-            <Text className="text-2xl font-quicksandBold">
+            <Text
+              className={`text-2xl font-quicksandBold ${
+                isDark ? "text-gray-100" : "text-gray-900"
+              }`}
+            >
               Schoolify<Text className="text-orange-600">.</Text>
             </Text>
           </View>
@@ -103,7 +109,9 @@ export default function SignIn() {
           {/* Illustration style hero card */}
           <View className="items-center mt-6">
             <View
-              className="w-11/12 h-44 bg-white rounded-3xl items-center justify-center"
+              className={`w-11/12 h-44 rounded-3xl items-center justify-center ${
+                isDark ? "bg-gray-800" : "bg-white"
+              }`}
               style={[cardShadow]}
             >
               <View className="items-center">
@@ -117,10 +125,18 @@ export default function SignIn() {
                   <View className="absolute top-7 left-3 w-9 h-1 bg-orange-200 rounded" />
                 </View>
 
-                <Text className="text-gray-800 font-quicksandBold text-lg text-center">
+                <Text
+                  className={`font-quicksandBold text-lg text-center ${
+                    isDark ? "text-gray-100" : "text-gray-800"
+                  }`}
+                >
                   Welcome Back!
                 </Text>
-                <Text className="text-gray-600 font-quicksandMedium text-sm text-center mt-1">
+                <Text
+                  className={`font-quicksandMedium text-sm text-center mt-1 ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
                   Continue your learning journey
                 </Text>
               </View>
@@ -129,9 +145,15 @@ export default function SignIn() {
 
           {/* Offline Banner */}
           {isOffline && (
-            <View className="bg-yellow-100 p-3 rounded-lg mt-6 border-l-4 border-yellow-500">
+            <View
+              className={`p-3 rounded-lg mt-6 border-l-4 ${
+                isDark
+                  ? "bg-yellow-900/20 border-yellow-600"
+                  : "bg-yellow-100 border-yellow-500"
+              }`}
+            >
               <Text
-                className="text-yellow-800"
+                className={`${isDark ? "text-yellow-300" : "text-yellow-800"}`}
                 style={{ fontFamily: "Quicksand-Medium" }}
               >
                 You're currently offline. Some features may be limited.
@@ -141,10 +163,18 @@ export default function SignIn() {
 
           {/* Header */}
           <View className="items-center mt-8">
-            <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
+            <Text
+              className={`text-5xl font-quicksandBold text-center ${
+                isDark ? "text-gray-100" : "text-gray-900"
+              }`}
+            >
               Login
             </Text>
-            <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
+            <Text
+              className={`text-xl text-center font-quicksandMedium mt-3 leading-6 ${
+                isDark ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
               Hey, Enter your details to get sign in{"\n"}to your account
             </Text>
           </View>
@@ -159,8 +189,12 @@ export default function SignIn() {
                   setForm((prev) => ({ ...prev, email: text }))
                 }
                 keyboardType="email-address"
-                className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg"
-                placeholderTextColor="#9CA3AF"
+                className={`w-full h-16 border-2 rounded-3xl px-6 text-lg ${
+                  isDark
+                    ? "bg-gray-800 border-gray-600 text-gray-100"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+                placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                 style={{ fontFamily: "Quicksand-Regular" }}
               />
             </View>
@@ -174,8 +208,12 @@ export default function SignIn() {
                     setForm((prev) => ({ ...prev, password: text }))
                   }
                   secureTextEntry={!showPassword}
-                  className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg pr-14"
-                  placeholderTextColor="#9CA3AF"
+                  className={`w-full h-16 border-2 rounded-3xl px-6 text-lg pr-14 ${
+                    isDark
+                      ? "bg-gray-800 border-gray-600 text-gray-100"
+                      : "bg-white border-gray-300 text-gray-900"
+                  }`}
+                  placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                   style={{ fontFamily: "Quicksand-Regular" }}
                 />
                 <TouchableOpacity
@@ -185,7 +223,7 @@ export default function SignIn() {
                   <MaterialIcons
                     name={showPassword ? "visibility-off" : "visibility"}
                     size={24}
-                    color="#6B7280"
+                    color={isDark ? "#9CA3AF" : "#6B7280"}
                   />
                 </TouchableOpacity>
               </View>
@@ -198,7 +236,7 @@ export default function SignIn() {
           {/* CTA + links */}
           <View className="mt-6">
             <TouchableOpacity
-              className="bg-orange-600 h-16 rounded-full items-center justify-center"
+              className="bg-purple-600 h-16 rounded-full items-center justify-center"
               onPress={submit}
               disabled={isSubmitting}
             >
@@ -219,7 +257,9 @@ export default function SignIn() {
 
             <View className="flex-row justify-center mt-2">
               <Text
-                className="text-gray-600 text-base"
+                className={`text-base ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}
                 style={{ fontFamily: "Quicksand-Regular" }}
               >
                 Don't have an account?{" "}

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
   ScrollView,
@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { useTheme } from "../context/ThemeContext";
 const ItemManagementModal = ({
   visible,
   onClose,
@@ -17,6 +17,7 @@ const ItemManagementModal = ({
   items,
   onDeleteItem,
 }) => {
+  const { isDark } = useTheme();
   const [itemName, setItemName] = useState("");
   const displayTitle = type === "category" ? "Courses" : "Priorities";
   const displayType = type === "category" ? "course" : type;
@@ -42,15 +43,27 @@ const ItemManagementModal = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50 p-4">
-        <View className="w-full max-w-md bg-white rounded-xl p-6">
-          <Text className="text-xl font-quicksandBold mb-4">
+        <View
+          className={`w-full max-w-md rounded-xl p-6 ${
+            isDark ? "bg-gray-800" : "bg-white"
+          }`}
+        >
+          <Text
+            className={`text-xl font-quicksandBold mb-4 ${
+              isDark ? "text-gray-100" : "text-gray-900"
+            }`}
+          >
             {displayTitle}
           </Text>
 
           {/* Add New Item */}
           <View className="flex-row items-center mb-4">
             <TextInput
-              className="flex-1 border border-gray-300 p-3 rounded-l-lg"
+              className={`flex-1 p-3 rounded-l-lg ${
+                isDark
+                  ? "bg-gray-700 border-gray-600 text-gray-100"
+                  : "bg-white border-gray-300 text-gray-900"
+              }`}
               placeholder={`Add new ${displayType}...`}
               value={itemName}
               onChangeText={setItemName}
@@ -60,7 +73,11 @@ const ItemManagementModal = ({
               className="bg-indigo-600 p-3 rounded-r-lg"
               onPress={handleAdd}
             >
-              <Ionicons name="add" size={20} color="white" />
+              <Ionicons
+                name="add"
+                size={20}
+                color={isDark ? "#9CA3AF" : "#6B7280"}
+              />
             </TouchableOpacity>
           </View>
 
@@ -70,9 +87,15 @@ const ItemManagementModal = ({
               {items.map((item) => (
                 <View
                   key={item.id}
-                  className="flex-row items-center justify-between py-2 border-b border-gray-100"
+                  className={`flex-row items-center justify-between py-2 border-b ${
+                    isDark ? "border-gray-700" : "border-gray-100"
+                  }`}
                 >
-                  <Text className="text-gray-800 font-quicksandMedium">
+                  <Text
+                    className={`font-quicksandMedium ${
+                      isDark ? "text-gray-100" : "text-gray-800"
+                    }`}
+                  >
                     {item.name}
                   </Text>
                   <TouchableOpacity
@@ -89,9 +112,17 @@ const ItemManagementModal = ({
           {/* Close Button */}
           <TouchableOpacity
             onPress={onClose}
-            className="mt-6 bg-gray-100 py-3 rounded-lg items-center"
+            className={`mt-6 py-3 rounded-lg items-center ${
+              isDark ? "bg-gray-700" : "bg-gray-100"
+            }`}
           >
-            <Text className="text-gray-800 font-quicksandSemiBold">Close</Text>
+            <Text
+              className={`font-quicksandSemiBold ${
+                isDark ? "text-gray-100" : "text-gray-800"
+              }`}
+            >
+              Close
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

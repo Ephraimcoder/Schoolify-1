@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import TimePickerModal from "../components/TimePickerModal";
+import { useTheme } from "../context/ThemeContext";
 import { useFadeAnimation } from "../hooks/useBackTransition";
 import {
   cancelDailyReminder,
@@ -26,7 +27,7 @@ import { showSuccess } from "../utils/toast";
 
 const Settings = () => {
   const router = useRouter();
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
   const [dailyReminder, setDailyReminder] = useState(false);
   const [reminderTime, setReminderTime] = useState(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -125,19 +126,33 @@ const Settings = () => {
   }) => (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-row items-center justify-between py-4 px-5 border-b border-gray-100"
+      className={`flex-row items-center justify-between py-4 px-5 border-b ${
+        isDark ? "border-gray-700" : "border-gray-100"
+      }`}
       disabled={!onPress}
     >
       <View className="flex-row items-center flex-1">
-        <View className="w-10 h-10 rounded-full bg-indigo-50 items-center justify-center mr-3">
+        <View
+          className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
+            isDark ? "bg-indigo-900/30" : "bg-indigo-50"
+          }`}
+        >
           <Ionicons name={icon} size={20} color="#4F46E5" />
         </View>
         <View className="flex-1">
-          <Text className="text-gray-900 font-quicksandBold text-base">
+          <Text
+            className={`font-quicksandBold text-base ${
+              isDark ? "text-gray-100" : "text-gray-900"
+            }`}
+          >
             {title}
           </Text>
           {description && (
-            <Text className="text-gray-500 font-quicksand text-sm mt-1">
+            <Text
+              className={`font-quicksand text-sm mt-1 ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
               {description}
             </Text>
           )}
@@ -146,13 +161,17 @@ const Settings = () => {
       {rightComponent ? (
         rightComponent
       ) : showChevron ? (
-        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        <Ionicons
+          name="chevron-forward"
+          size={20}
+          color={isDark ? "#9CA3AF" : "#9CA3AF"}
+        />
       ) : null}
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className={`flex-1 ${isDark ? "bg-gray-900" : "bg-white"}`}>
       <Animated.View
         style={{
           opacity: fadeAnim,
@@ -160,11 +179,23 @@ const Settings = () => {
         }}
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-100 bg-white">
+        <View
+          className={`flex-row items-center justify-between px-5 py-4 border-b ${
+            isDark ? "border-gray-700 bg-gray-800" : "border-gray-100 bg-white"
+          }`}
+        >
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#111827" />
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color={isDark ? "#D1D5DB" : "#111827"}
+            />
           </TouchableOpacity>
-          <Text className="text-lg font-quicksandBold text-gray-900">
+          <Text
+            className={`text-lg font-quicksandBold ${
+              isDark ? "text-gray-100" : "text-gray-900"
+            }`}
+          >
             Settings
           </Text>
           <View style={{ width: 24 }} />
@@ -172,23 +203,31 @@ const Settings = () => {
 
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* App Settings */}
-          <View className="bg-white rounded-xl mx-4 my-4 overflow-hidden">
-            <Text className="text-gray-500 font-quicksandBold text-xs uppercase tracking-wider px-5 pt-4 pb-2">
+          <View
+            className={`rounded-xl mx-4 my-4 overflow-hidden ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}
+          >
+            <Text
+              className={`font-quicksandBold text-xs uppercase tracking-wider px-5 pt-4 pb-2 ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
               App Settings
             </Text>
 
             <SettingItem
               icon="moon-outline"
               title="Dark Mode"
-              description="Coming soon"
-              // rightComponent={
-              //   <Switch
-              //     value={darkMode}
-              //     onValueChange={setDarkMode}
-              //     trackColor={{ false: "#E5E7EB", true: "#A5B4FC" }}
-              //     thumbColor={darkMode ? "#4F46E5" : "#F3F4F6"}
-              //   />
-              // }
+              description="Toggle dark mode"
+              rightComponent={
+                <Switch
+                  value={isDark}
+                  onValueChange={toggleTheme}
+                  trackColor={{ false: "#E5E7EB", true: "#A5B4FC" }}
+                  thumbColor={isDark ? "#4F46E5" : "#F3F4F6"}
+                />
+              }
             />
 
             <SettingItem
@@ -223,15 +262,23 @@ const Settings = () => {
                       showNotificationSettings ? "chevron-up" : "chevron-down"
                     }
                     size={20}
-                    color="#9CA3AF"
+                    color={isDark ? "#9CA3AF" : "#9CA3AF"}
                   />
                 </View>
               }
             />
 
             {showNotificationSettings && (
-              <View className="px-5 py-4 border-t border-gray-100">
-                <Text className="text-gray-500 font-quicksand text-sm mb-3">
+              <View
+                className={`px-5 py-4 border-t ${
+                  isDark ? "border-gray-700" : "border-gray-100"
+                }`}
+              >
+                <Text
+                  className={`font-quicksand text-sm mb-3 ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
                   Remind me before a task starts:
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
@@ -243,7 +290,9 @@ const Settings = () => {
                         className={`px-4 py-2 rounded-full border ${
                           selected
                             ? "bg-indigo-100 border-indigo-300"
-                            : "bg-white border-gray-200"
+                            : isDark
+                              ? "bg-gray-700 border-gray-600"
+                              : "bg-white border-gray-200"
                         }`}
                         onPress={async () => {
                           setLeadMinutes(m);
@@ -253,7 +302,11 @@ const Settings = () => {
                       >
                         <Text
                           className={`font-quicksand text-sm ${
-                            selected ? "text-indigo-700" : "text-gray-700"
+                            selected
+                              ? "text-indigo-700"
+                              : isDark
+                                ? "text-gray-300"
+                                : "text-gray-700"
                           }`}
                         >
                           {m} mins
@@ -262,7 +315,11 @@ const Settings = () => {
                     );
                   })}
                 </View>
-                <Text className="text-gray-400 font-quicksand mt-2 text-xs">
+                <Text
+                  className={`font-quicksand mt-2 text-xs ${
+                    isDark ? "text-gray-500" : "text-gray-400"
+                  }`}
+                >
                   This applies to new reminders you schedule for tasks.
                 </Text>
               </View>
@@ -270,8 +327,16 @@ const Settings = () => {
           </View>
 
           {/* Account */}
-          <View className="bg-white rounded-xl mx-4 my-4 overflow-hidden">
-            <Text className="text-gray-500 font-quicksandBold text-xs uppercase tracking-wider px-5 pt-4 pb-2">
+          <View
+            className={`rounded-xl mx-4 my-4 overflow-hidden ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}
+          >
+            <Text
+              className={`font-quicksandBold text-xs uppercase tracking-wider px-5 pt-4 pb-2 ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
               Account
             </Text>
 
@@ -291,8 +356,16 @@ const Settings = () => {
           </View>
 
           {/* Support */}
-          <View className="bg-white rounded-xl mx-4 my-4 overflow-hidden">
-            <Text className="text-gray-500 font-quicksandBold text-xs uppercase tracking-wider px-5 pt-4 pb-2">
+          <View
+            className={`rounded-xl mx-4 my-4 overflow-hidden ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}
+          >
+            <Text
+              className={`font-quicksandBold text-xs uppercase tracking-wider px-5 pt-4 pb-2 ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
               Support
             </Text>
 
@@ -317,10 +390,18 @@ const Settings = () => {
 
           {/* App Info */}
           <View className="items-center py-6">
-            <Text className="text-gray-400 font-quicksand text-sm">
+            <Text
+              className={`font-quicksand text-sm ${
+                isDark ? "text-gray-400" : "text-gray-400"
+              }`}
+            >
               Schoolify v{appVersion}
             </Text>
-            <Text className="text-gray-400 font-quicksand text-xs mt-1">
+            <Text
+              className={`font-quicksand text-xs mt-1 ${
+                isDark ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
               {new Date().getFullYear()} Schoolify. All rights reserved.
             </Text>
           </View>

@@ -1,37 +1,62 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useState } from "react";
-import { useColorScheme } from "react-native";
-
+import { ActivityIndicator, View } from "react-native";
 export const ThemeContext = createContext({
   isDark: false,
   toggleTheme: () => {},
+  colors: {},
 });
 
-export const ThemeProvider = ({ children }) => {
-  const systemColorScheme = useColorScheme();
-  const [isDark, setIsDark] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+const lightColors = {
+  background: ["#FFFBF5", "#FEFBF6"],
+  card: "#FFFFFF",
+  text: "#1F2937",
+  textSecondary: "#6B7280",
+  border: "#E5E7EB",
+  primary: "#4F46E5",
+  secondary: "#7C3AED",
+  success: "#10B981",
+  warning: "#F59E0B",
+  error: "#EF4444",
+  gray: "#9CA3AF",
+};
 
-  // Load saved theme preference
+const darkColors = {
+  background: ["#1F2937", "#111827"],
+  card: "#374151",
+  text: "#F9FAFB",
+  textSecondary: "#D1D5DB",
+  border: "#4B5563",
+  primary: "#6366F1",
+  secondary: "#8B5CF6",
+  success: "#34D399",
+  warning: "#FBBF24",
+  error: "#F87171",
+  gray: "#6B7280",
+};
+
+export const ThemeProvider = ({ children }) => {
+  // Combine useState calls to maintain consistent order
+  const [isDark, setIsDark] = useState(true); // Hardcode dark mode
+  const [isThemeLoading, setIsThemeLoading] = useState(false);
+
+  // Load saved theme preference (for production)
   useEffect(() => {
-    const loadThemePreference = async () => {
+    const loadTheme = async () => {
+      setIsThemeLoading(true);
       try {
         const savedTheme = await AsyncStorage.getItem("theme");
         if (savedTheme) {
           setIsDark(savedTheme === "dark");
-        } else {
-          // If no saved preference, use system theme
-          setIsDark(systemColorScheme === "dark");
         }
       } catch (error) {
         console.error("Failed to load theme preference", error);
       } finally {
-        setIsLoaded(true);
+        setIsThemeLoading(false);
       }
     };
-
-    loadThemePreference();
-  }, [systemColorScheme]);
+    loadTheme();
+  }, []);
 
   const toggleTheme = async () => {
     try {
@@ -43,12 +68,26 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  if (!isLoaded) {
-    return null; // or a loading spinner
+  const colors = isDark ? darkColors : lightColors;
+
+  // Show loading indicator while theme loads
+  if (isThemeLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#1F2937",
+        }}
+      >
+        <ActivityIndicator size="large" color="#F9FAFB" />
+      </View>
+    );
   }
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme, colors }}>
       {children}
     </ThemeContext.Provider>
   );

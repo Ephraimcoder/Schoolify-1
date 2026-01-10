@@ -51,6 +51,7 @@ const mapTaskModelToUi = (m) => ({
   subTasks: m.subtasksJson ? JSON.parse(m.subtasksJson) : [],
   notificationId: m.notificationId || null,
   date: m.createdAt ? m.createdAt.toISOString() : null,
+  updatedAt: m.updatedAt ? m.updatedAt.toISOString() : null,
   color: m.color || undefined,
 });
 
@@ -90,12 +91,6 @@ export const TaskProvider = ({ children }) => {
   // Load initial data from WatermelonDB
   const loadInitialData = useCallback(async () => {
     try {
-      // Skip if data is already loaded
-      if (tasks.length > 0 && categories.length > 0 && priorities.length > 0) {
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
 
       // Load tasks
@@ -144,12 +139,14 @@ export const TaskProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [tasks.length, categories.length, priorities.length, user?.accountId]);
+  }, [user?.accountId]);
 
-  // Load data on component mount
+  // Load data on component mount and user change
   useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData]);
+    if (user?.accountId) {
+      loadInitialData();
+    }
+  }, [loadInitialData, user?.accountId]);
 
   // Add a new task
   const addTask = useCallback(
@@ -547,16 +544,8 @@ export const TaskProvider = ({ children }) => {
       syncError,
       subTasks,
       formData,
-      handleAddTask,
-      resetForm,
-      addTask,
-      updateTask,
-      deleteTask,
-      addSubTask,
-      deleteSubTask,
-      clearSubTasks,
-      getTaskById,
       refreshTasks,
+      getTaskById,
       addCategory,
       deleteCategory,
       addPriority,

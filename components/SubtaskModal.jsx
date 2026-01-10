@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
 export default function SubtaskModal({
   visible,
@@ -18,6 +19,7 @@ export default function SubtaskModal({
   onAddSubtask,
   onDeleteSubtask,
 }) {
+  const { isDark } = useTheme();
   const [subtaskText, setSubtaskText] = useState("");
   const [isInputFocused, setIsInputFocused] = useState(false);
 
@@ -40,9 +42,17 @@ export default function SubtaskModal({
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           className="justify-end"
         >
-          <View className="bg-white rounded-t-3xl p-6 h-[500px]">
+          <View
+            className={`rounded-t-3xl p-6 h-[500px] ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}
+          >
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-xl font-quicksandBold text-gray-900">
+              <Text
+                className={`text-xl font-quicksandBold ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
                 Add Subtasks
               </Text>
               <TouchableOpacity onPress={onClose} className="p-2">
@@ -53,11 +63,17 @@ export default function SubtaskModal({
             {/* Subtask Input */}
             <View
               className={`flex-row items-center border rounded-xl px-4 py-3 mb-4 ${
-                isInputFocused ? "border-indigo-500" : "border-gray-200"
+                isInputFocused
+                  ? "border-indigo-500"
+                  : isDark
+                    ? "border-gray-700"
+                    : "border-gray-200"
               }`}
             >
               <TextInput
-                className="flex-1 font-quicksand text-base text-gray-800"
+                className={`flex-1 font-quicksand text-base ${
+                  isDark ? "text-gray-100" : "text-gray-800"
+                }`}
                 placeholder="Add a subtask..."
                 value={subtaskText}
                 onChangeText={setSubtaskText}
@@ -85,9 +101,15 @@ export default function SubtaskModal({
                   subtasks.map((subtask, index) => (
                     <View
                       key={`subtask-${index}-${subtask.id || ""}`}
-                      className="flex-row items-center justify-between bg-gray-50 rounded-xl p-4 mb-2"
+                      className={`flex-row items-center justify-between rounded-xl p-4 mb-2 ${
+                        isDark ? "bg-gray-700" : "bg-gray-50"
+                      }`}
                     >
-                      <Text className="font-quicksand text-gray-800 flex-1">
+                      <Text
+                        className={`font-quicksand flex-1 ${
+                          isDark ? "text-gray-100" : "text-gray-800"
+                        }`}
+                      >
                         {subtask.title}
                       </Text>
                       <TouchableOpacity
@@ -105,7 +127,11 @@ export default function SubtaskModal({
                 ) : (
                   <View className="items-center py-6">
                     <Ionicons name="list-outline" size={32} color="#9CA3AF" />
-                    <Text className="text-gray-500 font-quicksand mt-2">
+                    <Text
+                      className={`font-quicksand mt-2 ${
+                        isDark ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       No subtasks yet
                     </Text>
                   </View>

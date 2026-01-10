@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
 import { showError, showSuccess, showWarning } from "../../utils/toast";
 
@@ -17,6 +18,7 @@ export default function OtpStart() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
+  const { isDark } = useTheme();
   const router = useRouter();
   const { requestEmailOtp } = useUser();
 
@@ -79,7 +81,7 @@ export default function OtpStart() {
   });
 
   return (
-    <View className="flex-1 bg-amber-50">
+    <View className={`flex-1 ${isDark ? "bg-gray-900" : "bg-amber-50"}`}>
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 24,
@@ -90,7 +92,11 @@ export default function OtpStart() {
       >
         {/* Brand header */}
         <View className="items-center">
-          <Text className="text-2xl font-quicksandBold">
+          <Text
+            className={`text-2xl font-quicksandBold ${
+              isDark ? "text-gray-100" : "text-gray-900"
+            }`}
+          >
             Schoolify<Text className="text-orange-600">.</Text>
           </Text>
         </View>
@@ -98,18 +104,30 @@ export default function OtpStart() {
         {/* Hero */}
         <View className="items-center mt-6">
           <View
-            className="w-11/12 h-44 bg-white rounded-3xl items-center justify-center"
+            className={`w-11/12 h-44 rounded-3xl items-center justify-center ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}
             style={[cardShadow]}
           >
-            <View className="w-14 h-14 rounded-full bg-orange-200" />
+            <View
+              className={`w-14 h-14 rounded-full ${
+                isDark ? "bg-orange-800" : "bg-orange-200"
+              }`}
+            />
           </View>
         </View>
 
         {/* Offline Banner */}
         {isOffline && (
-          <View className="bg-yellow-100 p-3 rounded-lg mt-6 border-l-4 border-yellow-500">
+          <View
+            className={`p-3 rounded-lg mt-6 border-l-4 ${
+              isDark
+                ? "bg-yellow-900/20 border-yellow-600"
+                : "bg-yellow-100 border-yellow-500"
+            }`}
+          >
             <Text
-              className="text-yellow-800"
+              className={`${isDark ? "text-yellow-300" : "text-yellow-800"}`}
               style={{ fontFamily: "Quicksand-Medium" }}
             >
               You're currently offline. Some features may be limited.
@@ -119,10 +137,18 @@ export default function OtpStart() {
 
         {/* Header */}
         <View className="items-center mt-8">
-          <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
+          <Text
+            className={`text-5xl font-quicksandBold text-center ${
+              isDark ? "text-gray-100" : "text-gray-900"
+            }`}
+          >
             Email OTP
           </Text>
-          <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
+          <Text
+            className={`text-xl text-center font-quicksandMedium mt-3 leading-6 ${
+              isDark ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
             Enter your email to receive a 6-digit OTP
           </Text>
         </View>
@@ -136,8 +162,12 @@ export default function OtpStart() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg"
-              placeholderTextColor="#9CA3AF"
+              className={`w-full h-16 border-2 rounded-3xl px-6 text-lg ${
+                isDark
+                  ? "bg-gray-800 border-gray-600 text-gray-100"
+                  : "bg-white border-gray-300 text-gray-900"
+              }`}
+              placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
               style={{ fontFamily: "Quicksand-Regular" }}
             />
           </View>
@@ -150,7 +180,7 @@ export default function OtpStart() {
       {/* Pinned bottom CTA + link back */}
       <View className="absolute left-6 right-6 bottom-6">
         <TouchableOpacity
-          className="bg-orange-600 h-16 rounded-full items-center justify-center"
+          className="bg-purple-600 h-16 rounded-full items-center justify-center"
           onPress={submit}
           disabled={isSubmitting}
         >
@@ -161,7 +191,9 @@ export default function OtpStart() {
 
         <View className="flex-row justify-center mt-3">
           <Text
-            className="text-gray-600 text-base"
+            className={`text-base ${
+              isDark ? "text-gray-400" : "text-gray-600"
+            }`}
             style={{ fontFamily: "Quicksand-Regular" }}
           >
             Prefer password login?{" "}

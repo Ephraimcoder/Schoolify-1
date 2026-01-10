@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useContext, useMemo } from "react";
+import { useContext, useMemo } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -10,27 +10,42 @@ import {
   View,
 } from "react-native";
 import { TasksContext } from "../context/TasksContext";
+import { useTheme } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
 const ClassCard = ({ item, onPress }) => {
+  const { isDark } = useTheme();
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="w-72 bg-white rounded-2xl p-5 mx-2 shadow-sm border border-gray-100"
+      className={`w-72 rounded-2xl p-5 mx-2 shadow-sm border ${
+        isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+      }`}
     >
       <View className="flex-row justify-between items-start mb-3">
         <View className="flex-1">
           <Text
-            className="text-base font-quicksandBold text-gray-800 mb-2"
+            className={`text-base font-quicksandBold mb-2 ${
+              isDark ? "text-gray-100" : "text-gray-800"
+            }`}
             numberOfLines={1}
           >
             {item.title}
           </Text>
-          <Text className="text-sm text-gray-600 font-quicksandSemiBold mb-1">
+          <Text
+            className={`text-sm font-quicksandSemiBold mb-1 ${
+              isDark ? "text-gray-300" : "text-gray-600"
+            }`}
+          >
             {item.priority} Priority
           </Text>
-          <Text className="text-sm text-gray-500 font-quicksandMedium">
+          <Text
+            className={`text-sm font-quicksandMedium ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
             {new Date(item.dueTime).toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
@@ -42,7 +57,12 @@ const ClassCard = ({ item, onPress }) => {
       {item.description && (
         <View className="flex-row items-center">
           <Ionicons name="document-text-outline" size={14} color="#6B7280" />
-          <Text className="text-xs text-gray-600 ml-1" numberOfLines={1}>
+          <Text
+            className={`text-xs ml-1 ${
+              isDark ? "text-gray-400" : "text-gray-600"
+            }`}
+            numberOfLines={1}
+          >
             {item.description}
           </Text>
         </View>
@@ -51,8 +71,9 @@ const ClassCard = ({ item, onPress }) => {
   );
 };
 
-const ClassesSection = React.memo(() => {
+const ClassesSection = () => {
   const { tasks, isLoading } = useContext(TasksContext);
+  const { isDark, colors } = useTheme();
   const router = useRouter();
 
   // Filter and memoize class tasks
@@ -70,7 +91,13 @@ const ClassesSection = React.memo(() => {
     return (
       <View className="my-4 px-2">
         <View className="flex-row justify-between items-center mb-3">
-          <Text className="text-lg font-quicksandBold">My Classes</Text>
+          <Text
+            className={`text-lg font-quicksandBold ${
+              isDark ? "text-gray-100" : "text-gray-800"
+            }`}
+          >
+            My Classes
+          </Text>
           <TouchableOpacity>
             <Text className="text-indigo-600 font-quicksandSemiBold">
               See All
@@ -85,7 +112,19 @@ const ClassesSection = React.memo(() => {
   return (
     <View className="my-4">
       <View className="flex-row justify-between items-center mb-3 px-2">
-        <Text className="text-lg font-quicksandBold">My Classes</Text>
+        <Text
+          className={`text-lg font-quicksandBold ${
+            isDark ? "text-gray-100" : "text-gray-800"
+          }`}
+        >
+          <Text
+            className={`text-lg font-quicksandBold ${
+              isDark ? "text-gray-100" : "text-gray-800"
+            }`}
+          >
+            My Classes
+          </Text>
+        </Text>
         <TouchableOpacity
           onPress={() =>
             router.push({
@@ -129,7 +168,11 @@ const ClassesSection = React.memo(() => {
             color="#9CA3AF"
             style={{ marginBottom: 12, opacity: 0.7 }}
           />
-          <Text className="text-gray-500 font-quicksandMedium text-center text-base">
+          <Text
+            className={`text-gray-500 font-quicksandMedium text-center text-base ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
             You don't have any classes yet.
           </Text>
           <TouchableOpacity
@@ -149,7 +192,7 @@ const ClassesSection = React.memo(() => {
       )}
     </View>
   );
-});
+};
 
 ClassesSection.displayName = "ClassesSection";
 

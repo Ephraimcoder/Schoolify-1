@@ -9,9 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { useTheme } from "../context/ThemeContext";
 export const AnalyticsModal = ({ visible, onClose, tasks }) => {
   const [isCalculating, setIsCalculating] = useState(false);
+  const { isDark } = useTheme();
 
   const stats = useMemo(() => {
     setIsCalculating(true);
@@ -183,21 +184,39 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       onRequestClose={onClose}
     >
       <View className="flex-1 bg-black/50 justify-center p-5">
-        <View className="bg-white rounded-2xl p-6 max-h-[90%]">
+        <View
+          className={`rounded-2xl p-6 max-h-[90%] ${
+            isDark ? "bg-gray-800" : "bg-white"
+          }`}
+        >
           <View className="flex-row justify-between items-center mb-4">
             <View>
-              <Text className="text-2xl font-quicksandBold">
+              <Text
+                className={`text-2xl font-quicksandBold ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
                 Task Analytics
               </Text>
-              <Text className="text-gray-500 font-quicksand">
+              <Text
+                className={`font-quicksand ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
                 Your productivity insights
               </Text>
             </View>
             <TouchableOpacity
               onPress={onClose}
-              className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+              className={`w-10 h-10 rounded-full items-center justify-center ${
+                isDark ? "bg-gray-700" : "bg-gray-100"
+              }`}
             >
-              <Ionicons name="close" size={24} color="#6B7280" />
+              <Ionicons
+                name="close"
+                size={24}
+                color={isDark ? "#9CA3AF" : "#6B7280"}
+              />
             </TouchableOpacity>
           </View>
 
@@ -205,34 +224,68 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
             {/* Loading State */}
             {isCalculating ? (
               <View className="flex-1 items-center justify-center py-20">
-                <View className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-                <Text className="text-gray-500 font-quicksand">
+                <View
+                  className={`w-12 h-12 border-4 border-t-indigo-600 rounded-full animate-spin mb-4 ${
+                    isDark ? "border-indigo-400" : "border-indigo-200"
+                  }`}
+                />
+                <Text
+                  className={`font-quicksand ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
                   Calculating analytics...
                 </Text>
-                <Text className="text-gray-400 font-quicksand text-sm mt-2">
+                <Text
+                  className={`font-quicksand text-sm mt-2 ${
+                    isDark ? "text-gray-500" : "text-gray-400"
+                  }`}
+                >
                   Please wait a moment
                 </Text>
               </View>
             ) : (
               <>
                 {/* Task Overview */}
-                <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                  <Text className="text-lg font-quicksandBold mb-4">
+                <View
+                  className={`mb-6 rounded-xl p-4 border shadow-sm ${
+                    isDark
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-100"
+                  }`}
+                >
+                  <Text
+                    className={`text-lg font-quicksandBold mb-4 ${
+                      isDark ? "text-gray-100" : "text-gray-900"
+                    }`}
+                  >
                     Task Overview
                   </Text>
 
                   {/* Stats Cards */}
                   <View className="flex-row gap-4 mb-6">
-                    <View className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                    <View
+                      className={`flex-1 rounded-xl p-4 border ${
+                        isDark
+                          ? "bg-blue-900/20 border-blue-700/30"
+                          : "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
+                      }`}
+                    >
                       <View className="flex-row items-center mb-2">
-                        <View className="w-8 h-8 bg-blue-500 rounded-full items-center justify-center mr-3">
+                        <View
+                          className={`w-8 h-8 bg-blue-500 rounded-full items-center justify-center mr-3`}
+                        >
                           <Ionicons
                             name="checkmark-done"
                             size={16}
                             color="white"
                           />
                         </View>
-                        <Text className="text-blue-600 text-sm font-quicksandMedium">
+                        <Text
+                          className={`text-sm font-quicksandMedium ${
+                            isDark ? "text-blue-300" : "text-blue-600"
+                          }`}
+                        >
                           Completed
                         </Text>
                       </View>
@@ -241,16 +294,32 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                       </Text>
                     </View>
 
-                    <View className="flex-1 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                    <View
+                      className={`flex-1 rounded-xl p-4 border ${
+                        isDark
+                          ? "bg-orange-900/20 border-orange-700/30"
+                          : "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
+                      }`}
+                    >
                       <View className="flex-row items-center mb-2">
-                        <View className="w-8 h-8 bg-orange-500 rounded-full items-center justify-center mr-3">
+                        <View
+                          className={`w-8 h-8 bg-orange-500 rounded-full items-center justify-center mr-3`}
+                        >
                           <Ionicons name="time" size={16} color="white" />
                         </View>
-                        <Text className="text-orange-600 text-sm font-quicksandMedium">
+                        <Text
+                          className={`text-sm font-quicksandMedium ${
+                            isDark ? "text-orange-300" : "text-orange-600"
+                          }`}
+                        >
                           Pending
                         </Text>
                       </View>
-                      <Text className="text-orange-700 text-2xl font-quicksandBold">
+                      <Text
+                        className={`text-2xl font-quicksandBold ${
+                          isDark ? "text-orange-300" : "text-orange-700"
+                        }`}
+                      >
                         {stats.pending}
                       </Text>
                     </View>
@@ -259,60 +328,116 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                   {/* Completion Stats */}
                   <View className="mb-4">
                     <View className="flex-row justify-between items-center mb-2">
-                      <Text className="text-gray-700 font-quicksandMedium">
+                      <Text
+                        className={`font-quicksandMedium ${
+                          isDark ? "text-gray-400" : "text-gray-700"
+                        }`}
+                      >
                         Completion Rate
                       </Text>
-                      <View className="bg-indigo-100 px-3 py-1 rounded-full">
-                        <Text className="font-quicksandBold text-indigo-700 text-sm">
+                      <View
+                        className={`px-3 py-1 rounded-full ${
+                          isDark ? "bg-indigo-900/30" : "bg-indigo-100"
+                        }`}
+                      >
+                        <Text
+                          className={`font-quicksandBold text-sm ${
+                            isDark ? "text-indigo-300" : "text-indigo-700"
+                          }`}
+                        >
                           {stats.completionRate}%
                         </Text>
                       </View>
                     </View>
-                    <View className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <View
+                      className={`h-3 rounded-full overflow-hidden ${
+                        isDark ? "bg-purple-900/30" : "bg-gray-100"
+                      }`}
+                    >
                       <View
-                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full shadow-sm"
+                        className={`h-full bg-gradient-to-r rounded-full shadow-sm ${
+                          isDark
+                            ? "from-purple-500 to-purple-600"
+                            : "from-indigo-500 to-indigo-600"
+                        }`}
                         style={{ width: `${stats.completionRate}%` }}
                       />
                     </View>
                     <View className="flex-row justify-between mt-3">
-                      <Text className="text-sm text-gray-600 font-quicksand">
+                      <Text
+                        className={`text-sm font-quicksand ${
+                          isDark ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
                         {stats.completed} completed • {stats.pending} remaining
                       </Text>
-                      <Text className="text-sm text-gray-600 font-quicksand">
+                      <Text
+                        className={`text-sm font-quicksand ${
+                          isDark ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
                         {stats.total} total
                       </Text>
                     </View>
                   </View>
 
                   {/* Streak */}
-                  <View className="mt-5 pt-4 border-t border-gray-100">
+                  <View
+                    className={`mt-5 pt-4 border-t ${
+                      isDark ? "border-gray-600" : "border-gray-100"
+                    }`}
+                  >
                     <View className="flex-row items-start justify-between px-1">
                       <View className="flex-row items-center space-x-3 gap-2">
                         <View className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-full shadow-sm">
                           <Ionicons name="flame" size={18} color="white" />
                         </View>
                         <View>
-                          <Text className="text-gray-600 font-quicksandMedium text-[13px] mb-0.5">
+                          <Text
+                            className={`font-quicksandMedium text-[13px] mb-0.5 ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
                             Current Streak
                           </Text>
                           <View className="flex-row items-baseline space-x-1.5">
-                            <Text className="text-2xl font-quicksandBold text-purple-600">
+                            <Text
+                              className={`text-2xl font-quicksandBold ${
+                                isDark ? "text-purple-400" : "text-purple-600"
+                              }`}
+                            >
                               {stats.streak}
                             </Text>
-                            <Text className="text-gray-500 font-quicksand text-[13px] mb-0.5">
+                            <Text
+                              className={`font-quicksand text-[13px] mb-0.5 ${
+                                isDark ? "text-gray-500" : "text-gray-500"
+                              }`}
+                            >
                               {stats.streak === 1 ? "day" : "days"}
                             </Text>
                           </View>
                         </View>
                       </View>
                       <View className="items-end max-w-[45%]">
-                        <Text className="text-gray-600 font-quicksandMedium text-[13px] mb-0.5 text-right">
+                        <Text
+                          className={`font-quicksandMedium text-[13px] mb-0.5 text-right ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
                           Most Productive
                         </Text>
-                        <View className="flex-row items-center space-x-1.5 bg-gradient-to-r from-green-50 to-green-100 rounded-lg px-3 py-2 border border-green-200">
+                        <View
+                          className={`flex-row items-center space-x-1.5 rounded-lg px-3 py-2 border ${
+                            isDark
+                              ? "bg-green-900/20 border-green-700/30"
+                              : "bg-gradient-to-r from-green-50 to-green-100 border-green-200"
+                          }`}
+                        >
                           <Ionicons name="calendar" size={14} color="#10B981" />
                           <Text
-                            className="text-green-700 font-quicksandBold text-[13px] text-right"
+                            className={`font-quicksandBold text-[13px] text-right ${
+                              isDark ? "text-green-300" : "text-green-700"
+                            }`}
                             numberOfLines={3}
                             ellipsizeMode="tail"
                           >
@@ -322,8 +447,18 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                       </View>
                     </View>
                     {stats.streak > 0 && (
-                      <View className="mt-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-3 mx-1 border border-purple-200">
-                        <Text className="text-purple-700 font-quicksand text-xs text-center">
+                      <View
+                        className={`mt-3 rounded-lg p-3 mx-1 border ${
+                          isDark
+                            ? "bg-purple-900/20 border-purple-700/30"
+                            : "bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200"
+                        }`}
+                      >
+                        <Text
+                          className={`font-quicksand text-xs text-center ${
+                            isDark ? "text-purple-300" : "text-purple-700"
+                          }`}
+                        >
                           {stats.streak >= 3 ? "🔥 " : "✨ "}
                           {getStreakMessage(stats.streak)}
                         </Text>
@@ -334,8 +469,18 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
 
                 {/* Categories */}
                 {Object.keys(stats.categoryCounts).length > 0 && (
-                  <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                    <Text className="text-lg font-quicksandBold mb-4">
+                  <View
+                    className={`mb-6 rounded-xl p-4 border shadow-sm ${
+                      isDark
+                        ? "bg-gray-700 border-gray-600"
+                        : "bg-white border-gray-100"
+                    }`}
+                  >
+                    <Text
+                      className={`text-lg font-quicksandBold mb-4 ${
+                        isDark ? "text-gray-100" : "text-gray-900"
+                      }`}
+                    >
                       Tasks by Category
                     </Text>
                     <View className="space-y-4 gap-2">
@@ -366,7 +511,11 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                                     className="w-4 h-4 rounded-full mr-3 shadow-sm"
                                     style={{ backgroundColor: color }}
                                   />
-                                  <Text className="text-gray-700 font-quicksandMedium">
+                                  <Text
+                                    className={`font-quicksandMedium ${
+                                      isDark ? "text-gray-300" : "text-gray-700"
+                                    }`}
+                                  >
                                     {category}
                                   </Text>
                                 </View>
@@ -382,12 +531,20 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                                       {percentage}%
                                     </Text>
                                   </View>
-                                  <Text className="text-gray-600 font-quicksand text-sm">
+                                  <Text
+                                    className={`font-quicksand text-sm ${
+                                      isDark ? "text-gray-400" : "text-gray-600"
+                                    }`}
+                                  >
                                     {count} {count === 1 ? "task" : "tasks"}
                                   </Text>
                                 </View>
                               </View>
-                              <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <View
+                                className={`h-2 rounded-full overflow-hidden ${
+                                  isDark ? "bg-gray-700" : "bg-gray-100"
+                                }`}
+                              >
                                 <View
                                   className="h-full rounded-full shadow-sm"
                                   style={{
@@ -406,8 +563,18 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                 )}
 
                 {/* Priority */}
-                <View className="mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                  <Text className="text-lg font-quicksandBold mb-4">
+                <View
+                  className={`mb-6 rounded-xl p-4 border shadow-sm ${
+                    isDark
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-100"
+                  }`}
+                >
+                  <Text
+                    className={`text-lg font-quicksandBold mb-4 ${
+                      isDark ? "text-gray-100" : "text-gray-900"
+                    }`}
+                  >
                     Tasks by Priority
                   </Text>
                   <View className="space-y-3">
@@ -440,7 +607,11 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                                 className="w-4 h-4 rounded-full mr-3 shadow-sm"
                                 style={{ backgroundColor: color }}
                               />
-                              <Text className="text-gray-700 font-quicksandMedium">
+                              <Text
+                                className={`font-quicksandMedium ${
+                                  isDark ? "text-gray-300" : "text-gray-700"
+                                }`}
+                              >
                                 {priorityLabel} Priority
                               </Text>
                             </View>
@@ -456,12 +627,20 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                                   {percentage}%
                                 </Text>
                               </View>
-                              <Text className="text-gray-600 font-quicksand text-sm">
+                              <Text
+                                className={`font-quicksand text-sm ${
+                                  isDark ? "text-gray-400" : "text-gray-600"
+                                }`}
+                              >
                                 {count} {count === 1 ? "task" : "tasks"}
                               </Text>
                             </View>
                           </View>
-                          <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <View
+                            className={`h-2 rounded-full overflow-hidden ${
+                              isDark ? "bg-gray-700" : "bg-gray-100"
+                            }`}
+                          >
                             <View
                               className="h-full rounded-full shadow-sm"
                               style={{
@@ -478,8 +657,18 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                 </View>
 
                 {/* Productivity Tips */}
-                <View className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-xl p-4 mb-4 border border-indigo-200 shadow-sm">
-                  <Text className="font-quicksandBold text-indigo-800 mb-2 flex-row items-center">
+                <View
+                  className={`rounded-xl p-4 mb-4 border shadow-sm ${
+                    isDark
+                      ? "bg-indigo-900/20 border-indigo-700/30"
+                      : "bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200"
+                  }`}
+                >
+                  <Text
+                    className={`font-quicksandBold mb-2 flex-row items-center ${
+                      isDark ? "text-indigo-300" : "text-indigo-800"
+                    }`}
+                  >
                     <Ionicons
                       name="bulb"
                       size={16}
@@ -488,7 +677,11 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                     />
                     Productivity Tip
                   </Text>
-                  <Text className="text-indigo-700 font-quicksand text-sm">
+                  <Text
+                    className={`font-quicksand text-sm ${
+                      isDark ? "text-indigo-300" : "text-indigo-700"
+                    }`}
+                  >
                     {getProductivityTip(
                       stats.completionRate,
                       stats.streak,

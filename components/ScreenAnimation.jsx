@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Animated } from "react-native";
 
-const ScreenAnimation = ({ children, duration = 400 }) => {
+const ScreenAnimation = ({ children, duration = 200 }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   useEffect(() => {
-    // Reset animations to initial values every time component mounts/re-renders
-    fadeAnim.setValue(0);
-    slideAnim.setValue(30);
+    // Only run animation once per component instance
+    if (hasAnimated) return;
 
     // Start animation immediately after mount
     const timer = setTimeout(() => {
@@ -23,11 +23,13 @@ const ScreenAnimation = ({ children, duration = 400 }) => {
           duration,
           useNativeDriver: true,
         }),
-      ]).start(() => {});
-    }, 100); // Small delay to ensure component is mounted
+      ]).start(() => {
+        setHasAnimated(true);
+      });
+    }, 50); // Reduced delay for faster response
 
     return () => clearTimeout(timer);
-  }, []); // Run every time the component mounts
+  }, [hasAnimated]); // Only run when hasAnimated changes
 
   return (
     <Animated.View

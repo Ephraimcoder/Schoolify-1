@@ -5,13 +5,14 @@ import { useState } from "react";
 import {
   Platform,
   ScrollView,
+  StatusBar,
   Switch,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { useTheme } from "../../../context/ThemeContext";
 // UI-only: subtle shadow styling for hero card
 const cardShadow = Platform.select({
   ios: {
@@ -28,6 +29,7 @@ export default function BackupSettings() {
   const router = useRouter();
   const database = useDatabase();
   const [backupEnabled, setBackupEnabled] = useState(true);
+  const { isDark, colors } = useTheme();
 
   const handleNext = async () => {
     try {
@@ -63,7 +65,11 @@ export default function BackupSettings() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-amber-50">
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: colors.background[0] }}
+    >
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 24,
@@ -74,16 +80,19 @@ export default function BackupSettings() {
       >
         {/* Brand header */}
         <View className="items-center">
-          <Text className="text-2xl font-quicksandBold">
-            Schoolify<Text className="text-orange-600">.</Text>
+          <Text
+            className="text-2xl font-quicksandBold"
+            style={{ color: colors.text }}
+          >
+            Schoolify<Text style={{ color: colors.primary }}>.</Text>
           </Text>
         </View>
 
         {/* Hero card with illustration */}
         <View className="items-center mt-6">
           <View
-            className="w-11/12 h-44 bg-white rounded-3xl items-center justify-center overflow-hidden"
-            style={[cardShadow]}
+            className="w-11/12 h-44 rounded-3xl items-center justify-center overflow-hidden"
+            style={[cardShadow, { backgroundColor: colors.card }]}
           >
             {/* Cloud backup illustration */}
             <View className="items-center">
@@ -98,10 +107,16 @@ export default function BackupSettings() {
                 </View>
               </View>
 
-              <Text className="text-gray-800 font-quicksandBold text-lg text-center">
+              <Text
+                className="font-quicksandBold text-lg text-center"
+                style={{ color: colors.text }}
+              >
                 Backup Your Data
               </Text>
-              <Text className="text-gray-600 font-quicksandMedium text-sm text-center mt-1">
+              <Text
+                className="font-quicksandMedium text-sm text-center mt-1"
+                style={{ color: colors.textSecondary }}
+              >
                 Never lose your tasks and progress
               </Text>
             </View>
@@ -110,24 +125,39 @@ export default function BackupSettings() {
 
         {/* Header */}
         <View className="items-center mt-8">
-          <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
+          <Text
+            className="text-5xl font-quicksandBold text-center"
+            style={{ color: colors.text }}
+          >
             Auto Backup
           </Text>
-          <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
+          <Text
+            className="text-xl text-center font-quicksandMedium mt-3 leading-6"
+            style={{ color: colors.textSecondary }}
+          >
             Keep your data safe with automatic{"\n"}cloud backups
           </Text>
         </View>
 
         {/* Settings Card */}
         <View className="mt-10">
-          <View className="bg-white rounded-3xl p-8">
+          <View
+            className="rounded-3xl p-8"
+            style={{ backgroundColor: colors.card }}
+          >
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
-                <Text className="text-gray-800 font-quicksandBold text-lg">
+                <Text
+                  className="font-quicksandBold text-lg"
+                  style={{ color: colors.text }}
+                >
                   Enable Auto Backup
                 </Text>
-                <Text className="text-gray-600 font-quicksandMedium text-sm mt-1">
-                  Automatically save your tasks to the cloud
+                <Text
+                  className="font-quicksandMedium text-sm mt-1"
+                  style={{ color: colors.textSecondary }}
+                >
+                  Automatically save your tasks to cloud
                 </Text>
               </View>
               <Switch
@@ -144,7 +174,10 @@ export default function BackupSettings() {
                 <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-3">
                   <Ionicons name="checkmark" size={16} color="#16A34A" />
                 </View>
-                <Text className="text-gray-700 font-quicksandMedium text-sm">
+                <Text
+                  className="font-quicksandMedium text-sm"
+                  style={{ color: colors.text }}
+                >
                   Restore data on any device
                 </Text>
               </View>
@@ -152,7 +185,10 @@ export default function BackupSettings() {
                 <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-3">
                   <Ionicons name="checkmark" size={16} color="#16A34A" />
                 </View>
-                <Text className="text-gray-700 font-quicksandMedium text-sm">
+                <Text
+                  className="font-quicksandMedium text-sm"
+                  style={{ color: colors.text }}
+                >
                   Never lose your progress
                 </Text>
               </View>
@@ -160,7 +196,10 @@ export default function BackupSettings() {
                 <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-3">
                   <Ionicons name="checkmark" size={16} color="#16A34A" />
                 </View>
-                <Text className="text-gray-700 font-quicksandMedium text-sm">
+                <Text
+                  className="font-quicksandMedium text-sm"
+                  style={{ color: colors.text }}
+                >
                   Sync across all your devices
                 </Text>
               </View>
@@ -168,13 +207,14 @@ export default function BackupSettings() {
           </View>
         </View>
 
-        {/* Bottom spacing reserved for the pinned CTA */}
+        {/* Bottom spacing reserved for pinned CTA */}
         <View className="h-10" />
 
         {/* CTA + skip */}
         <View className="mt-6">
           <TouchableOpacity
-            className="bg-orange-600 h-16 rounded-full items-center justify-center"
+            className="h-16 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.primary }}
             onPress={handleNext}
           >
             <Text className="text-white font-quicksandBold text-lg">
@@ -183,7 +223,10 @@ export default function BackupSettings() {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleSkip} className="mt-3 items-center">
-            <Text className="text-gray-500 font-quicksandMedium text-base">
+            <Text
+              className="font-quicksandMedium text-base"
+              style={{ color: colors.textSecondary }}
+            >
               Skip for now
             </Text>
           </TouchableOpacity>

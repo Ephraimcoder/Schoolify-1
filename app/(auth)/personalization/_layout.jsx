@@ -9,6 +9,7 @@ export default function PersonalizationLayout() {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="daily-reminder" options={{ headerShown: false }} />
+      <Stack.Screen name="theme-selection" options={{ headerShown: false }} />
     </Stack>
   );
 }

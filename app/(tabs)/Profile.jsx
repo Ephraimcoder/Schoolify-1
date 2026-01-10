@@ -15,38 +15,76 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AnalyticsModal } from "../../components/AnalyticsModal";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import { useAppwriteSync, useTasks } from "../../context/TasksContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
 
-const SectionItem = ({ icon, label, onPress }) => (
+const SectionItem = ({ icon, label, onPress, isDark }) => (
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.85}
-    className="flex-row items-center justify-between bg-white rounded-2xl py-4 px-4 mb-3 border border-gray-100"
+    className={`flex-row items-center justify-between rounded-2xl py-4 px-4 mb-3 border ${
+      isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+    }`}
   >
     <View className="flex-row items-center">
-      <View className="w-10 h-10 rounded-full bg-gray-50 justify-center items-center mr-3">
-        <Ionicons name={icon} size={20} color="#374151" />
+      <View
+        className={`w-10 h-10 rounded-full justify-center items-center mr-3 ${
+          isDark ? "bg-gray-700" : "bg-gray-50"
+        }`}
+      >
+        <Ionicons
+          name={icon}
+          size={20}
+          color={isDark ? "#D1D5DB" : "#374151"}
+        />
       </View>
-      <Text className="text-gray-800 font-quicksandSemiBold text-base">
+      <Text
+        className={`font-quicksandSemiBold text-base ${
+          isDark ? "text-gray-100" : "text-gray-800"
+        }`}
+      >
         {label}
       </Text>
     </View>
-    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+    <Ionicons
+      name="chevron-forward"
+      size={20}
+      color={isDark ? "#9CA3AF" : "#9CA3AF"}
+    />
   </TouchableOpacity>
 );
 
-const StatCard = ({ icon, value, label, color = "#6B7280", onPress }) => (
+const StatCard = ({
+  icon,
+  value,
+  label,
+  color = "#6B7280",
+  onPress,
+  isDark,
+}) => (
   <TouchableOpacity
     onPress={onPress}
-    className="flex-1 bg-white rounded-2xl p-4 mr-3 last:mr-0 border border-gray-100"
+    className={`flex-1 rounded-2xl p-4 mr-3 last:mr-0 border ${
+      isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+    }`}
   >
     <View className="flex-row items-center mb-2">
       <Ionicons name={icon} size={18} color={color} />
-      <Text className="ml-2 font-quicksandBold text-gray-800 text-base">
+      <Text
+        className={`ml-2 font-quicksandBold text-base ${
+          isDark ? "text-gray-100" : "text-gray-800"
+        }`}
+      >
         {value}
       </Text>
     </View>
-    <Text className="text-gray-500 font-quicksand text-xs">{label}</Text>
+    <Text
+      className={`text-xs font-quicksand ${
+        isDark ? "text-gray-400" : "text-gray-500"
+      }`}
+    >
+      {label}
+    </Text>
   </TouchableOpacity>
 );
 
@@ -55,6 +93,7 @@ const Profile = () => {
   const { user, logout } = useUser();
   const { tasks } = useTasks();
   const [isOnline, setIsOnline] = useState(true);
+  const { isDark } = useTheme();
   const {
     isSyncing,
     syncError,
@@ -203,7 +242,12 @@ const Profile = () => {
       `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=4F46E5&color=fff`,
     stats,
     options: [
-      { id: "personal", label: "Personal Details", icon: "person-outline" },
+      {
+        id: "personal",
+        label: "Personal Details",
+        icon: "person-outline",
+        onPress: () => router.push("/personal-details"),
+      },
     ],
   };
 
@@ -214,16 +258,30 @@ const Profile = () => {
 
   return (
     <ScreenAnimation duration={400}>
-      <SafeAreaView className="flex-1 bg-[#FEFBF6]">
+      <SafeAreaView
+        className={`flex-1 ${isDark ? "bg-gray-900" : "bg-[#FEFBF6]"}`}
+      >
         {/* Header */}
-        <View className="flex-row justify-between items-center px-5 py-4 bg-white border-b border-gray-100">
+        <View
+          className={`flex-row justify-between items-center px-5 py-4 border-b ${
+            isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+          }`}
+        >
           <TouchableOpacity
             onPress={() => router.back()}
             className="w-12 h-12 rounded-full items-center justify-center"
           >
-            <Ionicons name="arrow-back" size={28} color="#111827" />
+            <Ionicons
+              name="arrow-back"
+              size={28}
+              color={isDark ? "#D1D5DB" : "#111827"}
+            />
           </TouchableOpacity>
-          <Text className="text-xl font-quicksandBold text-gray-900">
+          <Text
+            className={`text-xl font-quicksandBold ${
+              isDark ? "text-gray-100" : "text-gray-900"
+            }`}
+          >
             My Profile
           </Text>
           <View className="w-12">
@@ -249,15 +307,29 @@ const Profile = () => {
             contentContainerStyle={{ paddingBottom: 100 }}
           >
             {/* Card header with avatar */}
-            <View className="mx-5 mt-2 bg-white rounded-3xl items-center p-6 border border-gray-100">
+            <View
+              className={`mx-5 mt-2 rounded-3xl items-center p-6 border ${
+                isDark
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-gray-100"
+              }`}
+            >
               <Image
                 source={{ uri: profile.avatar }}
                 className="w-24 h-24 rounded-full"
               />
-              <Text className="mt-3 text-xl font-quicksandBold text-gray-900">
+              <Text
+                className={`mt-3 text-xl font-quicksandBold ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
                 {profile.name || "User"}
               </Text>
-              <Text className="text-gray-500 font-quicksand text-sm">
+              <Text
+                className={`font-quicksand text-sm ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
                 {profile.email || "No email"}
               </Text>
             </View>
@@ -269,7 +341,11 @@ const Profile = () => {
                   <TouchableOpacity
                     key={stat.id}
                     onPress={stat.onPress}
-                    className="w-[48%] bg-white rounded-2xl p-4 mb-4 border border-gray-100"
+                    className={`w-[48%] rounded-2xl p-4 mb-4 border ${
+                      isDark
+                        ? "bg-gray-800 border-gray-700"
+                        : "bg-white border-gray-100"
+                    }`}
                   >
                     <View className="flex-row items-center justify-between">
                       <View
@@ -283,10 +359,18 @@ const Profile = () => {
                         />
                       </View>
                     </View>
-                    <Text className="text-2xl font-quicksandBold text-gray-900 mt-2">
+                    <Text
+                      className={`text-2xl font-quicksandBold mt-2 ${
+                        isDark ? "text-gray-100" : "text-gray-900"
+                      }`}
+                    >
                       {stat.value}
                     </Text>
-                    <Text className="text-gray-500 font-quicksand text-sm">
+                    <Text
+                      className={`font-quicksand text-sm ${
+                        isDark ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       {stat.label}
                     </Text>
                   </TouchableOpacity>
@@ -301,11 +385,8 @@ const Profile = () => {
                   key={opt.id}
                   icon={opt.icon}
                   label={opt.label}
-                  onPress={() => {
-                    if (opt.id === "personal") {
-                      router.push("/personal-details");
-                    }
-                  }}
+                  onPress={opt.onPress}
+                  isDark={isDark}
                 />
               ))}
 
@@ -314,20 +395,39 @@ const Profile = () => {
                 icon="settings-outline"
                 label="Settings"
                 onPress={() => router.push("/settings")}
+                isDark={isDark}
               />
             </View>
 
             {/* Appwrite Sync Test Section */}
             <View className="px-5 mt-5 mb-6">
-              <View className="bg-white rounded-2xl p-4 border border-gray-100">
-                <Text className="text-lg font-quicksandBold text-gray-900 mb-3">
+              <View
+                className={`rounded-2xl p-4 border ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-100"
+                }`}
+              >
+                <Text
+                  className={`text-lg font-quicksandBold mb-3 ${
+                    isDark ? "text-gray-100" : "text-gray-900"
+                  }`}
+                >
                   Sync Tasks To Cloud
                 </Text>
 
                 {/* Sync Status */}
                 {syncStatus ? (
-                  <View className="bg-gray-50 rounded-lg p-3 mb-3">
-                    <Text className="text-sm font-quicksand text-gray-700">
+                  <View
+                    className={`rounded-lg p-3 mb-3 ${
+                      isDark ? "bg-gray-700" : "bg-gray-50"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-quicksand ${
+                        isDark ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
                       {syncStatus}
                     </Text>
                   </View>
@@ -335,8 +435,16 @@ const Profile = () => {
 
                 {/* Sync Error */}
                 {syncError ? (
-                  <View className="bg-red-50 rounded-lg p-3 mb-3">
-                    <Text className="text-sm font-quicksand text-red-700">
+                  <View
+                    className={`rounded-lg p-3 mb-3 ${
+                      isDark ? "bg-red-900/20" : "bg-red-50"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-quicksand ${
+                        isDark ? "text-red-400" : "text-red-700"
+                      }`}
+                    >
                       Error: {syncError}
                     </Text>
                   </View>
@@ -346,7 +454,11 @@ const Profile = () => {
                 {isSyncing && (
                   <View className="flex-row items-center justify-center py-3 mb-3">
                     <ActivityIndicator size="small" color="#3B82F6" />
-                    <Text className="ml-2 text-sm font-quicksand text-blue-600">
+                    <Text
+                      className={`ml-2 text-sm font-quicksand ${
+                        isDark ? "text-blue-400" : "text-blue-600"
+                      }`}
+                    >
                       Syncing with Appwrite...
                     </Text>
                   </View>
@@ -381,9 +493,17 @@ const Profile = () => {
                   </TouchableOpacity>
                 </View>
 
-                <Text className="text-xs text-gray-500 mt-3 text-center">
+                <Text
+                  className={`text-xs mt-3 text-center ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
                   {!isOnline ? (
-                    <Text className="text-yellow-600 font-quicksandMedium">
+                    <Text
+                      className={`font-quicksandMedium ${
+                        isDark ? "text-yellow-400" : "text-yellow-600"
+                      }`}
+                    >
                       ⚠️ Offline: Sync requires internet connection
                     </Text>
                   ) : (
@@ -392,23 +512,22 @@ const Profile = () => {
                 </Text>
               </View>
             </View>
-          </ScrollView>
 
-          {/* Delete Account Button - Fixed at bottom */}
-          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 py-4">
-            <TouchableOpacity
-              onPress={() => {
-                // Add delete account functionality here
-                alert("Delete account functionality will be implemented here");
-              }}
-              className="flex-row items-center justify-center bg-white rounded-2xl py-4 border border-red-100"
-            >
-              <MaterialIcons name="delete-outline" size={20} color="#EF4444" />
-              <Text className="ml-2 text-red-500 font-quicksandBold">
-                Delete Account
-              </Text>
-            </TouchableOpacity>
-          </View>
+            {/* Delete Account Button - Now as last section item */}
+            <View className="px-5 mb-6">
+              <SectionItem
+                icon="trash-outline"
+                label="Delete Account"
+                onPress={() => {
+                  // Add delete account functionality here
+                  alert(
+                    "Delete account functionality will be implemented here"
+                  );
+                }}
+                isDark={isDark}
+              />
+            </View>
+          </ScrollView>
         </View>
 
         <AnalyticsModal

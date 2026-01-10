@@ -1,13 +1,14 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
-
+import { useTheme } from "../../context/ThemeContext";
 const CalendarTaskList = ({
   tasksForDay = [],
   selectedDate,
   normalizeDate,
 }) => {
   const router = useRouter();
+  const { isDark } = useTheme();
 
   const formatTime = (timeString) => {
     if (!timeString) return "";
@@ -23,8 +24,12 @@ const CalendarTaskList = ({
       <TouchableOpacity
         className={`rounded-xl p-4 mb-3 shadow-sm ${
           normalizeDate(new Date(item.dueDate)) < normalizeDate(new Date())
-            ? "bg-gray-50"
-            : "bg-white"
+            ? isDark
+              ? "bg-gray-800"
+              : "bg-gray-50"
+            : isDark
+              ? "bg-gray-700"
+              : "bg-white"
         }`}
         onPress={() =>
           router.push({
@@ -34,29 +39,47 @@ const CalendarTaskList = ({
         }
       >
         <View className="flex-row justify-between items-start">
-          <Text
-            className={`font-quicksandSemiBold text-base ${
-              item.isCompleted
-                ? "line-through text-gray-400"
-                : normalizeDate(new Date(item.dueDate)) <
-                    normalizeDate(new Date())
-                  ? "text-gray-500"
-                  : "text-gray-800"
-            }`}
-            numberOfLines={1}
-          >
-            {item.title || "No title"}
+          <View className="flex-1">
+            <Text
+              className={`font-quicksandSemiBold text-base ${
+                item.isCompleted
+                  ? "line-through text-gray-400"
+                  : normalizeDate(new Date(item.dueDate)) <
+                      normalizeDate(new Date())
+                    ? isDark
+                      ? "text-gray-400"
+                      : "text-gray-500"
+                    : isDark
+                      ? "text-gray-100"
+                      : "text-gray-800"
+              }`}
+              numberOfLines={1}
+            >
+              {item.title || "No title"}
+            </Text>
             {normalizeDate(new Date(item.dueDate)) <
               normalizeDate(new Date()) && (
-              <Text className="text-xs font-quicksandMedium text-red-500 ml-2">
+              <Text
+                className={`text-xs font-quicksandMedium mt-1 ${
+                  isDark ? "text-purple-400" : "text-red-500"
+                }`}
+              >
                 Overdue
               </Text>
             )}
-          </Text>
+          </View>
           {item.dueDate && (
             <View className="flex-row items-center ml-2">
-              <MaterialIcons name="access-time" size={14} color="#6B7280" />
-              <Text className="text-xs font-quicksandMedium text-gray-500 ml-1">
+              <MaterialIcons
+                name="access-time"
+                size={14}
+                color={isDark ? "#9CA3AF" : "#6B7280"}
+              />
+              <Text
+                className={`text-xs font-quicksandMedium ml-1 ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
                 {(() => {
                   const date = new Date(item.dueDate);
                   return date.toLocaleDateString("en-US", {

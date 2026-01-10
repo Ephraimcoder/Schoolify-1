@@ -3,10 +3,11 @@ import { router } from "expo-router";
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { TasksContext } from "../context/TasksContext";
+import { useTheme } from "../context/ThemeContext";
 import { showError, showSuccess } from "../utils/toast";
-
 const TaskCard = React.memo(({ task }) => {
   const { deleteTask } = useContext(TasksContext);
+  const { isDark } = useTheme();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleTaskPress = useCallback(() => {
@@ -79,13 +80,21 @@ const TaskCard = React.memo(({ task }) => {
   const getPriorityClasses = () => {
     switch (priority?.toLowerCase()) {
       case "high":
-        return "bg-red-100 border-red-200 text-red-700";
+        return isDark
+          ? "bg-red-900 border-red-800 text-red-200"
+          : "bg-red-100 border-red-200 text-red-700";
       case "medium":
-        return "bg-amber-100 border-amber-200 text-amber-700";
+        return isDark
+          ? "bg-amber-900 border-amber-800 text-amber-200"
+          : "bg-amber-100 border-amber-200 text-amber-700";
       case "low":
-        return "bg-emerald-100 border-emerald-200 text-emerald-700";
+        return isDark
+          ? "bg-emerald-900 border-emerald-800 text-emerald-200"
+          : "bg-emerald-100 border-emerald-200 text-emerald-700";
       default:
-        return "bg-gray-100 border-gray-200 text-gray-700";
+        return isDark
+          ? "bg-gray-800 border-gray-700 text-gray-200"
+          : "bg-gray-100 border-gray-200 text-gray-700";
     }
   };
 
@@ -93,20 +102,25 @@ const TaskCard = React.memo(({ task }) => {
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={handleTaskPress}
-      className="w-72 bg-white rounded-2xl p-5 mx-2 shadow-sm border border-gray-100"
+      className={`w-72 rounded-2xl p-5 mx-2 shadow-sm border ${
+        isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+      }`}
     >
       <View className="flex-row justify-between items-start mb-4">
         <View className="flex-1">
           {category && (
             <Text
-              className="text-xs font-quicksandSemiBold px-3 py-1.5 rounded-full self-start mb-3"
-              style={{ backgroundColor: `${color}20`, color: color }}
+              className={`text-sm font-quicksandSemiBold px-3 py-1.5 rounded-full self-start mb-3 ${
+                isDark ? "text-gray-300" : "text-gray-600"
+              }`}
             >
               {category}
             </Text>
           )}
           <Text
-            className="text-lg font-quicksandBold text-gray-800 mb-3"
+            className={`text-lg font-quicksandBold mb-3 ${
+              isDark ? "text-gray-100" : "text-gray-800"
+            }`}
             numberOfLines={2}
           >
             {title}
@@ -125,16 +139,25 @@ const TaskCard = React.memo(({ task }) => {
         </TouchableOpacity>
       </View>
 
-      <View className="flex-row justify-between items-center mt-auto pt-3 border-t border-gray-100">
-        <View className="flex-row items-center">
-          <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-          <Text className="text-sm text-gray-600 font-quicksandSemiBold ml-2">
-            {formattedDate}
-          </Text>
-        </View>
+      <View
+        className={`flex-row justify-between items-center mt-auto pt-3 border-t ${
+          isDark ? "border-gray-700" : "border-gray-100"
+        }`}
+      >
+        <Text
+          className={`text-sm font-quicksandSemiBold ml-2 ${
+            isDark ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          {formattedDate}
+        </Text>
         <View className="flex-row items-center">
           <Ionicons name="time-outline" size={16} color="#6B7280" />
-          <Text className="text-sm text-gray-600 font-quicksandSemiBold ml-2">
+          <Text
+            className={`text-sm font-quicksandSemiBold ml-2 ${
+              isDark ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
             {formattedTime}
           </Text>
         </View>

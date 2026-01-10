@@ -8,12 +8,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../context/ThemeContext";
 import { useUser } from "../context/UserContext";
 import { useFadeAnimation } from "../hooks/useBackTransition";
-
 const PersonalDetails = () => {
   const router = useRouter();
   const { user } = useUser();
+  const { isDark } = useTheme();
   const fadeAnim = useFadeAnimation();
 
   // Only show fields that we have data for
@@ -24,20 +25,30 @@ const PersonalDetails = () => {
   ].filter((item) => item.value); // Only include fields with values
 
   const InfoRow = ({ label, value, icon }) => (
-    <View className="flex-row items-center justify-between py-5 border-b border-gray-100">
+    <View
+      className={`flex-row items-center justify-between py-5 border-b ${
+        isDark ? "border-gray-700" : "border-gray-100"
+      }`}
+    >
       <View className="flex-row items-center">
         <Ionicons
           name={icon}
           size={24}
-          color="#6B7280"
+          color={isDark ? "#9CA3AF" : "#6B7280"}
           style={{ marginRight: 16 }}
         />
-        <Text className="text-gray-500 font-quicksandSemiBold text-base">
+        <Text
+          className={`font-quicksandSemiBold text-base ${
+            isDark ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           {label}
         </Text>
       </View>
       <Text
-        className="text-gray-800 font-quicksand text-lg text-right"
+        className={`font-quicksand text-lg text-right ${
+          isDark ? "text-gray-100" : "text-gray-800"
+        }`}
         numberOfLines={1}
       >
         {value}
@@ -47,8 +58,16 @@ const PersonalDetails = () => {
 
   if (!user) {
     return (
-      <SafeAreaView className="flex-1 bg-[#FEFBF6] items-center justify-center">
-        <Text className="text-gray-500 font-quicksand">
+      <SafeAreaView
+        className={`flex-1 items-center justify-center ${
+          isDark ? "bg-gray-900" : "bg-[#FEFBF6]"
+        }`}
+      >
+        <Text
+          className={`font-quicksand ${
+            isDark ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           No user data available
         </Text>
       </SafeAreaView>
@@ -56,7 +75,7 @@ const PersonalDetails = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className={`flex-1 ${isDark ? "bg-gray-900" : "bg-white"}`}>
       {/* Header */}
       <Animated.View
         style={{
@@ -64,23 +83,43 @@ const PersonalDetails = () => {
           flex: 1,
         }}
       >
-        <View className="flex-row items-center justify-between px-5 py-5 border-b border-gray-100 bg-white">
+        <View
+          className={`flex-row items-center justify-between px-5 py-5 border-b ${
+            isDark ? "border-gray-700 bg-gray-800" : "border-gray-100 bg-white"
+          }`}
+        >
           <TouchableOpacity
             onPress={() => router.back()}
             className="w-12 h-12 rounded-full items-center justify-center"
           >
-            <Ionicons name="arrow-back" size={28} color="#111827" />
+            <Ionicons
+              name="arrow-back"
+              size={28}
+              color={isDark ? "#D1D5DB" : "#111827"}
+            />
           </TouchableOpacity>
-          <Text className="text-xl font-quicksandBold text-gray-800">
+          <Text
+            className={`text-xl font-quicksandBold ${
+              isDark ? "text-gray-100" : "text-gray-800"
+            }`}
+          >
             Personal Details
           </Text>
           <View className="w-12" />
         </View>
 
         <ScrollView className="flex-1 px-6 pt-7">
-          <View className="bg-white rounded-2xl p-7 mb-7">
+          <View
+            className={`rounded-2xl p-7 mb-7 ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}
+          >
             <View className="mb-7">
-              <Text className="text-2xl font-quicksandBold text-gray-900">
+              <Text
+                className={`text-2xl font-quicksandBold ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
                 Account Information
               </Text>
             </View>

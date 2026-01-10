@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Prevent white flash during navigation */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body, html, #root {
+  background-color: #FFFBF5;
+  transition: background-color 0.15s ease;
+}
+
+.dark body, .dark html, .dark #root {
+  background-color: #1F2937;
+}
+
+/* Add smooth transitions for all elements */
+* {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}

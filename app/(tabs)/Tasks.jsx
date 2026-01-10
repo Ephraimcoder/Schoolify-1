@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenAnimation from "../../components/ScreenAnimation";
@@ -11,22 +11,39 @@ import TasksStats from "../../components/search/TasksStats";
 import SearchBar from "../../components/SearchBar";
 import TaskList from "../../components/taskList";
 import { useTasks } from "../../context/TasksContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
 
 const Tasks = () => {
   const { tasks, loading, refreshTasks } = useTasks();
   const { user } = useUser();
+  const { isDark, colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [sortVisible, setSortVisible] = useState(false);
-  const [sortOption, setSortOption] = useState("dueDateDesc"); // default to latest first
+  const [sortOption, setSortOption] = useState("dueDateDesc");
 
-  // Handle pull-to-refresh
-  const onRefresh = async () => {
+  // Optimize refresh handler
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshTasks?.();
     setRefreshing(false);
-  };
+  }, [refreshTasks]);
+
+  // Optimize search handler
+  const handleSearch = useCallback((query) => {
+    setSearchQuery(query);
+  }, []);
+
+  // Optimize sort handlers
+  const toggleSortVisible = useCallback(() => {
+    setSortVisible((prev) => !prev);
+  }, []);
+
+  const handleSortOptionChange = useCallback((option) => {
+    setSortOption(option);
+    setSortVisible(false);
+  }, []);
 
   // Pre-process dates for better performance
   const processedTasks = DateProcessor({ tasks });
@@ -68,34 +85,54 @@ const Tasks = () => {
   const getPriorityClasses = (priority) => {
     switch (priority?.toLowerCase()) {
       case "high":
-        return "bg-red-100 border-red-200 text-red-700";
+        return isDark
+          ? "bg-red-900 border-red-800 text-red-200"
+          : "bg-red-100 border-red-200 text-red-700";
       case "medium":
-        return "bg-amber-100 border-amber-200 text-amber-700";
+        return isDark
+          ? "bg-amber-900 border-amber-800 text-amber-200"
+          : "bg-amber-100 border-amber-200 text-amber-700";
       case "low":
-        return "bg-emerald-100 border-emerald-200 text-emerald-700";
+        return isDark
+          ? "bg-emerald-900 border-emerald-800 text-emerald-200"
+          : "bg-emerald-100 border-emerald-200 text-emerald-700";
       default:
-        return "bg-gray-100 border-gray-200 text-gray-700";
+        return isDark
+          ? "bg-gray-800 border-gray-700 text-gray-200"
+          : "bg-gray-100 border-gray-200 text-gray-700";
     }
   };
 
   return (
     <ScreenAnimation duration={400}>
-      <LinearGradient colors={["#FFFBF5", "#FEFBF6"]} className="flex-1">
+      <LinearGradient colors={colors.background} className="flex-1">
         <SafeAreaView className="flex-1 px-4 mt-8">
           {/* Header */}
           <View className="flex-row justify-between items-center py-4">
             <View>
-              <Text className="text-2xl font-quicksandBold text-gray-900">
+              <Text
+                className={`text-2xl font-quicksandBold ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
                 My Tasks
               </Text>
-              <Text className="text-gray-500 font-quicksand">
+              <Text
+                className={`font-quicksand ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
                 {statusFilteredTasks.length} task
                 {statusFilteredTasks.length !== 1 ? "s" : ""} in total
               </Text>
             </View>
             <TouchableOpacity
               onPress={() => setSortVisible((v) => !v)}
-              className="flex-row items-center px-3 py-2 bg-white rounded-lg shadow-sm border border-gray-100"
+              className={`flex-row items-center px-3 py-2 rounded-lg shadow-sm border ${
+                isDark
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-gray-100"
+              }`}
               activeOpacity={0.8}
             >
               <Ionicons name="options-outline" size={18} color="#4F46E5" />
@@ -123,7 +160,13 @@ const Tasks = () => {
                 activeOpacity={1}
                 onPress={() => setSortVisible(false)}
               />
-              <View className="absolute right-4 top-24 bg-white rounded-xl shadow-lg border border-gray-100 w-64 z-50">
+              <View
+                className={`absolute right-4 top-24 rounded-xl shadow-lg border w-64 z-50 ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-100"
+                }`}
+              >
                 {[
                   { key: "dueDateAsc", label: "Due date: earliest first" },
                   { key: "dueDateDesc", label: "Due date: latest first" },

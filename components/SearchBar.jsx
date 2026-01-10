@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
 import { Animated, TextInput, TouchableOpacity, View } from "react-native";
-
+import { useTheme } from "../context/ThemeContext";
 export default function SearchBar({
   value,
   onChangeText,
@@ -11,6 +11,7 @@ export default function SearchBar({
   onClear,
   autoFocus = false,
 }) {
+  const { isDark } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [internalValue, setInternalValue] = useState("");
   const isControlled = value !== undefined;
@@ -52,9 +53,9 @@ export default function SearchBar({
   return (
     <View className="relative">
       <Animated.View
-        className={`flex-row items-center bg-white rounded-2xl p-4 shadow-sm ${
+        className={`flex-row items-center rounded-2xl p-4 shadow-sm ${
           isFocused ? "border-2 border-indigo-100" : "border border-gray-100"
-        }`}
+        } ${isDark ? "bg-gray-800" : "bg-white"}`}
         style={{
           transform: [{ scale: scaleAnim }],
           shadowColor: "#000",
@@ -75,7 +76,9 @@ export default function SearchBar({
           onChangeText={handleChange}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
-          className="flex-1 font-quicksand text-base text-gray-800"
+          className={`flex-1 font-quicksand text-base ${
+            isDark ? "text-gray-100" : "text-gray-800"
+          }`}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onSubmitEditing={handleSubmit}

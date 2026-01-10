@@ -1,21 +1,41 @@
 import NetInfo from "@react-native-community/netinfo";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ClassesSection from "../../components/ClassesSection";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import TaskProgress from "../../components/TaskProgress";
 import TasksSection from "../../components/TasksSection";
+import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
-const Home = () => {
-  const date = new Date();
-  const { user, isLoading } = useUser();
-  const [isOnline, setIsOnline] = useState(true);
-  const hours = date.getUTCHours();
 
-  // Monitor network status
+const Home = () => {
+  const { user, isLoading } = useUser();
+  const { isDark, colors } = useTheme();
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Memoize date calculations to prevent re-calculation on every render
+  const dateInfo = useMemo(() => {
+    const date = new Date();
+    const hours = date.getUTCHours();
+    return { date, hours };
+  }, []); // Only calculate once on mount
+
+  // Memoize greeting calculation
+  const greeting = useMemo(() => {
+    const { hours } = dateInfo;
+    if (hours < 12) return "Good morning";
+    if (hours < 17) return "Good afternoon";
+    return "Good evening";
+  }, [dateInfo.hours]);
+
+  // Optimize network status monitoring
+  const handleNetworkChange = useCallback((state) => {
+    setIsOnline(state.isConnected);
+  }, []);
+
   useEffect(() => {
     const checkNetworkStatus = async () => {
       const netInfo = await NetInfo.fetch();
@@ -23,19 +43,10 @@ const Home = () => {
     };
 
     checkNetworkStatus();
-
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsOnline(state.isConnected);
-    });
+    const unsubscribe = NetInfo.addEventListener(handleNetworkChange);
 
     return () => unsubscribe();
-  }, []);
-
-  const greeting = useMemo(() => {
-    if (hours < 12) return "Good morning";
-    if (hours < 18) return "Good afternoon";
-    return "Good evening";
-  }, [hours]);
+  }, [handleNetworkChange]);
 
   const avatarUrl = useMemo(() => {
     return (
@@ -45,9 +56,15 @@ const Home = () => {
   }, [user?.avatar, user?.name]);
 
   const router = useRouter();
+
+  // Calculate today's task count for the title
+  const todayTaskCount = useMemo(() => {
+    // This would ideally come from TasksContext but for now we'll keep it simple
+    return 0; // This will be updated when we integrate with TasksContext
+  }, []);
   return (
     <ScreenAnimation duration={400}>
-      <LinearGradient colors={["#FFFBF5", "#FEFBF6"]} className="flex-1">
+      <LinearGradient colors={colors.background} className="flex-1">
         <SafeAreaView className="flex-1 px-6 mt-2">
           {/* Header Section */}
           <View className="flex-row items-center justify-between mt-6 mb-6">
@@ -59,10 +76,14 @@ const Home = () => {
                 />
               </View>
               <View>
-                <Text className="text-gray-500 font-quicksand text-sm">
+                <Text
+                  className={`text-gray-500 font-quicksand text-sm ${isDark ? "text-gray-400" : ""}`}
+                >
                   {greeting} 👋
                 </Text>
-                <Text className="text-xl font-bold text-gray-800 font-quicksandBold">
+                <Text
+                  className={`text-xl font-bold font-quicksandBold ${isDark ? "text-gray-100" : "text-gray-800"}`}
+                >
                   {user?.name || "Welcome back"}
                 </Text>
               </View>
@@ -96,7 +117,9 @@ const Home = () => {
             {/* Tasks Section */}
             <View className="mb-6">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-lg font-quicksandBold text-gray-800">
+                <Text
+                  className={`text-lg font-quicksandBold ${isDark ? "text-gray-100" : "text-gray-800"}`}
+                >
                   Today's Tasks
                 </Text>
                 <TouchableOpacity onPress={() => router.push("/Tasks")}>

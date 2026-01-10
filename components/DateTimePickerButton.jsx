@@ -1,8 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
-
+import { useTheme } from "../context/ThemeContext";
 const DateTimePickerButton = ({
   value,
   onValueChange,
@@ -15,6 +15,7 @@ const DateTimePickerButton = ({
   minimumDate,
   is24Hour = false,
 }) => {
+  const { isDark } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value || new Date());
 
@@ -59,14 +60,24 @@ const DateTimePickerButton = ({
     <View
       className={`flex-1 ${mode === "time" ? "ml-2" : "mr-2"} ${containerStyle}`}
     >
-      <Text className="text-gray-700 text-sm font-quicksandBold mb-1">
+      <Text
+        className={`text-sm font-quicksandBold mb-1 ${
+          isDark ? "text-gray-300" : "text-gray-700"
+        }`}
+      >
         {label}
       </Text>
       <TouchableOpacity
-        className={`bg-white border border-gray-200 rounded-lg p-3 flex-row justify-between items-center ${buttonStyle}`}
+        className={`border rounded-lg p-3 flex-row justify-between items-center ${buttonStyle} ${
+          isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+        }`}
         onPress={() => setShowPicker(true)}
       >
-        <Text className={`text-gray-700 font-quicksandMedium ${textStyle}`}>
+        <Text
+          className={`font-quicksandMedium ${textStyle} ${
+            isDark ? "text-gray-300" : "text-gray-700"
+          }`}
+        >
           {formatDisplayValue(selectedValue)}
         </Text>
         <Ionicons

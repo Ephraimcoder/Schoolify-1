@@ -1,7 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Platform,
@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import ScreenAnimation from "../../components/ScreenAnimation";
+import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
 import { showError, showSuccess, showWarning } from "../../utils/toast";
 export default function SignUp() {
@@ -21,6 +22,7 @@ export default function SignUp() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   const { register, requestEmailOtp } = useUser();
+  const { isDark } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -99,7 +101,7 @@ export default function SignUp() {
 
   return (
     <ScreenAnimation duration={400}>
-      <View className="flex-1 bg-amber-50">
+      <View className={`flex-1 ${isDark ? "bg-gray-900" : "bg-amber-50"}`}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 24,
@@ -110,7 +112,11 @@ export default function SignUp() {
         >
           {/* Brand header */}
           <View className="items-center">
-            <Text className="text-2xl font-quicksandBold">
+            <Text
+              className={`text-2xl font-quicksandBold ${
+                isDark ? "text-gray-100" : "text-gray-900"
+              }`}
+            >
               Schoolify<Text className="text-orange-600">.</Text>
             </Text>
           </View>
@@ -118,7 +124,9 @@ export default function SignUp() {
           {/* Illustration style hero card */}
           <View className="items-center mt-6">
             <View
-              className="w-11/12 h-44 bg-white rounded-3xl items-center justify-center"
+              className={`w-11/12 h-44 rounded-3xl items-center justify-center ${
+                isDark ? "bg-gray-800" : "bg-white"
+              }`}
               style={[cardShadow]}
             >
               <View className="items-center">
@@ -135,10 +143,18 @@ export default function SignUp() {
                   <View className="absolute -top-4 left-6 w-4 h-8 bg-orange-600 rounded" />
                 </View>
 
-                <Text className="text-gray-800 font-quicksandBold text-lg text-center">
+                <Text
+                  className={`font-quicksandBold text-lg text-center ${
+                    isDark ? "text-gray-100" : "text-gray-800"
+                  }`}
+                >
                   Start Your Journey!
                 </Text>
-                <Text className="text-gray-600 font-quicksandMedium text-sm text-center mt-1">
+                <Text
+                  className={`font-quicksandMedium text-sm text-center mt-1 ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
                   Create your account and begin learning
                 </Text>
               </View>
@@ -147,9 +163,15 @@ export default function SignUp() {
 
           {/* Offline Banner */}
           {isOffline && (
-            <View className="bg-yellow-100 p-3 rounded-lg mt-6 border-l-4 border-yellow-500">
+            <View
+              className={`p-3 rounded-lg mt-6 border-l-4 ${
+                isDark
+                  ? "bg-yellow-900/20 border-yellow-600"
+                  : "bg-yellow-100 border-yellow-500"
+              }`}
+            >
               <Text
-                className="text-yellow-800"
+                className={`${isDark ? "text-yellow-300" : "text-yellow-800"}`}
                 style={{ fontFamily: "Quicksand-Medium" }}
               >
                 You're currently offline. You need to be online to create an
@@ -160,10 +182,18 @@ export default function SignUp() {
 
           {/* Header */}
           <View className="items-center mt-8">
-            <Text className="text-5xl font-quicksandBold text-gray-900 text-center">
+            <Text
+              className={`text-5xl font-quicksandBold text-center ${
+                isDark ? "text-gray-100" : "text-gray-900"
+              }`}
+            >
               Create Account
             </Text>
-            <Text className="text-xl text-gray-600 text-center font-quicksandMedium mt-3 leading-6">
+            <Text
+              className={`text-xl text-center font-quicksandMedium mt-3 leading-6 ${
+                isDark ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
               Please register on our app, to {"\n"}continue using our service.
             </Text>
           </View>
@@ -177,8 +207,12 @@ export default function SignUp() {
                 onChangeText={(text) =>
                   setForm((prev) => ({ ...prev, name: text }))
                 }
-                className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg"
-                placeholderTextColor="#9CA3AF"
+                className={`w-full h-16 border-2 rounded-3xl px-6 text-lg ${
+                  isDark
+                    ? "bg-gray-800 border-gray-600 text-gray-100"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+                placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                 style={{ fontFamily: "Quicksand-Regular" }}
               />
             </View>
@@ -191,8 +225,12 @@ export default function SignUp() {
                   setForm((prev) => ({ ...prev, email: text }))
                 }
                 keyboardType="email-address"
-                className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg"
-                placeholderTextColor="#9CA3AF"
+                className={`w-full h-16 border-2 rounded-3xl px-6 text-lg ${
+                  isDark
+                    ? "bg-gray-800 border-gray-600 text-gray-100"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+                placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                 style={{ fontFamily: "Quicksand-Regular" }}
               />
             </View>
@@ -205,8 +243,12 @@ export default function SignUp() {
                   setForm((prev) => ({ ...prev, password: text }))
                 }
                 secureTextEntry={!showPassword}
-                className="w-full h-16 bg-white border-2 border-gray-300 rounded-3xl px-6 text-gray-900 text-lg pr-14"
-                placeholderTextColor="#9CA3AF"
+                className={`w-full h-16 border-2 rounded-3xl px-6 text-lg pr-14 ${
+                  isDark
+                    ? "bg-gray-800 border-gray-600 text-gray-100"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+                placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                 style={{ fontFamily: "Quicksand-Regular" }}
               />
               <TouchableOpacity
@@ -216,7 +258,7 @@ export default function SignUp() {
                 <MaterialIcons
                   name={showPassword ? "visibility-off" : "visibility"}
                   size={24}
-                  color="#6B7280"
+                  color={isDark ? "#9CA3AF" : "#6B7280"}
                 />
               </TouchableOpacity>
             </View>
@@ -228,7 +270,7 @@ export default function SignUp() {
           {/* CTA + link */}
           <View className="mt-6">
             <TouchableOpacity
-              className="bg-orange-600 h-16 rounded-full items-center justify-center"
+              className="bg-purple-600 h-16 rounded-full items-center justify-center"
               onPress={submit}
               disabled={isSubmitting}
             >
@@ -239,7 +281,9 @@ export default function SignUp() {
 
             <View className="flex-row justify-center mt-3">
               <Text
-                className="text-gray-600 text-base"
+                className={`text-base ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}
                 style={{ fontFamily: "Quicksand-Regular" }}
               >
                 Already have an account?{" "}

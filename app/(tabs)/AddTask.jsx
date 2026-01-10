@@ -29,6 +29,7 @@ import {
   useTaskActions,
   useTasks,
 } from "../../context/TasksContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getNotificationLeadMinutes } from "../../utils/notificationPrefs";
 
 const formatDate = (date) => {
@@ -49,6 +50,7 @@ const formatTime = (date) => {
 
 const AddTask = () => {
   const { getTaskById } = useTasks();
+  const { isDark, colors } = useTheme();
   const {
     formData,
     setFormData,
@@ -404,7 +406,7 @@ const AddTask = () => {
 
   return (
     <ScreenAnimation duration={400}>
-      <LinearGradient colors={["#FFFBF5", "#FEFBF6"]} className="flex-1">
+      <LinearGradient colors={colors.background} className="flex-1">
         <SafeAreaView className="flex-1">
           <ScrollView
             className="px-6 pt-4"
@@ -415,7 +417,9 @@ const AddTask = () => {
             {/* Header */}
             <View className="flex-row justify-between items-center mb-6">
               <TouchableOpacity
-                className="bg-white p-2 rounded-full"
+                className={`p-2 rounded-full ${
+                  isDark ? "bg-gray-800" : "bg-white"
+                }`}
                 onPress={() => {
                   router.setParams({
                     taskId: undefined,
@@ -434,10 +438,24 @@ const AddTask = () => {
                   router.back();
                 }}
               >
-                <Ionicons name="close" size={24} color="black" />
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={isDark ? "white" : "black"}
+                />
               </TouchableOpacity>
-              <Text className="text-2xl font-quicksandBold">
-                {taskId ? "Edit Task" : "New Task"}
+              <Text
+                className={`text-2xl font-quicksandBold ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
+                {taskId
+                  ? formData.category === "Class"
+                    ? "Edit Class"
+                    : "Edit Task"
+                  : formData.category === "Class"
+                    ? "New Class"
+                    : "New Task"}
               </Text>
               <View className="w-10" />
             </View>
@@ -462,7 +480,11 @@ const AddTask = () => {
               value={formData.description}
               onChangeText={(text) => handleInputChange("description", text)}
               multiline
-              className="bg-white border border-gray-200 rounded-xl p-4 h-28 text-base font-quicksand my-2"
+              className={`border rounded-xl p-4 h-28 text-base font-quicksand my-2 ${
+                isDark
+                  ? "bg-gray-800 border-gray-700 text-gray-100"
+                  : "bg-white border-gray-200 text-gray-900"
+              }`}
               textAlignVertical="top"
             />
 
@@ -494,12 +516,18 @@ const AddTask = () => {
             </View>
 
             {/* Category */}
-            <View className="flex-row items-center">
-              <Text className="text-lg font-quicksandBold my-2">
+            <View className="flex-row items-center justify-between">
+              <Text
+                className={`text-lg font-quicksandBold my-2 ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
                 Course / Category
               </Text>
               <TouchableOpacity
-                className="ml-2 p-2 bg-gray-100 rounded"
+                className={`p-2 rounded ${
+                  isDark ? "bg-gray-700" : "bg-gray-100"
+                }`}
                 onPress={() => handleOpenModal("category")}
               >
                 <Ionicons name="pencil" size={14} color="#4B5563" />
@@ -527,10 +555,18 @@ const AddTask = () => {
             </View>
 
             {/* Priority */}
-            <View className="flex-row items-center">
-              <Text className="text-lg font-quicksandBold my-2">Priority</Text>
+            <View className="flex-row items-center justify-between">
+              <Text
+                className={`text-lg font-quicksandBold my-2 ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
+                Priority
+              </Text>
               <TouchableOpacity
-                className="ml-2 p-2 bg-gray-100 rounded"
+                className={`p-2 rounded ${
+                  isDark ? "bg-gray-700" : "bg-gray-100"
+                }`}
                 onPress={() => handleOpenModal("priority")}
               >
                 <Ionicons name="pencil" size={14} color="#4B5563" />
@@ -565,14 +601,29 @@ const AddTask = () => {
 
             {/* Alert */}
             <View className="flex-row justify-between items-center my-6">
-              <Text className="text-lg font-quicksandBold">
+              <Text
+                className={`text-lg font-quicksandBold ${
+                  isDark ? "text-gray-100" : "text-gray-900"
+                }`}
+              >
                 {formData.category === "Class"
                   ? "Get alert for this class"
                   : "Get alert for this task"}
               </Text>
               <Switch
-                trackColor={{ false: "#E5E7EB", true: "#FCA5A5" }}
-                thumbColor={alertEnabled ? "#EF4444" : "#f4f3f4"}
+                trackColor={{
+                  false: isDark ? "#374151" : "#E5E7EB",
+                  true: isDark ? "#6366F1" : "#FCA5A5",
+                }}
+                thumbColor={
+                  alertEnabled
+                    ? isDark
+                      ? "#8B5CF6"
+                      : "#EF4444"
+                    : isDark
+                      ? "#1F2937"
+                      : "#f4f3f4"
+                }
                 onValueChange={(value) => {
                   setAlertEnabled(value);
                   handleInputChange("alertEnabled", value);
@@ -583,12 +634,18 @@ const AddTask = () => {
 
             {/* Add Subtask Button */}
             <View className="mb-6">
-              <Text className="text-base font-quicksandBold text-gray-800 mb-2">
+              <Text
+                className={`text-base font-quicksandBold mb-2 ${
+                  isDark ? "text-gray-300" : "text-gray-800"
+                }`}
+              >
                 Subtasks {subTasks.length > 0 && `(${subTasks.length})`}
               </Text>
               <TouchableOpacity
                 onPress={() => setIsSubtaskModalVisible(true)}
-                className="flex-row items-center justify-center border-2 border-dashed border-indigo-200 rounded-xl py-3"
+                className={`flex-row items-center justify-center border-2 border-dashed rounded-xl py-3 ${
+                  isDark ? "border-indigo-800" : "border-indigo-200"
+                }`}
               >
                 <Ionicons name="add-circle-outline" size={20} color="#4F46E5" />
                 <Text className="text-indigo-600 font-quicksandBold ml-2">
@@ -599,7 +656,9 @@ const AddTask = () => {
 
             {/* Create Button */}
             <TouchableOpacity
-              className={`bg-[#F26D6D] py-4 rounded-xl my-6 ${isSaving ? "opacity-70" : ""}`}
+              className={`py-4 rounded-xl my-6 ${isSaving ? "opacity-70" : ""} ${
+                isDark ? "bg-indigo-600" : "bg-[#F26D6D]"
+              }`}
               onPress={handleSubmit}
               disabled={isSaving}
             >
