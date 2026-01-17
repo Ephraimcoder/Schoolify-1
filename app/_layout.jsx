@@ -9,12 +9,14 @@ import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Platform,
+  StatusBar,
+  Text,
   useColorScheme,
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableFreeze, enableScreens } from "react-native-screens";
-import { TaskProvider } from "../context/TasksContext";
+import { TaskProvider, useTasks } from "../context/TasksContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { UserProvider, useUser } from "../context/UserContext";
 import { database } from "../database/database";
@@ -35,9 +37,11 @@ Notifications.setNotificationHandler({
 enableScreens(true);
 enableFreeze(true);
 
-// Simplified loading component - providers handle their own loading states
+// Enhanced loading component that waits for fonts, user data, and initial tasks load
 const UnifiedLoading = ({ children }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const { user, isLoading: isUserLoading } = useUser();
+  const { isLoading: isTasksLoading } = useTasks();
   const [fontsLoaded] = useFonts({
     QuicksandRegular: require("../assets/fonts/Quicksand-Regular.ttf"),
     QuicksandBold: require("../assets/fonts/Quicksand-Bold.ttf"),
@@ -46,22 +50,34 @@ const UnifiedLoading = ({ children }) => {
     QuicksandLight: require("../assets/fonts/Quicksand-Light.ttf"),
   });
 
-  // Simple loading state - just wait for fonts
-  if (!fontsLoaded) {
+  // Wait for all critical loading states
+  const isEverythingLoaded = fontsLoaded && !isUserLoading && !isTasksLoading;
+
+  // Show loading screen until everything is ready
+  if (!isEverythingLoaded) {
     return (
       <View
         style={{
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: colors.background[0],
+          backgroundColor: isDark ? "#1F2937" : "#FFFBF5",
         }}
       >
-        <ActivityIndicator size="100" color={colors.text} />
+        <ActivityIndicator size="100" color={isDark ? "#818CF8" : "#4F46E5"} />
+        <Text
+          style={{
+            marginTop: 16,
+            color: isDark ? "#F3F4F6" : "#1F2937",
+            fontSize: 16,
+            fontFamily: "QuicksandMedium",
+          }}
+        >
+          Loading Schoolify...
+        </Text>
       </View>
     );
   }
-
   return children;
 };
 
@@ -127,11 +143,14 @@ function RootLayoutContent() {
           (!savedTheme && systemColorScheme === "dark");
 
         if (Platform.OS === "ios") {
-          if (isDarkTheme) {
-            NavigationBar.setBarStyleAsync("dark-content");
-          } else {
-            NavigationBar.setBarStyleAsync("light-content");
-          }
+          // Use StatusBar for iOS status bar
+          StatusBar.setBarStyle(isDarkTheme ? "light-content" : "dark-content");
+        } else {
+          // Android: Use StatusBar for status bar and NavigationBar for navigation bar
+          StatusBar.setBarStyle(isDarkTheme ? "light-content" : "dark-content");
+          await NavigationBar.setBackgroundColorAsync(
+            isDarkTheme ? "#1F2937" : "#FFFBF5"
+          );
         }
       } catch (error) {
         console.error("Failed to set status bar style", error);
@@ -173,21 +192,33 @@ const DatabaseWrapper = ({ children }) => {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <UserProvider>
-        <UnifiedLoading>
-          <DatabaseWrapper>
-            <TaskProvider>
+      <DatabaseWrapper>
+        <UserProvider>
+          <TaskProvider>
+            <UnifiedLoading>
               <RootLayoutWrapper />
-            </TaskProvider>
-          </DatabaseWrapper>
-        </UnifiedLoading>
-      </UserProvider>
+            </UnifiedLoading>
+          </TaskProvider>
+        </UserProvider>
+      </DatabaseWrapper>
     </ThemeProvider>
   );
 }
 
 const RootLayoutWrapper = () => {
   const { isDark } = useTheme();
+
+  // Update status bar when theme changes
+  useEffect(() => {
+    if (Platform.OS === "ios") {
+      StatusBar.setBarStyle(isDark ? "light-content" : "dark-content");
+    } else {
+      // Android: Use StatusBar instead of NavigationBar
+      StatusBar.setBarStyle(isDark ? "light-content" : "dark-content");
+      // Also set the navigation bar color if needed
+      NavigationBar.setBackgroundColorAsync(isDark ? "#1F2937" : "#FFFBF5");
+    }
+  }, [isDark]);
 
   return (
     <GestureHandlerRootView
@@ -196,6 +227,11 @@ const RootLayoutWrapper = () => {
         backgroundColor: isDark ? "#1F2937" : "#FFFBF5",
       }}
     >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
       <RootLayoutContent />
       <Toasts
         position="bottom"

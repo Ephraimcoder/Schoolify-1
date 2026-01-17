@@ -17,8 +17,10 @@ import ScreenAnimation from "../../components/ScreenAnimation";
 import { useAppwriteSync, useTasks } from "../../context/TasksContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
+import { isBackupEnabled } from "../../helpers/syncHelper";
+import { showError } from "../../utils/toast";
 
-const SectionItem = ({ icon, label, onPress, isDark }) => (
+const SectionItem = ({ icon, label, onPress, isDark, iconColor }) => (
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.85}
@@ -35,7 +37,7 @@ const SectionItem = ({ icon, label, onPress, isDark }) => (
         <Ionicons
           name={icon}
           size={20}
-          color={isDark ? "#D1D5DB" : "#374151"}
+          color={iconColor || (isDark ? "#D1D5DB" : "#374151")}
         />
       </View>
       <Text
@@ -46,11 +48,13 @@ const SectionItem = ({ icon, label, onPress, isDark }) => (
         {label}
       </Text>
     </View>
-    <Ionicons
-      name="chevron-forward"
-      size={20}
-      color={isDark ? "#9CA3AF" : "#9CA3AF"}
-    />
+    <View className="flex-row items-center">
+      <Ionicons
+        name="chevron-forward"
+        size={20}
+        color={isDark ? "#6B7280" : "#9CA3AF"}
+      />
+    </View>
   </TouchableOpacity>
 );
 
@@ -90,10 +94,11 @@ const StatCard = ({
 
 const Profile = () => {
   const router = useRouter();
-  const { user, logout } = useUser();
+  const { user, logout, deleteAccount } = useUser();
   const { tasks } = useTasks();
   const [isOnline, setIsOnline] = useState(true);
   const { isDark } = useTheme();
+  const [backupEnabled, setBackupEnabled] = useState(true);
   const {
     isSyncing,
     syncError,
@@ -104,6 +109,33 @@ const Profile = () => {
   } = useAppwriteSync();
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [syncStatus, setSyncStatus] = useState("");
+  const [progress, setProgress] = useState({ step: "", message: "" });
+
+  // Check backup preference on mount and set up listener
+  useEffect(() => {
+    const checkBackupPreference = async () => {
+      try {
+        const enabled = await isBackupEnabled();
+
+        setBackupEnabled(enabled);
+      } catch (error) {
+        showError("Error finding backup prefrence");
+        setBackupEnabled(true); // Default to enabled
+      }
+    };
+
+    checkBackupPreference();
+
+    // Set up interval to check for backup preference changes
+    const interval = setInterval(checkBackupPreference, 2000); // Check every 2 seconds
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
+
+  // Debug: Log current backup state
+  useEffect(() => {
+    console.log("Current backupEnabled state:", backupEnabled);
+  }, [backupEnabled]);
 
   // Monitor network status
   useEffect(() => {
@@ -131,35 +163,34 @@ const Profile = () => {
       return;
     }
 
+    // Check if backup is enabled
+    if (!backupEnabled) {
+      Alert.alert(
+        "Backup Disabled",
+        "Sync is disabled because backup is turned off. Please enable backup in settings to use sync features."
+      );
+      return;
+    }
+
     try {
       setSyncStatus("🚀 Starting intelligent sync...");
-      const results = await syncAllTasksIntelligently();
+      const results = await syncAllTasksIntelligently(({ step, message }) => {
+        setProgress({ step, message });
+      });
 
       if (results.success) {
         const summary = results.summary;
         setSyncStatus(
           `✅ Sync Complete! ${summary.totalCreated} created, ${summary.totalUpdated} updated, ${summary.totalDeleted} deleted, ${summary.totalMerged} merged`
         );
-        Alert.alert(
-          "Sync Complete",
-          `📊 Sync Summary:\n` +
-            `• Created: ${summary.totalCreated}\n` +
-            `• Updated: ${summary.totalUpdated}\n` +
-            `• Deleted: ${summary.totalDeleted}\n` +
-            `• Merged: ${summary.totalMerged}\n` +
-            `• Failed: ${summary.totalFailed}\n` +
-            `• Total Processed: ${summary.totalProcessed}`
-        );
       } else {
         setSyncStatus(`❌ Sync failed`);
-        Alert.alert(
-          "Sync Failed",
-          "Some tasks failed to sync. Check console for details."
-        );
       }
     } catch (error) {
       setSyncStatus(`❌ Error: ${error.message}`);
-      Alert.alert("Error", error.message);
+    } finally {
+      // Clear progress after a delay
+      setTimeout(() => setProgress({ step: "", message: "" }), 2000);
     }
   };
 
@@ -173,23 +204,26 @@ const Profile = () => {
       return;
     }
 
+    // Check if backup is enabled
+    if (!backupEnabled) {
+      Alert.alert(
+        "Backup Disabled",
+        "Sync is disabled because backup is turned off. Please enable backup in settings to use sync features."
+      );
+      return;
+    }
+
     try {
       setSyncStatus("🗑️ Syncing deleted tasks...");
       const results = await syncDeletedTasks();
 
       if (results.success) {
         setSyncStatus(`✅ Deleted ${results.deleted} tasks from cloud`);
-        Alert.alert(
-          "Delete Sync Complete",
-          `🗑️ Successfully deleted ${results.deleted} tasks from cloud storage`
-        );
       } else {
         setSyncStatus(`❌ Delete sync failed`);
-        Alert.alert("Delete Sync Failed", "Failed to sync deletions to cloud.");
       }
     } catch (error) {
       setSyncStatus(`❌ Error: ${error.message}`);
-      Alert.alert("Error", error.message);
     }
   };
 
@@ -416,6 +450,38 @@ const Profile = () => {
                   Sync Tasks To Cloud
                 </Text>
 
+                {/* Progress Bar */}
+                {progress.step && (
+                  <View
+                    className={`rounded-lg p-3 mb-3 ${
+                      isDark ? "bg-blue-900/20" : "bg-blue-50"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-quicksand mb-2 ${
+                        isDark ? "text-blue-300" : "text-blue-700"
+                      }`}
+                    >
+                      {progress.message}
+                    </Text>
+                    <View
+                      className={`h-2 rounded-full ${
+                        isDark ? "bg-gray-700" : "bg-gray-200"
+                      }`}
+                    >
+                      <View
+                        className={`h-2 rounded-full ${
+                          progress.step === "syncing"
+                            ? "bg-blue-500 w-1/2"
+                            : progress.step === "merging"
+                              ? "bg-green-500 w-full"
+                              : "bg-purple-500 w-full"
+                        }`}
+                      />
+                    </View>
+                  </View>
+                )}
+
                 {/* Sync Status */}
                 {syncStatus ? (
                   <View
@@ -468,9 +534,11 @@ const Profile = () => {
                 <View className="space-y-3 gap-2">
                   <TouchableOpacity
                     onPress={handleSyncAllTasks}
-                    disabled={isSyncing || !isOnline}
+                    disabled={isSyncing || !isOnline || !backupEnabled}
                     className={`py-3 rounded-lg flex-row items-center justify-center ${
-                      isSyncing || !isOnline ? "bg-gray-300" : "bg-purple-500"
+                      isSyncing || !isOnline || !backupEnabled
+                        ? "bg-gray-300"
+                        : "bg-purple-500"
                     }`}
                   >
                     <Ionicons name="sync" size={18} color="white" />
@@ -481,9 +549,11 @@ const Profile = () => {
 
                   <TouchableOpacity
                     onPress={handleSyncDeletedTasks}
-                    disabled={isSyncing || !isOnline}
+                    disabled={isSyncing || !isOnline || !backupEnabled}
                     className={`py-3 rounded-lg flex-row items-center justify-center ${
-                      isSyncing || !isOnline ? "bg-gray-300" : "bg-red-500"
+                      isSyncing || !isOnline || !backupEnabled
+                        ? "bg-gray-300"
+                        : "bg-red-500"
                     }`}
                   >
                     <Ionicons name="trash-outline" size={18} color="white" />
@@ -492,6 +562,22 @@ const Profile = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
+
+                {!backupEnabled && (
+                  <View
+                    className={`rounded-lg p-3 mb-3 ${
+                      isDark ? "bg-yellow-900/20" : "bg-yellow-50"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-quicksand ${
+                        isDark ? "text-yellow-300" : "text-yellow-700"
+                      }`}
+                    >
+                      ⚠️ Sync is disabled because backup is turned off
+                    </Text>
+                  </View>
+                )}
 
                 <Text
                   className={`text-xs mt-3 text-center ${
@@ -511,21 +597,6 @@ const Profile = () => {
                   )}
                 </Text>
               </View>
-            </View>
-
-            {/* Delete Account Button - Now as last section item */}
-            <View className="px-5 mb-6">
-              <SectionItem
-                icon="trash-outline"
-                label="Delete Account"
-                onPress={() => {
-                  // Add delete account functionality here
-                  alert(
-                    "Delete account functionality will be implemented here"
-                  );
-                }}
-                isDark={isDark}
-              />
             </View>
           </ScrollView>
         </View>

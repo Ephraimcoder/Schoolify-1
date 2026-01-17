@@ -9,7 +9,10 @@ export default appSchema({
     }),
     tableSchema({
       name: "categories",
-      columns: [{ name: "name", type: "string" }],
+      columns: [
+        { name: "name", type: "string" },
+        { name: "user_id", type: "string", isOptional: true, isIndexed: true },
+      ],
     }),
     tableSchema({
       name: "priorities",
@@ -17,6 +20,7 @@ export default appSchema({
         { name: "name", type: "string" },
         { name: "level", type: "number" },
         { name: "color", type: "string", isOptional: true },
+        { name: "user_id", type: "string", isOptional: true, isIndexed: true },
       ],
     }),
     tableSchema({

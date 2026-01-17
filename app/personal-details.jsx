@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
+  Alert,
   Animated,
   ScrollView,
   Text,
@@ -13,7 +14,7 @@ import { useUser } from "../context/UserContext";
 import { useFadeAnimation } from "../hooks/useBackTransition";
 const PersonalDetails = () => {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, deleteAccount } = useUser();
   const { isDark } = useTheme();
   const fadeAnim = useFadeAnimation();
 
@@ -132,6 +133,86 @@ const PersonalDetails = () => {
                 icon={info.icon}
               />
             ))}
+          </View>
+
+          {/* Danger Zone Section */}
+          <View className="px-5 mt-8 mb-6">
+            <View className="mb-4">
+              <Text
+                className={`text-center font-quicksandBold text-lg ${
+                  isDark ? "text-red-400" : "text-red-600"
+                }`}
+              >
+                ⚠️ Danger Zone
+              </Text>
+              <Text
+                className={`text-center font-quicksand text-sm mt-1 ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                Irreversible actions
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                Alert.alert(
+                  "Delete Account",
+                  "This action cannot be undone. Are you sure you want to delete your account?",
+                  [
+                    {
+                      text: "Cancel",
+                      style: "cancel",
+                    },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: async () => {
+                        try {
+                          await deleteAccount();
+                          Alert.alert(
+                            "Account Deleted",
+                            "Your account has been successfully deleted."
+                          );
+                          router.replace("/(auth)/sign-in");
+                        } catch (error) {
+                          Alert.alert("Error", error.message);
+                        }
+                      },
+                    },
+                  ]
+                );
+              }}
+              className={`flex-row items-center justify-between rounded-2xl py-4 px-4 mb-3 border ${
+                isDark
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-gray-100"
+              }`}
+            >
+              <View className="flex-row items-center">
+                <View
+                  className={`w-10 h-10 rounded-full justify-center items-center mr-3 ${
+                    isDark ? "bg-gray-700" : "bg-gray-50"
+                  }`}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </View>
+                <Text
+                  className={`font-quicksandSemiBold text-base ${
+                    isDark ? "text-gray-100" : "text-gray-800"
+                  }`}
+                >
+                  Delete Account
+                </Text>
+              </View>
+              <View className="flex-row items-center">
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDark ? "#6B7280" : "#9CA3AF"}
+                />
+              </View>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </Animated.View>

@@ -9,7 +9,7 @@ import {
   ID,
   Query,
 } from "react-native-appwrite";
-
+import { database } from "../database/database";
 const USER_STORAGE_KEY = "@user_data";
 const LOGOUT_PENDING_KEY = "@logout_pending";
 const LAST_SESSION_CHECK_KEY = "@last_session_check";
@@ -348,29 +348,61 @@ export function UserProvider({ children }) {
 
   const deleteAccount = async (password) => {
     try {
-      // 1. Verify the user's password by creating a new email session
-      await account.createEmailSession(user.email, password);
+      // 1. Delete all user's tasks from Appwrite remote database
+      const tasksResponse = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.tasksCollectionId,
+        [Query.equal("user_id", user.accountId)]
+      );
 
-      // 2. Delete user document from database
+      if (tasksResponse.documents.length > 0) {
+        console.log(
+          `Deleting ${tasksResponse.documents.length} tasks from Appwrite...`
+        );
+        for (const taskDoc of tasksResponse.documents) {
+          await databases.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.tasksCollectionId,
+            taskDoc.$id
+          );
+        }
+        console.log(
+          `Deleted ${tasksResponse.documents.length} tasks from Appwrite`
+        );
+      }
+
+      // 2. Delete all user's tasks from local database
+      const tasksCollection = database.collections.get("tasks");
+      const userTasks = await tasksCollection
+        .query(Q.where("user_id", user.accountId))
+        .fetch();
+
+      if (userTasks.length > 0) {
+        await database.write(async () => {
+          for (const task of userTasks) {
+            await task.markAsDeleted();
+          }
+        });
+        console.log(`Marked ${userTasks.length} tasks as deleted`);
+      }
+
+      // 3. Delete user document from database
       await databases.deleteDocument(
         appwriteConfig.databaseId,
         appwriteConfig.userCollectionId,
         user.$id
       );
 
-      // 3. Delete the account
+      // 4. Delete the account (no password verification needed for deletion)
       await account.delete();
 
-      // 4. Clear local storage and state
+      // 5. Clear local storage and state
       await clearUser();
       setUser(null);
 
       return { success: true };
     } catch (error) {
       console.error("Error deleting account:", error);
-      if (error.code === 401) {
-        throw new Error("Incorrect password. Please try again.");
-      }
       throw new Error("Failed to delete account. Please try again later.");
     }
   };

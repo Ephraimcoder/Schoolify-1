@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import TimePickerModal from "../components/TimePickerModal";
 import { useTheme } from "../context/ThemeContext";
+import { database } from "../database/database";
 import { useFadeAnimation } from "../hooks/useBackTransition";
 import {
   cancelDailyReminder,
@@ -40,6 +41,55 @@ const Settings = () => {
 
   const minuteOptions = [5, 10, 15, 30, 60, 120];
 
+  // Load backup preference from database
+  const loadBackupPreference = async () => {
+    try {
+      const backupPrefs = database.collections.get("backup_prefs");
+      const prefs = await backupPrefs.query().fetch();
+
+      if (prefs.length > 0) {
+        setBackupEnabled(prefs[0].enabled);
+      } else {
+        // Create default preference if none exists
+        await database.write(async () => {
+          await backupPrefs.create((pref) => {
+            pref.enabled = true;
+          });
+        });
+        setBackupEnabled(true);
+      }
+    } catch (error) {
+      console.error("Error loading backup preference:", error);
+      setBackupEnabled(true); // Default to enabled
+    }
+  };
+
+  // Save backup preference to database
+  const saveBackupPreference = async (enabled) => {
+    try {
+      const backupPrefs = database.collections.get("backup_prefs");
+      const prefs = await backupPrefs.query().fetch();
+
+      await database.write(async () => {
+        if (prefs.length > 0) {
+          // Update existing preference
+          await prefs[0].update((pref) => {
+            pref.enabled = enabled;
+          });
+        } else {
+          // Create new preference record
+          await backupPrefs.create((pref) => {
+            pref.enabled = enabled;
+          });
+        }
+      });
+
+      showSuccess(`Backup ${enabled ? "enabled" : "disabled"}`);
+    } catch (error) {
+      console.error("Error saving backup preference:", error);
+    }
+  };
+
   // Load saved settings on mount
   useEffect(() => {
     const loadSettings = async () => {
@@ -65,6 +115,9 @@ const Settings = () => {
             return newTime;
           });
         }
+
+        // Load backup preference
+        await loadBackupPreference();
       } catch (error) {
         console.error("Error loading settings:", error);
       }
@@ -347,7 +400,10 @@ const Settings = () => {
               rightComponent={
                 <Switch
                   value={backupEnabled}
-                  onValueChange={setBackupEnabled}
+                  onValueChange={(value) => {
+                    setBackupEnabled(value);
+                    saveBackupPreference(value);
+                  }}
                   trackColor={{ false: "#E5E7EB", true: "#A5B4FC" }}
                   thumbColor={backupEnabled ? "#4F46E5" : "#F3F4F6"}
                 />

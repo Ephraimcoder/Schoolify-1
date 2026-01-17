@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useDatabase } from "@nozbe/watermelondb/react";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
+import { showSuccess } from "../../../utils/toast";
 // UI-only: subtle shadow styling for hero card
 const cardShadow = Platform.select({
   ios: {
@@ -30,6 +31,33 @@ export default function BackupSettings() {
   const database = useDatabase();
   const [backupEnabled, setBackupEnabled] = useState(true);
   const { isDark, colors } = useTheme();
+
+  // Load backup preference on mount
+  useEffect(() => {
+    const loadBackupPreference = async () => {
+      try {
+        const backupPrefs = database.collections.get("backup_prefs");
+        const prefs = await backupPrefs.query().fetch();
+
+        if (prefs.length > 0) {
+          setBackupEnabled(prefs[0].enabled);
+        } else {
+          // Create default preference if none exists
+          await database.write(async () => {
+            await backupPrefs.create((pref) => {
+              pref.enabled = true;
+            });
+          });
+          setBackupEnabled(true);
+        }
+      } catch (error) {
+        console.error("Error loading backup preference:", error);
+        setBackupEnabled(true); // Default to enabled
+      }
+    };
+
+    loadBackupPreference();
+  }, [database]);
 
   const handleNext = async () => {
     try {
@@ -52,6 +80,7 @@ export default function BackupSettings() {
       });
 
       console.log("Backup enabled saved to database:", backupEnabled);
+      showSuccess(`Backup ${backupEnabled ? "enabled" : "disabled"}`);
       router.push("/(auth)/personalization/notification-timing");
     } catch (error) {
       console.error("Error saving backup preference:", error);

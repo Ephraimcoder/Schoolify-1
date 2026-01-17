@@ -49,8 +49,12 @@ class AppwriteSyncService {
       subtasks_json: task.subTasks
         ? JSON.stringify(task.subTasks)
         : task.subtasksJson || "[]",
-      due_date: task.dueDate ? new Date(task.dueDate).getTime() : 0,
-      due_time: task.dueTime ? new Date(task.dueTime).getTime() : 0,
+      due_date: task.dueDate
+        ? new Date(task.dueDate).getTime()
+        : new Date().getTime(),
+      due_time: task.dueTime
+        ? new Date(task.dueTime).getTime()
+        : new Date().getTime(),
       last_synced_at: Date.now(),
     };
   }

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import { TasksContext } from "../../context/TasksContext";
+import { useTheme } from "../../context/ThemeContext";
 import {
   formatDate,
   formatTime,
@@ -18,12 +19,12 @@ import {
   getPriorityClasses,
 } from "../../utils/taskUtils";
 import { showError } from "../../utils/toast";
-
 const TaskDetails = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { getTaskById, updateTask, deleteTask, addTask } =
     useContext(TasksContext);
+  const { colors } = useTheme();
   const [task, setTask] = useState(null);
 
   const taskData = useMemo(() => {
@@ -105,10 +106,17 @@ const TaskDetails = () => {
   const renderSubtask = ({ item, index }) => (
     <View
       key={`subtask-${index}`}
-      className="flex-row items-center py-2 border-b border-gray-100"
+      className="flex-row items-center py-2 border-b"
+      style={{ borderColor: colors.border }}
     >
-      <View className="w-5 h-5 rounded-full border border-gray-300 mr-3" />
-      <Text className="text-gray-700 font-quicksandMedium flex-1">
+      <View
+        className="w-5 h-5 rounded-full border mr-3"
+        style={{ borderColor: colors.border }}
+      />
+      <Text
+        className="font-quicksandMedium flex-1"
+        style={{ color: colors.text }}
+      >
         {item.title}
       </Text>
     </View>
@@ -116,8 +124,11 @@ const TaskDetails = () => {
 
   const renderEmptySubtasks = () => (
     <View className="py-4 items-center justify-center">
-      <Ionicons name="list-outline" size={32} color="#9CA3AF" />
-      <Text className="text-gray-500 font-quicksandMedium mt-2">
+      <Ionicons name="list-outline" size={32} color={colors.gray} />
+      <Text
+        className="font-quicksandMedium mt-2"
+        style={{ color: colors.textSecondary }}
+      >
         No subtasks added yet
       </Text>
     </View>
@@ -125,36 +136,58 @@ const TaskDetails = () => {
 
   if (!task) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-gray-500">Loading task details...</Text>
+      <View
+        className="flex-1 justify-center items-center"
+        style={{ backgroundColor: colors.background[0] }}
+      >
+        <Text style={{ color: colors.textSecondary }}>
+          Loading task details...
+        </Text>
       </View>
     );
   }
 
   return (
     <ScreenAnimation duration={400}>
-      <View className="flex-1 bg-gray-50">
+      <View
+        className="flex-1"
+        style={{ backgroundColor: colors.background[0] }}
+      >
         {/* Header */}
-        <View className="bg-white px-6 pt-14 pb-4 shadow-sm">
+        <View
+          className="px-6 pt-14 pb-4 shadow-sm"
+          style={{ backgroundColor: colors.card }}
+        >
           <View className="flex-row items-center justify-between mb-4">
             <TouchableOpacity
               onPress={() => router.back()}
               className="p-2 -ml-2"
             >
-              <Ionicons name="arrow-back" size={24} color="#374151" />
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
-            <Text className="text-xl font-quicksandBold text-gray-800">
+            <Text
+              className="text-xl font-quicksandBold"
+              style={{ color: colors.text }}
+            >
               {task.category === "Class" ? "Class Details" : "Task Details"}
             </Text>
             <View className="flex-row">
               <TouchableOpacity onPress={handleEdit} className="p-2">
-                <Ionicons name="create-outline" size={20} color="#3B82F6" />
+                <Ionicons
+                  name="create-outline"
+                  size={20}
+                  color={colors.primary}
+                />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleDuplicate} className="p-2">
-                <Ionicons name="copy-outline" size={20} color="#10B981" />
+                <Ionicons
+                  name="copy-outline"
+                  size={20}
+                  color={colors.success}
+                />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleDelete} className="p-2">
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                <Ionicons name="trash-outline" size={20} color={colors.error} />
               </TouchableOpacity>
             </View>
           </View>
@@ -163,7 +196,10 @@ const TaskDetails = () => {
         <ScrollView className="flex-1">
           <View className="p-5">
             {/* Header Section */}
-            <View className="bg-white rounded-2xl p-5 shadow-sm mb-6">
+            <View
+              className="rounded-2xl p-5 shadow-sm mb-6"
+              style={{ backgroundColor: colors.card }}
+            >
               <View className="flex-row justify-between items-start mb-4">
                 {task.category && (
                   <View className="self-start mb-4">
@@ -185,17 +221,29 @@ const TaskDetails = () => {
                   </View>
                 )}
               </View>
-              <Text className="text-2xl font-quicksandBold text-gray-900 flex-1 mr-2">
+              <Text
+                className="text-2xl font-quicksandBold flex-1 mr-2"
+                style={{ color: colors.text }}
+              >
                 {task.title}
               </Text>
 
               {/* Description */}
               {task.description && (
-                <View className="mt-4 pt-4 border-t border-gray-100">
-                  <Text className="text-gray-600 font-quicksandSemiBold mb-2">
+                <View
+                  className="mt-4 pt-4 rounded-2xl p-5"
+                  style={{ borderTopColor: colors.border }}
+                >
+                  <Text
+                    className="font-quicksandSemiBold mb-2"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Description
                   </Text>
-                  <Text className="text-gray-700 text-base font-quicksandMedium leading-6">
+                  <Text
+                    className="text-base font-quicksandMedium leading-6"
+                    style={{ color: colors.text }}
+                  >
                     {task.description}
                   </Text>
                 </View>
@@ -203,9 +251,15 @@ const TaskDetails = () => {
             </View>
 
             {/* Subtasks Section */}
-            <View className="bg-white rounded-2xl p-5 shadow-sm">
+            <View
+              className="rounded-2xl p-5 shadow-sm"
+              style={{ backgroundColor: colors.card }}
+            >
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-lg font-quicksandBold text-gray-900">
+                <Text
+                  className="text-lg font-quicksandBold"
+                  style={{ color: colors.text }}
+                >
                   Subtasks
                 </Text>
               </View>
@@ -220,34 +274,66 @@ const TaskDetails = () => {
             </View>
 
             {/* Due Date & Time Section */}
-            <View className="bg-white rounded-2xl p-5 shadow-sm mt-6">
-              <Text className="text-lg font-quicksandBold text-gray-900 mb-4">
+            <View
+              className="rounded-2xl p-5 shadow-sm mt-6"
+              style={{ backgroundColor: colors.card }}
+            >
+              <Text
+                className="text-lg font-quicksandBold mb-4"
+                style={{ color: colors.text }}
+              >
                 Due Date & Time
               </Text>
 
               <View className="flex-row items-center mb-3">
-                <View className="w-10 h-10 rounded-full bg-purple-50 items-center justify-center mr-3">
-                  <Ionicons name="calendar-outline" size={20} color="#8B5CF6" />
+                <View
+                  className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                  style={{ backgroundColor: colors.secondary + "20" }}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color={colors.secondary}
+                  />
                 </View>
                 <View>
-                  <Text className="text-gray-600 font-quicksandSemiBold text-sm">
+                  <Text
+                    className="font-quicksandSemiBold text-sm"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Due Date
                   </Text>
-                  <Text className="text-gray-900 font-quicksandMedium">
+                  <Text
+                    className="font-quicksandMedium"
+                    style={{ color: colors.text }}
+                  >
                     {formatDate(task.dueDate)}
                   </Text>
                 </View>
               </View>
 
               <View className="flex-row items-center">
-                <View className="w-10 h-10 rounded-full bg-purple-50 items-center justify-center mr-3">
-                  <Ionicons name="time-outline" size={20} color="#8B5CF6" />
+                <View
+                  className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                  style={{ backgroundColor: colors.secondary + "20" }}
+                >
+                  <Ionicons
+                    name="time-outline"
+                    size={20}
+                    color={colors.secondary}
+                  />
                 </View>
                 <View>
-                  <Text className="text-gray-600 font-quicksandSemiBold text-sm">
+                  <Text
+                    className="font-quicksandSemiBold text-sm"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Time
                   </Text>
-                  <Text className="text-gray-900 font-quicksandMedium">
+                  <Text
+                    className="font-quicksandMedium"
+                    style={{ color: colors.text }}
+                  >
                     {task.dueTime ? formatTime(task.dueTime) : "No time set"}
                   </Text>
                 </View>
@@ -255,33 +341,52 @@ const TaskDetails = () => {
             </View>
 
             {/* Status */}
-            <View className="bg-white rounded-2xl p-5 shadow-sm mt-6">
+            <View
+              className="rounded-2xl p-5 shadow-sm mt-6"
+              style={{ backgroundColor: colors.card }}
+            >
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-lg font-quicksandBold text-gray-900">
+                <Text
+                  className="text-lg font-quicksandBold"
+                  style={{ color: colors.text }}
+                >
                   Status
                 </Text>
                 <TouchableOpacity
                   onPress={handleToggleComplete}
-                  className="px-4 py-2 rounded-lg bg-blue-50"
+                  className="px-4 py-2 rounded-lg"
+                  style={{ backgroundColor: colors.primary + "20" }}
                 >
-                  <Text className="text-blue-600 font-quicksandSemiBold">
+                  <Text
+                    className="font-quicksandSemiBold"
+                    style={{ color: colors.primary }}
+                  >
                     {task.isCompleted ? "Mark Incomplete" : "Mark Complete"}
                   </Text>
                 </TouchableOpacity>
               </View>
               <View className="flex-row items-center">
-                <View className="w-10 h-10 rounded-full bg-blue-50 items-center justify-center mr-3">
+                <View
+                  className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                  style={{ backgroundColor: colors.primary + "20" }}
+                >
                   <Ionicons
                     name={task.isCompleted ? "checkmark-circle" : "time"}
                     size={20}
-                    color={task.isCompleted ? "#10B981" : "#3B82F6"}
+                    color={task.isCompleted ? colors.success : colors.primary}
                   />
                 </View>
                 <View>
-                  <Text className="text-gray-600 font-quicksandSemiBold text-sm">
+                  <Text
+                    className="font-quicksandSemiBold text-sm"
+                    style={{ color: colors.textSecondary }}
+                  >
                     Status
                   </Text>
-                  <Text className="text-gray-900 font-quicksandMedium">
+                  <Text
+                    className="font-quicksandMedium"
+                    style={{ color: colors.text }}
+                  >
                     {task.isCompleted ? "Completed" : "In Progress"}
                   </Text>
                 </View>

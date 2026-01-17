@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
-
 // UI-only: subtle shadow styling for hero card
 const cardShadow = Platform.select({
   ios: {
@@ -42,12 +41,12 @@ export default function NotificationTiming() {
         if (existingPrefs.length > 0) {
           // Update existing preference
           await existingPrefs[0].update((pref) => {
-            pref.leadMinutes = leadMinutes;
+            pref.lead_minutes = leadMinutes;
           });
         } else {
           // Create new preference record
           await notificationPrefs.create((pref) => {
-            pref.leadMinutes = leadMinutes;
+            pref.lead_minutes = leadMinutes;
           });
         }
       });

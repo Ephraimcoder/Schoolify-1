@@ -190,8 +190,12 @@ const Tasks = () => {
                     <Text
                       className={
                         opt.key === sortOption
-                          ? "text-indigo-600 font-quicksandSemiBold"
-                          : "text-gray-700 font-quicksand"
+                          ? `font-quicksandSemiBold ${
+                              isDark ? "text-indigo-400" : "text-indigo-600"
+                            }`
+                          : `font-quicksand ${
+                              isDark ? "text-gray-300" : "text-gray-700"
+                            }`
                       }
                     >
                       {opt.label}

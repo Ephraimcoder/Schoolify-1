@@ -9,12 +9,11 @@ import {
 } from "react";
 import { database } from "../database/database";
 import {
-  mergeAppwriteOnlyTasks,
   performIntelligentSync,
   syncDeletedTasksToAppwrite,
   syncUnsyncedTasksToAppwrite,
-} from "../helpers/appwriteSyncHelper";
-import { showError } from "../utils/toast";
+} from "../helpers/syncHelper";
+import { showError, showInfo } from "../utils/toast";
 import { useUser } from "./UserContext";
 
 // Create the context
@@ -83,7 +82,6 @@ export const TaskProvider = ({ children }) => {
         .fetch();
       setTasks(models.map(mapTaskModelToUi));
     } catch (error) {
-      console.error("Refresh tasks error:", error);
       showError("Failed to refresh tasks. Please pull to refresh.");
     }
   }, [user?.accountId]);
@@ -100,9 +98,16 @@ export const TaskProvider = ({ children }) => {
         .fetch();
       setTasks(loadedTasks.map(mapTaskModelToUi));
 
-      // Load categories
+      // Load categories for current user (or global ones without user_id)
       const categoriesCollection = database.collections.get("categories");
-      let loadedCategories = await categoriesCollection.query().fetch();
+      let loadedCategories = await categoriesCollection
+        .query(
+          Q.or(
+            Q.where("user_id", user?.accountId || ""),
+            Q.where("user_id", null)
+          )
+        )
+        .fetch();
 
       // If no categories exist, create default ones
       if (loadedCategories.length === 0) {
@@ -110,6 +115,7 @@ export const TaskProvider = ({ children }) => {
           for (const category of DEFAULT_CATEGORIES) {
             await categoriesCollection.create((cat) => {
               cat.name = category.name;
+              cat.userId = user?.accountId || null;
             });
           }
         });
@@ -117,9 +123,16 @@ export const TaskProvider = ({ children }) => {
       }
       setCategories(loadedCategories);
 
-      // Load priorities
+      // Load priorities for current user (or global ones without user_id)
       const prioritiesCollection = database.collections.get("priorities");
-      let loadedPriorities = await prioritiesCollection.query().fetch();
+      let loadedPriorities = await prioritiesCollection
+        .query(
+          Q.or(
+            Q.where("user_id", user?.accountId || ""),
+            Q.where("user_id", null)
+          )
+        )
+        .fetch();
 
       // If no priorities exist, create default ones
       if (loadedPriorities.length === 0) {
@@ -145,6 +158,9 @@ export const TaskProvider = ({ children }) => {
   useEffect(() => {
     if (user?.accountId) {
       loadInitialData();
+    } else {
+      // No user, so not loading
+      setIsLoading(false);
     }
   }, [loadInitialData, user?.accountId]);
 
@@ -334,68 +350,208 @@ export const TaskProvider = ({ children }) => {
     });
   }, []);
 
-  const addCategory = useCallback(async (categoryName) => {
-    try {
-      const col = database.get("categories");
-      let created;
-      await database.write(async () => {
-        created = await col.create((rec) => {
-          rec.name = categoryName;
+  // Derive additional categories from tasks (for synced data that may not exist in local categories table)
+  const derivedCategories = useMemo(() => {
+    const names = new Set();
+
+    tasks.forEach((t) => {
+      if (!t?.category) return;
+
+      // Skip if it's already part of the default list
+      const isDefault = DEFAULT_CATEGORIES.some(
+        (cat) => cat.name.toLowerCase() === String(t.category).toLowerCase()
+      );
+      if (isDefault) return;
+
+      names.add(String(t.category));
+    });
+
+    return Array.from(names).map((name) => ({
+      id: `derived-${name}`,
+      name,
+    }));
+  }, [tasks]);
+
+  // Derive additional priorities from tasks
+  const derivedPriorities = useMemo(() => {
+    const names = new Set();
+
+    tasks.forEach((t) => {
+      if (!t?.priority) return;
+
+      const isDefault = DEFAULT_PRIORITIES.some(
+        (prio) => prio.name.toLowerCase() === String(t.priority).toLowerCase()
+      );
+      if (isDefault) return;
+
+      names.add(String(t.priority));
+    });
+
+    return Array.from(names).map((name) => ({
+      id: `derived-${name}`,
+      name,
+    }));
+  }, [tasks]);
+
+  // Merge locally stored and derived categories/priorities, avoiding duplicates by name
+  const mergedCategories = useMemo(() => {
+    if (!categories?.length && !derivedCategories.length) return [];
+
+    const existingNames = new Set(
+      (categories || []).map((c) => String(c.name).toLowerCase())
+    );
+
+    const extra = derivedCategories.filter((dc) => {
+      const name = String(dc.name).toLowerCase();
+      if (existingNames.has(name)) return false;
+      existingNames.add(name);
+      return true;
+    });
+
+    return [...(categories || []), ...extra];
+  }, [categories, derivedCategories]);
+
+  const mergedPriorities = useMemo(() => {
+    if (!priorities?.length && !derivedPriorities.length) return [];
+
+    const existingNames = new Set(
+      (priorities || []).map((p) => String(p.name).toLowerCase())
+    );
+
+    const extra = derivedPriorities.filter((dp) => {
+      const name = String(dp.name).toLowerCase();
+      if (existingNames.has(name)) return false;
+      existingNames.add(name);
+      return true;
+    });
+
+    return [...(priorities || []), ...extra];
+  }, [priorities, derivedPriorities]);
+
+  const addCategory = useCallback(
+    async (categoryName) => {
+      try {
+        const col = database.get("categories");
+        let created;
+        await database.write(async () => {
+          created = await col.create((rec) => {
+            rec.name = categoryName;
+            rec.userId = user?.accountId || "";
+          });
         });
-      });
-      return { id: created.id, name: categoryName };
-    } catch (e) {
-      showError("Failed to add category. Please try again.");
-      return null;
-    }
-  }, []);
+
+        // Refresh categories state to include new category (scoped to user)
+        const updatedCategories = await col
+          .query(
+            Q.or(
+              Q.where("user_id", user?.accountId || ""),
+              Q.where("user_id", null)
+            )
+          )
+          .fetch();
+        setCategories(updatedCategories);
+
+        return { id: created.id, name: categoryName };
+      } catch (e) {
+        showError("Failed to add category. Please try again.");
+        return null;
+      }
+    },
+    [user?.accountId]
+  );
 
   // Delete category
-  const deleteCategory = useCallback(async (id) => {
-    try {
-      await database.write(async () => {
-        const model = await database.get("categories").find(id);
-        await model.markAsDeleted();
-      });
-    } catch (e) {
-      showError("Failed to delete category. Please try again.");
-    }
-  }, []);
+  const deleteCategory = useCallback(
+    async (id) => {
+      try {
+        await database.write(async () => {
+          const model = await database.get("categories").find(id);
+          await model.markAsDeleted();
+        });
+
+        // Refresh categories state to remove deleted category (scoped to user)
+        const col = database.get("categories");
+        const updatedCategories = await col
+          .query(
+            Q.or(
+              Q.where("user_id", user?.accountId || ""),
+              Q.where("user_id", null)
+            )
+          )
+          .fetch();
+        setCategories(updatedCategories);
+      } catch (e) {
+        showError("Failed to delete category. Please try again.");
+      }
+    },
+    [user?.accountId]
+  );
 
   // Add new priority
-  const addPriority = useCallback(async (priorityName) => {
-    try {
-      const col = database.get("priorities");
-      let created;
-      await database.write(async () => {
-        created = await col.create((rec) => {
-          rec.name = priorityName;
-          rec.level =
-            priorityName.toLowerCase() === "high"
-              ? 3
-              : priorityName.toLowerCase() === "medium"
-                ? 2
-                : 1;
+  const addPriority = useCallback(
+    async (priorityName) => {
+      try {
+        const col = database.get("priorities");
+        let created;
+        await database.write(async () => {
+          created = await col.create((rec) => {
+            rec.name = priorityName;
+            rec.level =
+              priorityName.toLowerCase() === "high"
+                ? 3
+                : priorityName.toLowerCase() === "medium"
+                  ? 2
+                  : 1;
+            rec.userId = user?.accountId || "";
+          });
         });
-      });
-      return { id: created.id, name: priorityName };
-    } catch (e) {
-      showError("Failed to add priority. Please try again.");
-      return null;
-    }
-  }, []);
+
+        // Refresh priorities state to include new priority (scoped to user)
+        const updatedPriorities = await col
+          .query(
+            Q.or(
+              Q.where("user_id", user?.accountId || ""),
+              Q.where("user_id", null)
+            )
+          )
+          .fetch();
+        setPriorities(updatedPriorities);
+
+        return { id: created.id, name: priorityName };
+      } catch (e) {
+        showError("Failed to add priority. Please try again.");
+        return null;
+      }
+    },
+    [user?.accountId]
+  );
 
   // Delete priority
-  const deletePriority = useCallback(async (id) => {
-    try {
-      await database.write(async () => {
-        const model = await database.get("priorities").find(id);
-        await model.markAsDeleted();
-      });
-    } catch (e) {
-      showError("Failed to delete priority. Please try again.");
-    }
-  }, []);
+  const deletePriority = useCallback(
+    async (id) => {
+      try {
+        await database.write(async () => {
+          const model = await database.get("priorities").find(id);
+          await model.markAsDeleted();
+        });
+
+        // Refresh priorities state to remove deleted priority (scoped to user)
+        const col = database.get("priorities");
+        const updatedPriorities = await col
+          .query(
+            Q.or(
+              Q.where("user_id", user?.accountId || ""),
+              Q.where("user_id", null)
+            )
+          )
+          .fetch();
+        setPriorities(updatedPriorities);
+      } catch (e) {
+        showError("Failed to delete priority. Please try again.");
+      }
+    },
+    [user?.accountId]
+  );
 
   // Manual Appwrite Sync Functions using helper
 
@@ -418,7 +574,9 @@ export const TaskProvider = ({ children }) => {
 
       return results;
     } catch (error) {
-      setSyncError(error.message);
+      if (error.code !== "BACKUP_DISABLED") {
+        setSyncError(error.message);
+      }
       throw error;
     } finally {
       setIsSyncing(false);
@@ -444,7 +602,9 @@ export const TaskProvider = ({ children }) => {
 
       return results;
     } catch (error) {
-      setSyncError(error.message);
+      if (error.code !== "BACKUP_DISABLED") {
+        setSyncError(error.message);
+      }
       throw error;
     } finally {
       setIsSyncing(false);
@@ -452,7 +612,7 @@ export const TaskProvider = ({ children }) => {
   }, [user?.accountId, refreshTasks]);
 
   /**
-   * Sync deletions from local to Appwrite
+   * Sync deletions from local to Appwrite with progress indication
    */
   const syncDeletedTasks = useCallback(async () => {
     if (!user?.accountId) {
@@ -463,14 +623,30 @@ export const TaskProvider = ({ children }) => {
     setSyncError(null);
 
     try {
+      showInfo("Syncing deletions...", 2000);
       const results = await syncDeletedTasksToAppwrite(user.accountId);
 
       // Refresh local tasks after deletion sync
       await refreshTasks();
 
+      // User-friendly completion message
+      if (results.deleted > 0) {
+        console.log(
+          `Deleted ${results.deleted} task${results.deleted > 1 ? "s" : ""} from cloud`
+        );
+      } else if (results.failed > 0) {
+        console.warn(
+          `Failed to delete ${results.failed} task${results.failed > 1 ? "s" : ""}`
+        );
+      } else {
+        console.log("No deletions needed");
+      }
+
       return results;
     } catch (error) {
-      setSyncError(error.message);
+      if (error.code !== "BACKUP_DISABLED") {
+        setSyncError(error.message);
+      }
       throw error;
     } finally {
       setIsSyncing(false);
@@ -478,36 +654,44 @@ export const TaskProvider = ({ children }) => {
   }, [user?.accountId, refreshTasks]);
 
   /**
-   * Full intelligent sync: Both directions
+   * Full intelligent sync: Both directions with progress reporting
    */
-  const syncAllTasksIntelligently = useCallback(async () => {
-    if (!user?.accountId) {
-      throw new Error("User not authenticated");
-    }
+  const syncAllTasksIntelligently = useCallback(
+    async (onProgress) => {
+      if (!user?.accountId) {
+        throw new Error("User not authenticated");
+      }
 
-    setIsSyncing(true);
-    setSyncError(null);
+      setIsSyncing(true);
+      setSyncError(null);
 
-    try {
-      const results = await performIntelligentSync(user.accountId);
+      try {
+        const results = await performIntelligentSync(
+          user.accountId,
+          onProgress
+        );
 
-      // Refresh local tasks after full sync
-      await refreshTasks();
+        // Refresh local tasks after full sync
+        await refreshTasks();
 
-      return results;
-    } catch (error) {
-      setSyncError(error.message);
-      throw error;
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [user?.accountId, refreshTasks]);
+        return results;
+      } catch (error) {
+        if (error.code !== "BACKUP_DISABLED") {
+          setSyncError(error.message);
+        }
+        throw error;
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [user?.accountId, refreshTasks]
+  );
 
   const value = useMemo(
     () => ({
       tasks,
-      categories,
-      priorities,
+      categories: mergedCategories,
+      priorities: mergedPriorities,
       isLoading,
       isSyncing,
       syncError,
