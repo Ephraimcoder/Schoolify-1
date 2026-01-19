@@ -32,7 +32,7 @@ export const mergeAppwriteOnlyTasks = async (userId) => {
     });
 
     if (appwriteOnlyTasks.length === 0) {
-      console.log("No cloud tasks to merge");
+      // No cloud tasks to merge
       return { success: true, merged: 0 };
     }
 
@@ -61,7 +61,6 @@ export const mergeAppwriteOnlyTasks = async (userId) => {
       }
     });
 
-    console.log(`Merged ${appwriteOnlyTasks.length} cloud tasks locally`);
     return { success: true, merged: appwriteOnlyTasks.length };
   } catch (error) {
     showError("Failed to merge cloud tasks: " + error.message);

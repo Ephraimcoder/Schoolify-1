@@ -14,6 +14,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
+import {
+  cancelDailyReminder,
+  scheduleDailyReminder,
+} from "../../../utils/dailyReminder";
 
 // UI-only: subtle shadow styling for hero card
 const cardShadow = Platform.select({
@@ -37,33 +41,17 @@ export default function DailyReminder() {
 
   const handleNext = async () => {
     try {
-      // Save daily reminder preference to database
-      const reminderPrefs = database.collections.get("reminder_prefs");
-      const existingPrefs = await reminderPrefs.query().fetch();
+      const hour = reminderTime.getHours();
+      const minute = reminderTime.getMinutes();
 
-      await database.write(async () => {
-        if (existingPrefs.length > 0) {
-          // Update existing preference
-          await existingPrefs[0].update((pref) => {
-            pref.enabled = dailyReminder;
-            pref.hour = reminderTime.getHours();
-            pref.minute = reminderTime.getMinutes();
-          });
-        } else {
-          // Create new preference record
-          await reminderPrefs.create((pref) => {
-            pref.enabled = dailyReminder;
-            pref.hour = reminderTime.getHours();
-            pref.minute = reminderTime.getMinutes();
-          });
-        }
-      });
+      if (dailyReminder) {
+        // Schedule and persist the reminder
+        await scheduleDailyReminder(hour, minute);
+      } else {
+        // Disable any existing reminder
+        await cancelDailyReminder();
+      }
 
-      console.log("Daily reminder saved to database:", {
-        enabled: dailyReminder,
-        hour: reminderTime.getHours(),
-        minute: reminderTime.getMinutes(),
-      });
       router.replace("/(auth)/sign-in");
     } catch (error) {
       console.error("Error saving daily reminder preference:", error);
@@ -72,8 +60,26 @@ export default function DailyReminder() {
     }
   };
 
-  const handleSkip = () => {
-    router.replace("/(auth)/sign-in");
+  const handleSkip = async () => {
+    try {
+      // Save the default state when skipping
+      const hour = reminderTime.getHours();
+      const minute = reminderTime.getMinutes();
+
+      if (dailyReminder) {
+        // Schedule and persist the reminder with default settings
+        await scheduleDailyReminder(hour, minute);
+      } else {
+        // Disable any existing reminder
+        await cancelDailyReminder();
+      }
+
+      router.replace("/(auth)/sign-in");
+    } catch (error) {
+      console.error("Error saving daily reminder preference on skip:", error);
+      // Still proceed even if database save fails
+      router.replace("/(auth)/sign-in");
+    }
   };
 
   const formatTimeDisplay = (date) => {

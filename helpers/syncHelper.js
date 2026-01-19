@@ -10,7 +10,7 @@ import { syncUnsyncedTasksToAppwrite } from "./syncTasksHelper";
  */
 export const performIntelligentSync = async (userId, onProgress) => {
   try {
-    console.log(" Starting intelligent full sync...");
+    // Starting intelligent full sync...
     showInfo("Starting sync...", 2000);
 
     // Step 1: Sync unsynced local tasks to Appwrite
@@ -61,7 +61,7 @@ export const performIntelligentSync = async (userId, onProgress) => {
     if (onProgress) onProgress({ step: "completed", message });
     // Removed showInfo call - let the UI button handle status display
 
-    console.log(" Intelligent sync completed:", finalResults.summary);
+    // Intelligent sync completed: ${finalResults.summary}
     return finalResults;
   } catch (error) {
     console.error(" Intelligent sync failed:", error);

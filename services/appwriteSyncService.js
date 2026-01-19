@@ -302,7 +302,7 @@ class AppwriteSyncService {
                 });
               } else {
                 // Same timestamp - no conflict
-                console.log(`No conflict for task ${localTask.$id}`);
+                // No conflict for task ${localTask.$id}
               }
             }
           } else {

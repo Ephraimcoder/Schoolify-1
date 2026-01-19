@@ -13,8 +13,10 @@
       "android": {
         "buildType": "apk"
       },
-
-    "environment": "preview"
+      "environment": "preview",
+      "cache": {
+        "disabled": true
+      }
     },
     "production": {
       "autoIncrement": true

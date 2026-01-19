@@ -145,7 +145,7 @@ const AddTask = () => {
       // Customize notification content based on whether it's a class or task
       const notificationTitle = isClass
         ? `📚 Your class ${title} is starting soon!`
-        : `🔔 Your Task ${title} id due soon`;
+        : `🔔 Your Task ${title} is due soon`;
 
       const notificationBody = isClass
         ? `Your class is about to begin. Don't be late!`

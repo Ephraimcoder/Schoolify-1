@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated } from "react-native";
 
 const ScreenAnimation = ({ children, duration = 200 }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const hasAnimatedRef = useRef(false);
 
   useEffect(() => {
     // Only run animation once per component instance
-    if (hasAnimated) return;
+    if (hasAnimatedRef.current) return;
 
     // Start animation immediately after mount
     const timer = setTimeout(() => {
@@ -24,12 +24,12 @@ const ScreenAnimation = ({ children, duration = 200 }) => {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        setHasAnimated(true);
+        hasAnimatedRef.current = true;
       });
     }, 50); // Reduced delay for faster response
 
     return () => clearTimeout(timer);
-  }, [hasAnimated]); // Only run when hasAnimated changes
+  }, []); // Empty dependency array - run once on mount
 
   return (
     <Animated.View

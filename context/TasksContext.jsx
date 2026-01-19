@@ -460,18 +460,61 @@ export const TaskProvider = ({ children }) => {
     [user?.accountId]
   );
 
+  // Remove derived category by clearing it from all tasks
+  const removeDerivedCategory = useCallback(
+    async (name) => {
+      try {
+        const tasksToUpdate = tasks.filter((task) => task.category === name);
+        await Promise.all(
+          tasksToUpdate.map((task) => updateTask(task.id, { category: "" }))
+        );
+        await refreshTasks();
+        showInfo(`Removed category "${name}" from all tasks`);
+      } catch (e) {
+        showError("Failed to remove derived category");
+      }
+    },
+    [tasks, updateTask, refreshTasks]
+  );
+
+  // Remove derived priority by clearing it from all tasks
+  const removeDerivedPriority = useCallback(
+    async (name) => {
+      try {
+        const tasksToUpdate = tasks.filter((task) => task.priority === name);
+        await Promise.all(
+          tasksToUpdate.map((task) => updateTask(task.id, { priority: "" }))
+        );
+        await refreshTasks();
+        showInfo(`Removed priority "${name}" from all tasks`);
+      } catch (e) {
+        showError("Failed to remove derived priority");
+      }
+    },
+    [tasks, updateTask, refreshTasks]
+  );
+
   // Delete category
   const deleteCategory = useCallback(
     async (id) => {
       try {
+        if (String(id).startsWith("derived-")) {
+          const name = id.replace("derived-", "");
+          await removeDerivedCategory(name);
+          return;
+        }
+        const categoriesCollection = database.collections.get("categories");
         await database.write(async () => {
-          const model = await database.get("categories").find(id);
+          const model = await categoriesCollection.find(id).catch(() => null);
+          if (!model) {
+            console.warn("Category not found when deleting", id);
+            return;
+          }
           await model.markAsDeleted();
         });
 
         // Refresh categories state to remove deleted category (scoped to user)
-        const col = database.get("categories");
-        const updatedCategories = await col
+        const updatedCategories = await categoriesCollection
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
@@ -481,6 +524,7 @@ export const TaskProvider = ({ children }) => {
           .fetch();
         setCategories(updatedCategories);
       } catch (e) {
+        console.error("Error deleting category", e);
         showError("Failed to delete category. Please try again.");
       }
     },
@@ -530,14 +574,23 @@ export const TaskProvider = ({ children }) => {
   const deletePriority = useCallback(
     async (id) => {
       try {
+        if (String(id).startsWith("derived-")) {
+          const name = id.replace("derived-", "");
+          await removeDerivedPriority(name);
+          return;
+        }
+        const prioritiesCollection = database.collections.get("priorities");
         await database.write(async () => {
-          const model = await database.get("priorities").find(id);
+          const model = await prioritiesCollection.find(id).catch(() => null);
+          if (!model) {
+            console.warn("Priority not found when deleting", id);
+            return;
+          }
           await model.markAsDeleted();
         });
 
         // Refresh priorities state to remove deleted priority (scoped to user)
-        const col = database.get("priorities");
-        const updatedPriorities = await col
+        const updatedPriorities = await prioritiesCollection
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
@@ -547,6 +600,7 @@ export const TaskProvider = ({ children }) => {
           .fetch();
         setPriorities(updatedPriorities);
       } catch (e) {
+        console.error("Error deleting priority", e);
         showError("Failed to delete priority. Please try again.");
       }
     },
@@ -631,15 +685,11 @@ export const TaskProvider = ({ children }) => {
 
       // User-friendly completion message
       if (results.deleted > 0) {
-        console.log(
-          `Deleted ${results.deleted} task${results.deleted > 1 ? "s" : ""} from cloud`
-        );
+        // Deleted ${results.deleted} tasks from cloud
       } else if (results.failed > 0) {
-        console.warn(
-          `Failed to delete ${results.failed} task${results.failed > 1 ? "s" : ""}`
-        );
+        // Failed to delete ${results.failed} tasks
       } else {
-        console.log("No deletions needed");
+        // No deletions needed
       }
 
       return results;

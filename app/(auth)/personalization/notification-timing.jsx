@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
+import { setNotificationLeadMinutes } from "../../../utils/notificationPrefs";
 // UI-only: subtle shadow styling for hero card
 const cardShadow = Platform.select({
   ios: {
@@ -33,25 +34,7 @@ export default function NotificationTiming() {
 
   const handleNext = async () => {
     try {
-      // Save notification preference to database
-      const notificationPrefs = database.collections.get("notification_prefs");
-      const existingPrefs = await notificationPrefs.query().fetch();
-
-      await database.write(async () => {
-        if (existingPrefs.length > 0) {
-          // Update existing preference
-          await existingPrefs[0].update((pref) => {
-            pref.lead_minutes = leadMinutes;
-          });
-        } else {
-          // Create new preference record
-          await notificationPrefs.create((pref) => {
-            pref.lead_minutes = leadMinutes;
-          });
-        }
-      });
-
-      console.log("Notification lead minutes saved to database:", leadMinutes);
+      await setNotificationLeadMinutes(leadMinutes);
       router.push("/(auth)/personalization/daily-reminder");
     } catch (error) {
       console.error("Error saving notification preference:", error);

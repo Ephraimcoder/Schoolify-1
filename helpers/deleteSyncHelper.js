@@ -30,11 +30,9 @@ export const getTasksToDeleteFromAppwrite = async (userId) => {
         return task._raw && task._raw._status === "deleted";
       });
 
-      console.log(
-        `Found ${recentlyDeletedTasks.length} recently deleted records`
-      );
+      // Found ${recentlyDeletedTasks.length} recently deleted records
     } catch (error) {
-      console.log(`Failed to get deleted records: ${error.message}`);
+      // Failed to get deleted records: ${error.message}
     }
 
     // Method 2: Safe comparison method (uncommented for testing)
@@ -55,9 +53,7 @@ export const getTasksToDeleteFromAppwrite = async (userId) => {
 
       // Only use recently deleted records in this scenario (if available)
       if (recentlyDeletedTasks.length > 0) {
-        console.log(
-          `✅ Only processing ${recentlyDeletedTasks.length} recently deleted tasks`
-        );
+        // Only processing ${recentlyDeletedTasks.length} recently deleted tasks
         return recentlyDeletedTasks.filter((task) => task.appwriteId);
       }
 
@@ -85,11 +81,9 @@ export const getTasksToDeleteFromAppwrite = async (userId) => {
       ),
     ];
 
-    console.log(
-      `Found ${allTasksToDelete.length} total tasks to delete from Appwrite`
-    );
-    console.log(`  - ${tasksToDelete.length} from comparison method`);
-    console.log(`  - ${recentlyDeletedTasks.length} from deleted records`);
+    // Found ${allTasksToDelete.length} total tasks to delete from Appwrite
+    //  - ${tasksToDelete.length} from comparison method
+    //  - ${recentlyDeletedTasks.length} from deleted records
 
     return allTasksToDelete;
   } catch (error) {
@@ -107,13 +101,13 @@ export const syncDeletedTasksToAppwrite = async (userId) => {
       throw new Error("User not authenticated");
     }
 
-    console.log("🗑️ Syncing deleted tasks to Appwrite...");
+    // Syncing deleted tasks to Appwrite...
 
     // Get tasks that need to be deleted from Appwrite
     const tasksToDelete = await getTasksToDeleteFromAppwrite(userId);
 
     if (tasksToDelete.length === 0) {
-      console.log("✅ No tasks to delete from Appwrite");
+      // No tasks to delete from Appwrite
       return { success: true, deleted: 0 };
     }
 
@@ -123,7 +117,7 @@ export const syncDeletedTasksToAppwrite = async (userId) => {
     // Delete each task from Appwrite
     for (const appwriteTask of tasksToDelete) {
       try {
-        console.log(`🗑️ Deleting task from Appwrite: ${appwriteTask.title}`);
+        // Deleting task from Appwrite: ${appwriteTask.title}
         await appwriteSyncService.deleteTaskFromAppwrite(appwriteTask.$id);
         deletedCount++;
       } catch (error) {
@@ -135,9 +129,7 @@ export const syncDeletedTasksToAppwrite = async (userId) => {
       }
     }
 
-    console.log(
-      `🗑️ Delete sync completed: ${deletedCount} deleted, ${failedCount} failed`
-    );
+    // Delete sync completed: ${deletedCount} deleted, ${failedCount} failed
 
     return {
       success: failedCount === 0,

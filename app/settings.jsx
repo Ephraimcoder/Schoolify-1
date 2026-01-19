@@ -467,11 +467,8 @@ const Settings = () => {
         <TimePickerModal
           visible={showTimePicker}
           onClose={() => setShowTimePicker(false)}
-          initialTime={reminderTime}
-          onSave={(time) => {
-            setReminderTime(time);
-            setShowTimePicker(false);
-          }}
+          initialTime={reminderTime || new Date()}
+          onTimeSelected={handleTimeSelected}
         />
       </Animated.View>
     </SafeAreaView>

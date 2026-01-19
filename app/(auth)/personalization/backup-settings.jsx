@@ -79,7 +79,7 @@ export default function BackupSettings() {
         }
       });
 
-      console.log("Backup enabled saved to database:", backupEnabled);
+      // Backup enabled saved to database: ${backupEnabled}
       showSuccess(`Backup ${backupEnabled ? "enabled" : "disabled"}`);
       router.push("/(auth)/personalization/notification-timing");
     } catch (error) {

@@ -36,9 +36,7 @@ export const getUnsyncedTasks = async (userId) => {
       return lastModified > lastSynced;
     });
 
-    console.log(
-      `Found ${unsyncedTasks.length} tasks that need syncing out of ${allTasks.length} total`
-    );
+    // Found ${unsyncedTasks.length} tasks that need syncing out of ${allTasks.length} total
 
     // 🚀 Debug: Log details of tasks needing sync
     unsyncedTasks.forEach((task, index) => {
@@ -71,7 +69,7 @@ export const syncUnsyncedTasksToAppwrite = async (userId) => {
     const unsyncedTasks = await getUnsyncedTasks(userId);
 
     if (unsyncedTasks.length === 0) {
-      console.log("No tasks need syncing");
+      // No tasks need syncing
       return {
         success: true,
         created: [],
@@ -180,9 +178,7 @@ export const syncUnsyncedTasksToAppwrite = async (userId) => {
       }
     }
 
-    console.log(
-      `Sync completed: ${results.created.length} created, ${results.updated.length} updated, ${results.failed.length} failed`
-    );
+    // Sync completed: ${results.created.length} created, ${results.updated.length} updated, ${results.failed.length} failed
 
     return {
       success: results.failed.length === 0,

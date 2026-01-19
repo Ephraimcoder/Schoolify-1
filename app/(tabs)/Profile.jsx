@@ -132,9 +132,9 @@ const Profile = () => {
     return () => clearInterval(interval); // Cleanup on unmount
   }, []);
 
-  // Debug: Log current backup state
+  // Monitor backup state changes
   useEffect(() => {
-    console.log("Current backupEnabled state:", backupEnabled);
+    // Current backupEnabled state: ${backupEnabled}
   }, [backupEnabled]);
 
   // Monitor network status

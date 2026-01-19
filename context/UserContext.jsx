@@ -1,3 +1,4 @@
+import { Q } from "@nozbe/watermelondb";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -83,6 +84,7 @@ export function UserProvider({ children }) {
   };
 
   useEffect(() => {
+    let mounted = true;
     const loadAndValidateUser = async () => {
       try {
         // 1. Load from local storage
@@ -104,8 +106,10 @@ export function UserProvider({ children }) {
           // If cache is fresh, verify session matches cached user (only every 24 hours)
           if (!shouldCheckSession) {
             // Skip session check - use cached data
-            setUser(currentUserData);
-            setIsLoading(false);
+            if (mounted) {
+              setUser(currentUserData);
+              setIsLoading(false);
+            }
             return;
           }
 
@@ -122,38 +126,53 @@ export function UserProvider({ children }) {
               console.log("Session user mismatch, clearing cache");
               await clearUser();
               currentUserData = null;
-              setIsLoading(false);
+              if (mounted) {
+                setIsLoading(false);
+              }
               return;
             } else if (!currentAccount) {
               // No session - clear cache
               await clearUser();
               currentUserData = null;
-              setIsLoading(false);
+              if (mounted) {
+                setIsLoading(false);
+              }
               return;
             }
           } catch (sessionError) {
             // Can't get session - clear cache for safety
             await clearUser();
             currentUserData = null;
-            setIsLoading(false);
+            if (mounted) {
+              setIsLoading(false);
+            }
             return;
           }
 
-          setUser(currentUserData);
-          setIsLoading(false);
+          if (mounted) {
+            setUser(currentUserData);
+            setIsLoading(false);
+          }
           return;
         }
 
         // 3. FINAL STEP: Update user state
-        setUser(currentUserData);
+        if (mounted) {
+          setUser(currentUserData);
+        }
       } catch (e) {
         console.error("Initialization failed", e);
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadAndValidateUser();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Save user to AsyncStorage
@@ -356,9 +375,6 @@ export function UserProvider({ children }) {
       );
 
       if (tasksResponse.documents.length > 0) {
-        console.log(
-          `Deleting ${tasksResponse.documents.length} tasks from Appwrite...`
-        );
         for (const taskDoc of tasksResponse.documents) {
           await databases.deleteDocument(
             appwriteConfig.databaseId,
@@ -366,9 +382,6 @@ export function UserProvider({ children }) {
             taskDoc.$id
           );
         }
-        console.log(
-          `Deleted ${tasksResponse.documents.length} tasks from Appwrite`
-        );
       }
 
       // 2. Delete all user's tasks from local database
@@ -383,18 +396,25 @@ export function UserProvider({ children }) {
             await task.markAsDeleted();
           }
         });
-        console.log(`Marked ${userTasks.length} tasks as deleted`);
       }
 
       // 3. Delete user document from database
-      await databases.deleteDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.userCollectionId,
-        user.$id
-      );
+      try {
+        await databases.deleteDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.userCollectionId,
+          user.$id
+        );
+      } catch (error) {
+        if (error.code !== 404) {
+          throw error; // Re-throw if it's not a "not found" error
+        }
+      }
 
-      // 4. Delete the account (no password verification needed for deletion)
-      await account.delete();
+      // 4. Delete the account session
+      await account.deleteSession("current");
+      // Note: Appwrite doesn't have a direct deleteAccount method in the client SDK
+      // The account deletion should be handled server-side or via additional API calls
 
       // 5. Clear local storage and state
       await clearUser();

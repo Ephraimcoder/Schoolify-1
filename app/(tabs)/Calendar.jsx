@@ -49,6 +49,7 @@ const CalendarScreen = () => {
           }`}
         >
           <Calendar
+            key={`calendar-${isDark ? "dark" : "light"}`} // force re-render when theme changes
             onDayPress={(day) => setSelectedDate(day.dateString)}
             markedDates={markedDates}
             theme={{

@@ -95,7 +95,7 @@ function RootLayoutContent() {
     // This listener is called when a notification is received while the app is in the foreground
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
-        console.log("Notification received:", notification);
+        // Notification received
       });
 
     // This listener is called when a user taps on a notification
@@ -105,7 +105,7 @@ function RootLayoutContent() {
           response.notification.request.content.data || {};
         const { id, type } = notificationData;
 
-        console.log("Notification tapped:", { id, type });
+        // Notification tapped: { id, type }
 
         // Handle different notification types
         if (id && type === "task") {
