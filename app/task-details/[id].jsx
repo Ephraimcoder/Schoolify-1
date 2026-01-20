@@ -46,6 +46,31 @@ const TaskDetails = () => {
     updateTask(task.id, updatedTask);
     setTask(updatedTask);
   };
+
+  const handleToggleSubtask = (subtaskId) => {
+    if (!task) return;
+
+    const updatedSubTasks = (task.subTasks || []).map((subtask) =>
+      subtask.id === subtaskId
+        ? { ...subtask, isCompleted: !subtask.isCompleted }
+        : subtask
+    );
+
+    const allDone =
+      updatedSubTasks.length > 0 &&
+      updatedSubTasks.every((subtask) => subtask.isCompleted);
+
+    setTask((prev) => ({
+      ...prev,
+      subTasks: updatedSubTasks,
+      isCompleted: allDone,
+    }));
+
+    updateTask(task.id, {
+      subTasks: updatedSubTasks,
+      isCompleted: allDone,
+    });
+  };
   const handleEdit = () => {
     // Navigate to edit screen or open edit modal
     // For now, we'll just close the modal
@@ -104,22 +129,33 @@ const TaskDetails = () => {
   };
 
   const renderSubtask = ({ item, index }) => (
-    <View
+    <TouchableOpacity
       key={`subtask-${index}`}
-      className="flex-row items-center py-2 border-b"
+      onPress={() => handleToggleSubtask(item.id)}
+      className="flex-row items-center py-2 mb-1 border-b"
       style={{ borderColor: colors.border }}
     >
       <View
-        className="w-5 h-5 rounded-full border mr-3"
-        style={{ borderColor: colors.border }}
-      />
+        className="w-5 h-5 rounded-full border mr-3 items-center justify-center"
+        style={{
+          borderColor: item.isCompleted ? colors.primary : colors.border,
+          backgroundColor: item.isCompleted ? colors.primary + "20" : "transparent",
+        }}
+      >
+        {item.isCompleted && (
+          <Ionicons name="checkmark" size={12} color={colors.primary} />
+        )}
+      </View>
       <Text
         className="font-quicksandMedium flex-1"
-        style={{ color: colors.text }}
+        style={{
+          color: item.isCompleted ? colors.textSecondary : colors.text,
+          textDecorationLine: item.isCompleted ? "line-through" : "none",
+        }}
       >
         {item.title}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderEmptySubtasks = () => (
@@ -146,6 +182,11 @@ const TaskDetails = () => {
       </View>
     );
   }
+
+  const totalSubtasks = task?.subTasks?.length || 0;
+  const completedSubtasks =
+    task?.subTasks?.filter((subtask) => subtask.isCompleted).length || 0;
+  const progress = totalSubtasks > 0 ? completedSubtasks / totalSubtasks : 0;
 
   return (
     <ScreenAnimation duration={400}>
@@ -262,6 +303,42 @@ const TaskDetails = () => {
                 >
                   Subtasks
                 </Text>
+              </View>
+
+              <View className="mb-4">
+                <View className="flex-row justify-between items-center mb-2">
+                  <Text
+                    className="text-xs font-quicksandSemiBold"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    {totalSubtasks > 0
+                      ? `${completedSubtasks} of ${totalSubtasks} completed`
+                      : "No subtasks yet"}
+                  </Text>
+                  {totalSubtasks > 0 && (
+                    <Text
+                      className="text-xs font-quicksandSemiBold"
+                      style={{ color: colors.textSecondary }}
+                    >
+                      {Math.round(progress * 100)}%
+                    </Text>
+                  )}
+                </View>
+
+                {totalSubtasks > 0 && (
+                  <View
+                    className="w-full h-2 rounded-full"
+                    style={{ backgroundColor: colors.border }}
+                  >
+                    <View
+                      className="h-2 rounded-full"
+                      style={{
+                        backgroundColor: colors.primary,
+                        width: `${progress * 100}%`,
+                      }}
+                    />
+                  </View>
+                )}
               </View>
 
               <FlatList
