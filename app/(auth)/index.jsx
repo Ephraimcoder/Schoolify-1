@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { onboarding } from "../../constants/index";
 import { useTheme } from "../../context/ThemeContext";
 const { width } = Dimensions.get("window");
@@ -86,7 +87,10 @@ export default function Index() {
   if (isBooting) return null;
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background[0] }}>
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: colors.background[0] }}
+    >
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <View style={{ flex: 1 }}>
         <ScrollView
@@ -193,6 +197,6 @@ export default function Index() {
           ))}
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

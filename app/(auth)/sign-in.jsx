@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
@@ -86,7 +87,9 @@ export default function SignIn() {
 
   return (
     <ScreenAnimation duration={400}>
-      <View className={`flex-1 ${isDark ? "bg-gray-900" : "bg-amber-50"}`}>
+      <SafeAreaView
+        className={`flex-1 ${isDark ? "bg-gray-900" : "bg-amber-50"}`}
+      >
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 24,
@@ -274,7 +277,7 @@ export default function SignIn() {
             </View>
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </ScreenAnimation>
   );
 }

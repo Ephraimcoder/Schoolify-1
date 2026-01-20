@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import { TasksContext } from "../../context/TasksContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -139,7 +140,9 @@ const TaskDetails = () => {
         className="w-5 h-5 rounded-full border mr-3 items-center justify-center"
         style={{
           borderColor: item.isCompleted ? colors.primary : colors.border,
-          backgroundColor: item.isCompleted ? colors.primary + "20" : "transparent",
+          backgroundColor: item.isCompleted
+            ? colors.primary + "20"
+            : "transparent",
         }}
       >
         {item.isCompleted && (
@@ -190,7 +193,7 @@ const TaskDetails = () => {
 
   return (
     <ScreenAnimation duration={400}>
-      <View
+      <SafeAreaView
         className="flex-1"
         style={{ backgroundColor: colors.background[0] }}
       >
@@ -471,7 +474,7 @@ const TaskDetails = () => {
             </View>
           </View>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </ScreenAnimation>
   );
 };

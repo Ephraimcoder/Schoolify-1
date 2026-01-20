@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import CalendarTaskList from "../../components/calendar/CalendarTaskList";
 import DateUtils from "../../components/calendar/DateUtils";
@@ -28,7 +29,7 @@ const CalendarScreen = () => {
 
   return (
     <ScreenAnimation duration={400}>
-      <View
+      <SafeAreaView
         className={`flex-1 px-4 pt-4 ${
           isDark ? "bg-gray-900" : "bg-[#FEFBF6]"
         }`}
@@ -128,7 +129,7 @@ const CalendarScreen = () => {
             </View>
           )}
         </View>
-      </View>
+      </SafeAreaView>
     </ScreenAnimation>
   );
 };
