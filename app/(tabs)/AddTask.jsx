@@ -352,8 +352,14 @@ const AddTask = () => {
       router.back();
 
       const isClass = formData.category === "Class";
+      const isEditing = !!taskId;
+
       toast.success(
-        isClass ? "Class created successfully!" : "Task saved successfully!",
+        isClass
+          ? isEditing
+            ? "Class updated successfully!"
+            : "Class created successfully!"
+          : "Task saved successfully!",
         {
           width: 400,
           duration: 4000,
@@ -672,7 +678,9 @@ const AddTask = () => {
               ) : (
                 <Text className="text-white text-center font-quicksandBold text-lg">
                   {formData.category === "Class"
-                    ? "Create Class"
+                    ? taskId
+                      ? "Edit Class"
+                      : "Create Class"
                     : taskId
                       ? "Edit Task"
                       : "Create Task"}

@@ -258,81 +258,153 @@ export function UserProvider({ children }) {
       throw new Error("No internet connection");
     }
     setIsLoading(true);
+
+    // Track if we need to rollback
+    let sessionCreated = false;
+    let accountUpdated = false;
+    let databaseDocumentCreated = false;
+
     try {
-      if (isSignup) {
-        // For signup: create account first, then verify with OTP
-        const newAccount = await account.create(userId, email, password, name);
+      // Step 1: Create session with OTP to verify the email token
+      await account.createSession({ userId, secret: code });
+      sessionCreated = true;
 
-        // Create session with OTP to verify
-        await account.createSession({ userId, secret: code });
-
-        // Create user document
-        const avatarUrl = avatars.getInitialsURL(name);
-        const newDoc = await databases.createDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.userCollectionId,
-          ID.unique(),
-          {
-            accountId: newAccount.$id,
-            name: name,
-            email: email,
-            avatar: avatarUrl,
-          }
-        );
-
-        const userData = {
-          $id: newDoc.$id,
-          name: newDoc.name,
-          email: newDoc.email,
-          avatar: newDoc.avatar,
-          accountId: newDoc.accountId,
-        };
-
-        await saveUser(userData);
-        return userData;
-      } else {
-        // For login: existing OTP flow
-        await account.createSession({ userId, secret: code });
-      }
-
-      // Get the authenticated account
+      // Get the authenticated account (this works for both signup and login)
       const currentAccount = await account.get();
 
-      // Try fetching user document; if missing, create it (first sign-in)
+      // For signup, we need to update the account with name and password since OTP verification only creates a basic account
+      if (isSignup) {
+        try {
+          // Step 2: Update account with name and password
+          await account.updateName(name);
+          await account.updatePassword(password);
+          accountUpdated = true;
+
+          // Step 3: Create user document in our database
+          const avatarUrl = avatars.getInitialsURL(name);
+          const newDoc = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            ID.unique(),
+            {
+              accountId: currentAccount.$id,
+              name: name,
+              email: email,
+              avatar: avatarUrl,
+            }
+          );
+          databaseDocumentCreated = true;
+
+          const userData = {
+            $id: newDoc.$id,
+            name: newDoc.name,
+            email: newDoc.email,
+            avatar: newDoc.avatar,
+            accountId: newDoc.accountId,
+          };
+
+          await saveUser(userData);
+          return userData;
+        } catch (signupError) {
+          console.error(
+            "Signup process failed, initiating cleanup:",
+            signupError
+          );
+
+          // Rollback: Clean up any partial creation
+          try {
+            if (databaseDocumentCreated) {
+              // Database document was created, but we can't easily rollback without document ID
+              // This is a rare case, but we'll log it for manual cleanup
+              console.error(
+                "Database document created but subsequent operations failed - manual cleanup may be needed"
+              );
+            }
+
+            if (accountUpdated) {
+              // Try to delete the session to prevent further access
+              await account.deleteSessions();
+            }
+
+            if (sessionCreated) {
+              // Try to delete the entire account if it was just created
+              // Note: Appwrite doesn't provide direct account deletion from client SDK
+              // This would need server-side implementation
+              console.error(
+                "Account was created but setup incomplete - account may need manual cleanup"
+              );
+            }
+          } catch (cleanupError) {
+            console.error("Cleanup failed:", cleanupError);
+          }
+
+          throw new Error(
+            "Account creation failed. Please try again or contact support if the issue persists."
+          );
+        }
+      }
+
+      // For login: Try fetching user document; if missing, create it (first sign-in)
       let userData;
       try {
         userData = await fetchUserDocument(currentAccount.$id);
       } catch (err) {
-        // Create minimal profile (shouldn't happen for signup, but fallback)
-        const fallbackName =
-          currentAccount.name && currentAccount.name.trim().length > 0
-            ? currentAccount.name
-            : currentAccount.email?.split("@")[0] || "User";
-        const avatarUrl = avatars.getInitialsURL(fallbackName);
-        const newDoc = await databases.createDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.userCollectionId,
-          ID.unique(),
-          {
-            accountId: currentAccount.$id,
-            name: fallbackName,
-            email: currentAccount.email,
-            avatar: avatarUrl,
+        try {
+          // Create minimal profile (shouldn't happen for signup, but fallback)
+          const fallbackName =
+            currentAccount.name && currentAccount.name.trim().length > 0
+              ? currentAccount.name
+              : currentAccount.email?.split("@")[0] || "User";
+          const avatarUrl = avatars.getInitialsURL(fallbackName);
+          const newDoc = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            ID.unique(),
+            {
+              accountId: currentAccount.$id,
+              name: fallbackName,
+              email: currentAccount.email,
+              avatar: avatarUrl,
+            }
+          );
+          userData = {
+            $id: newDoc.$id,
+            name: newDoc.name,
+            email: newDoc.email,
+            avatar: newDoc.avatar,
+            accountId: newDoc.accountId,
+          };
+        } catch (fallbackError) {
+          // If fallback fails, clean up the session
+          console.error(
+            "Fallback user document creation failed:",
+            fallbackError
+          );
+          try {
+            await account.deleteSessions();
+          } catch (cleanupError) {
+            console.error("Session cleanup failed:", cleanupError);
           }
-        );
-        userData = {
-          $id: newDoc.$id,
-          name: newDoc.name,
-          email: newDoc.email,
-          avatar: newDoc.avatar,
-          accountId: newDoc.accountId,
-        };
+          throw new Error(
+            "Failed to complete account setup. Please try again."
+          );
+        }
       }
 
       await saveUser(userData);
       return userData;
     } catch (error) {
       console.error("verifyEmailOtp error:", error);
+
+      // If we failed early and created a session, clean it up
+      if (sessionCreated && !isSignup) {
+        try {
+          await account.deleteSessions();
+        } catch (cleanupError) {
+          console.error("Session cleanup failed:", cleanupError);
+        }
+      }
+
       throw new Error(
         error?.message || "Invalid or expired code. Please try again."
       );

@@ -33,7 +33,7 @@ const Settings = () => {
   const [reminderTime, setReminderTime] = useState(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [backupEnabled, setBackupEnabled] = useState(true);
-  const [leadMinutes, setLeadMinutes] = useState(15);
+  const [leadMinutes, setLeadMinutes] = useState(null);
   const [appVersion] = useState("1.0.0");
   const [showNotificationSettings, setShowNotificationSettings] =
     useState(false);
@@ -101,8 +101,11 @@ const Settings = () => {
         ]);
 
         // Load notification lead time
-        if (savedLeadMinutes) {
+        if (savedLeadMinutes !== null && savedLeadMinutes !== undefined) {
           setLeadMinutes(savedLeadMinutes);
+        } else {
+          // Fallback to default if no saved preference exists
+          setLeadMinutes(15);
         }
 
         // Load daily reminder settings
@@ -336,7 +339,7 @@ const Settings = () => {
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
                   {minuteOptions.map((m) => {
-                    const selected = m === leadMinutes;
+                    const selected = leadMinutes !== null && m === leadMinutes;
                     return (
                       <TouchableOpacity
                         key={m}

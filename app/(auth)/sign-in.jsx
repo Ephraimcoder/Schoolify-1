@@ -94,7 +94,7 @@ export default function SignIn() {
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 40,
-            paddingBottom: 180,
+            paddingBottom: 40,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -233,11 +233,8 @@ export default function SignIn() {
             </View>
           </View>
 
-          {/* Bottom spacing reserved for the pinned CTA */}
-          <View className="h-10" />
-
           {/* CTA + links */}
-          <View className="mt-6">
+          <View className="mt-8">
             <TouchableOpacity
               className="bg-purple-600 h-16 rounded-full items-center justify-center"
               onPress={submit}
@@ -248,7 +245,7 @@ export default function SignIn() {
               </Text>
             </TouchableOpacity>
 
-            <View className="flex-row justify-center mt-3">
+            <View className="flex-row justify-center mt-4">
               <Link
                 href="/(auth)/otp-start"
                 className="text-orange-500 font-quicksandBold text-base"
@@ -258,7 +255,7 @@ export default function SignIn() {
               </Link>
             </View>
 
-            <View className="flex-row justify-center mt-2">
+            <View className="flex-row justify-center mt-3">
               <Text
                 className={`text-base ${
                   isDark ? "text-gray-400" : "text-gray-600"

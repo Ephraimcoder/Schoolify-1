@@ -12,7 +12,7 @@
     "scheme": ["schoolify"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true
     },
@@ -23,7 +23,7 @@
       },
       "edgeToEdgeEnabled": false,
       "package": "com.ephraimcoder.Schoolify",
-      "jsEngine": "jsc",
+      "jsEngine": "hermes",
       "newArchEnabled": false
     },
     "web": {

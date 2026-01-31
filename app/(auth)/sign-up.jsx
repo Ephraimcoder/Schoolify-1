@@ -109,7 +109,7 @@ export default function SignUp() {
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 40,
-            paddingBottom: 200,
+            paddingBottom: 40,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -267,11 +267,8 @@ export default function SignUp() {
             </View>
           </View>
 
-          {/* Bottom spacer for pinned CTA */}
-          <View className="h-10" />
-
           {/* CTA + link */}
-          <View className="mt-6">
+          <View className="mt-8">
             <TouchableOpacity
               className="bg-purple-600 h-16 rounded-full items-center justify-center"
               onPress={submit}
@@ -282,7 +279,7 @@ export default function SignUp() {
               </Text>
             </TouchableOpacity>
 
-            <View className="flex-row justify-center mt-3">
+            <View className="flex-row justify-center mt-4">
               <Text
                 className={`text-base ${
                   isDark ? "text-gray-400" : "text-gray-600"

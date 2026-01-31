@@ -1,15 +1,44 @@
 import { toast } from "@backpackapp-io/react-native-toast";
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
-import {
-  Dimensions,
-  Modal,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { GamificationAnalytics } from "../components/analytics";
 import { useTheme } from "../context/ThemeContext";
+
+// Reuse the streak calculation from TaskProgress
+const calculateStreak = (tasks) => {
+  const completedTaskList = tasks.filter((task) => task.isCompleted);
+  if (completedTaskList.length === 0) return 0;
+
+  const dates = [
+    ...new Set(
+      completedTaskList
+        .map((task) => {
+          // Use updatedAt for completion date, fallback to dueDate
+          const completionDate = task.updatedAt || task.dueDate;
+          return completionDate
+            ? new Date(completionDate).toDateString()
+            : null;
+        })
+        .filter(Boolean)
+    ),
+  ].sort((a, b) => new Date(b) - new Date(a));
+
+  let streakCount = 0;
+  const today = new Date().toDateString();
+
+  for (let i = 0; i < dates.length; i++) {
+    const expectedDate = new Date();
+    expectedDate.setDate(expectedDate.getDate() - i);
+    if (dates[i] === expectedDate.toDateString()) {
+      streakCount++;
+    } else {
+      break;
+    }
+  }
+  return streakCount;
+};
+
 export const AnalyticsModal = ({ visible, onClose, tasks }) => {
   const [isCalculating, setIsCalculating] = useState(false);
   const { isDark } = useTheme();
@@ -77,53 +106,6 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
     return result;
   }, [tasks]);
 
-  function calculateStreak(tasks) {
-    // Sort completed tasks by completion date in descending order (newest first)
-    const completedTasks = tasks
-      .filter((t) => t.isCompleted && t.completedAt)
-      .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-
-    if (completedTasks.length === 0) return 0;
-
-    // Convert all dates to YYYY-MM-DD format for accurate comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    // Check if the most recent task was completed today or yesterday
-    const lastCompleted = new Date(completedTasks[0].completedAt);
-    lastCompleted.setHours(0, 0, 0, 0);
-
-    // If the last completed task is before yesterday, there's no active streak
-    if (lastCompleted < yesterday) return 0;
-
-    let streak = 1;
-    let currentDate = lastCompleted;
-
-    // Check for consecutive days
-    for (let i = 1; i < completedTasks.length; i++) {
-      const taskDate = new Date(completedTasks[i].completedAt);
-      taskDate.setHours(0, 0, 0, 0);
-
-      const diffTime = currentDate - taskDate;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1) {
-        // Next day in streak
-        streak++;
-        currentDate = taskDate;
-      } else if (diffDays > 1) {
-        // Streak broken
-        break;
-      }
-      // If diffDays === 0, it's the same day, so we skip it
-    }
-
-    return streak;
-  }
-
   function getMostProductiveDay(tasks) {
     const dayCount = {};
     const days = [
@@ -174,8 +156,6 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
     return days[mostProductive[0]];
   }
 
-  const screenWidth = Dimensions.get("window").width - 80;
-
   return (
     <Modal
       animationType="slide"
@@ -185,9 +165,8 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
     >
       <View className="flex-1 bg-black/50 justify-center p-5">
         <View
-          className={`rounded-2xl p-6 max-h-[90%] ${
-            isDark ? "bg-gray-800" : "bg-white"
-          }`}
+          className={`rounded-2xl p-6 ${isDark ? "bg-gray-800" : "bg-white"}`}
+          style={{ maxHeight: "85%" }}
         >
           <View className="flex-row justify-between items-center mb-4">
             <View>
@@ -220,7 +199,12 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-2">
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            className="mt-2"
+            contentContainerStyle={{ paddingBottom: 20 }}
+            nestedScrollEnabled={true}
+          >
             {/* Loading State */}
             {isCalculating ? (
               <View className="flex-1 items-center justify-center py-20">
@@ -261,69 +245,6 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                   >
                     Task Overview
                   </Text>
-
-                  {/* Stats Cards */}
-                  <View className="flex-row gap-4 mb-6">
-                    <View
-                      className={`flex-1 rounded-xl p-4 border ${
-                        isDark
-                          ? "bg-blue-900/20 border-blue-700/30"
-                          : "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
-                      }`}
-                    >
-                      <View className="flex-row items-center mb-2">
-                        <View
-                          className={`w-8 h-8 bg-blue-500 rounded-full items-center justify-center mr-3`}
-                        >
-                          <Ionicons
-                            name="checkmark-done"
-                            size={16}
-                            color="white"
-                          />
-                        </View>
-                        <Text
-                          className={`text-sm font-quicksandMedium ${
-                            isDark ? "text-blue-300" : "text-blue-600"
-                          }`}
-                        >
-                          Completed
-                        </Text>
-                      </View>
-                      <Text className="text-blue-700 text-2xl font-quicksandBold">
-                        {stats.completed}
-                      </Text>
-                    </View>
-
-                    <View
-                      className={`flex-1 rounded-xl p-4 border ${
-                        isDark
-                          ? "bg-orange-900/20 border-orange-700/30"
-                          : "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
-                      }`}
-                    >
-                      <View className="flex-row items-center mb-2">
-                        <View
-                          className={`w-8 h-8 bg-orange-500 rounded-full items-center justify-center mr-3`}
-                        >
-                          <Ionicons name="time" size={16} color="white" />
-                        </View>
-                        <Text
-                          className={`text-sm font-quicksandMedium ${
-                            isDark ? "text-orange-300" : "text-orange-600"
-                          }`}
-                        >
-                          Pending
-                        </Text>
-                      </View>
-                      <Text
-                        className={`text-2xl font-quicksandBold ${
-                          isDark ? "text-orange-300" : "text-orange-700"
-                        }`}
-                      >
-                        {stats.pending}
-                      </Text>
-                    </View>
-                  </View>
 
                   {/* Completion Stats */}
                   <View className="mb-4">
@@ -387,61 +308,32 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                       isDark ? "border-gray-600" : "border-gray-100"
                     }`}
                   >
-                    <View className="flex-row items-start justify-between px-1">
-                      <View className="flex-row items-center space-x-3 gap-2">
-                        <View className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-full shadow-sm">
-                          <Ionicons name="flame" size={18} color="white" />
-                        </View>
-                        <View>
-                          <Text
-                            className={`font-quicksandMedium text-[13px] mb-0.5 ${
-                              isDark ? "text-gray-400" : "text-gray-600"
-                            }`}
-                          >
-                            Current Streak
-                          </Text>
-                          <View className="flex-row items-baseline space-x-1.5">
-                            <Text
-                              className={`text-2xl font-quicksandBold ${
-                                isDark ? "text-purple-400" : "text-purple-600"
-                              }`}
-                            >
-                              {stats.streak}
-                            </Text>
-                            <Text
-                              className={`font-quicksand text-[13px] mb-0.5 ${
-                                isDark ? "text-gray-500" : "text-gray-500"
-                              }`}
-                            >
-                              {stats.streak === 1 ? "day" : "days"}
-                            </Text>
-                          </View>
-                        </View>
+                    <View className="flex-row items-center gap-3 px-1">
+                      <View className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-full shadow-sm">
+                        <Ionicons name="flame" size={18} color="white" />
                       </View>
-                      <View className="items-end max-w-[45%]">
+                      <View>
                         <Text
-                          className={`font-quicksandMedium text-[13px] mb-0.5 text-right ${
+                          className={`font-quicksandMedium text-[13px] mb-0.5 ${
                             isDark ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          Most Productive
+                          Current Streak
                         </Text>
-                        <View
-                          className={`flex-row items-center space-x-1.5 rounded-lg px-3 py-2 border ${
-                            isDark
-                              ? "bg-green-900/20 border-green-700/30"
-                              : "bg-gradient-to-r from-green-50 to-green-100 border-green-200"
-                          }`}
-                        >
-                          <Ionicons name="calendar" size={14} color="#10B981" />
+                        <View className="flex-row items-baseline space-x-1.5">
                           <Text
-                            className={`font-quicksandBold text-[13px] text-right ${
-                              isDark ? "text-green-300" : "text-green-700"
+                            className={`text-2xl font-quicksandBold ${
+                              isDark ? "text-purple-400" : "text-purple-600"
                             }`}
-                            numberOfLines={3}
-                            ellipsizeMode="tail"
                           >
-                            {stats.mostProductiveDay}
+                            {stats.streak}
+                          </Text>
+                          <Text
+                            className={`font-quicksand text-[13px] mb-0.5 ${
+                              isDark ? "text-gray-500" : "text-gray-500"
+                            }`}
+                          >
+                            {stats.streak === 1 ? "day" : "days"}
                           </Text>
                         </View>
                       </View>
@@ -656,39 +548,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                   </View>
                 </View>
 
-                {/* Productivity Tips */}
-                <View
-                  className={`rounded-xl p-4 mb-4 border shadow-sm ${
-                    isDark
-                      ? "bg-indigo-900/20 border-indigo-700/30"
-                      : "bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200"
-                  }`}
-                >
-                  <Text
-                    className={`font-quicksandBold mb-2 flex-row items-center ${
-                      isDark ? "text-indigo-300" : "text-indigo-800"
-                    }`}
-                  >
-                    <Ionicons
-                      name="bulb"
-                      size={16}
-                      color="#4F46E5"
-                      className="mr-2"
-                    />
-                    Productivity Tip
-                  </Text>
-                  <Text
-                    className={`font-quicksand text-sm ${
-                      isDark ? "text-indigo-300" : "text-indigo-700"
-                    }`}
-                  >
-                    {getProductivityTip(
-                      stats.completionRate,
-                      stats.streak,
-                      stats.mostProductiveDay
-                    )}
-                  </Text>
-                </View>
+                <GamificationAnalytics tasks={tasks} />
               </>
             )}
           </ScrollView>
@@ -697,18 +557,6 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
     </Modal>
   );
 };
-
-function getProductivityTip(completionRate, streak, mostProductiveDay) {
-  if (completionRate >= 80) {
-    return `Amazing! You're completing ${completionRate}% of your tasks. Keep up the great work!`;
-  } else if (streak >= 3) {
-    return `You're on a ${streak}-day streak! Try to tackle your most challenging task first thing in the morning.`;
-  } else if (mostProductiveDay !== "No data") {
-    return `Your most productive day is ${mostProductiveDay}. Schedule important tasks for then!`;
-  } else {
-    return "Start by completing small tasks to build momentum. You've got this!";
-  }
-}
 
 function getStreakMessage(streak) {
   if (streak === 0) return "Complete tasks to start a streak!";
