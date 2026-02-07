@@ -521,44 +521,50 @@ const AddTask = () => {
               />
             </View>
 
-            {/* Category */}
-            <View className="flex-row items-center justify-between">
-              <Text
-                className={`text-lg font-quicksandBold my-2 ${
-                  isDark ? "text-gray-100" : "text-gray-900"
-                }`}
-              >
-                Course / Category
-              </Text>
-              <TouchableOpacity
-                className={`p-2 rounded ${
-                  isDark ? "bg-gray-700" : "bg-gray-100"
-                }`}
-                onPress={() => handleOpenModal("category")}
-              >
-                <Ionicons name="pencil" size={14} color="#4B5563" />
-              </TouchableOpacity>
-            </View>
-            <View className="flex-row flex-wrap gap-2 mb-4">
-              {categories.map((category) => (
-                <SelectableButton
-                  key={category.id}
-                  label={category.name}
-                  isSelected={formData.category === category.name}
-                  onPress={() => {
-                    handleInputChange(
-                      "category",
-                      formData.category === category.name ? "" : category.name
-                    );
-                  }}
-                  selectedBgColor="bg-blue-500"
-                  selectedTextColor="text-white"
-                  unselectedBgColor="bg-white"
-                  unselectedTextColor="text-gray-700"
-                  borderColor="border-gray-200"
-                />
-              ))}
-            </View>
+            {/* Category - Hide when creating a class */}
+            {formData.category !== "Class" && (
+              <>
+                <View className="flex-row items-center justify-between">
+                  <Text
+                    className={`text-lg font-quicksandBold my-2 ${
+                      isDark ? "text-gray-100" : "text-gray-900"
+                    }`}
+                  >
+                    Course / Category
+                  </Text>
+                  <TouchableOpacity
+                    className={`p-2 rounded ${
+                      isDark ? "bg-gray-700" : "bg-gray-100"
+                    }`}
+                    onPress={() => handleOpenModal("category")}
+                  >
+                    <Ionicons name="pencil" size={14} color="#4B5563" />
+                  </TouchableOpacity>
+                </View>
+                <View className="flex-row flex-wrap gap-2 mb-4">
+                  {categories.map((category) => (
+                    <SelectableButton
+                      key={category.id}
+                      label={category.name}
+                      isSelected={formData.category === category.name}
+                      onPress={() => {
+                        handleInputChange(
+                          "category",
+                          formData.category === category.name
+                            ? ""
+                            : category.name
+                        );
+                      }}
+                      selectedBgColor="bg-blue-500"
+                      selectedTextColor="text-white"
+                      unselectedBgColor="bg-white"
+                      unselectedTextColor="text-gray-700"
+                      borderColor="border-gray-200"
+                    />
+                  ))}
+                </View>
+              </>
+            )}
 
             {/* Priority */}
             <View className="flex-row items-center justify-between">

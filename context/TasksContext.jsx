@@ -469,12 +469,25 @@ export const TaskProvider = ({ children }) => {
           tasksToUpdate.map((task) => updateTask(task.id, { category: "" }))
         );
         await refreshTasks();
+
+        // Force refresh categories state to recalculate derived ones
+        const categoriesCollection = database.collections.get("categories");
+        const updatedCategories = await categoriesCollection
+          .query(
+            Q.or(
+              Q.where("user_id", user?.accountId || ""),
+              Q.where("user_id", null)
+            )
+          )
+          .fetch();
+        setCategories(updatedCategories);
+
         showInfo(`Removed category "${name}" from all tasks`);
       } catch (e) {
         showError("Failed to remove derived category");
       }
     },
-    [tasks, updateTask, refreshTasks]
+    [tasks, updateTask, refreshTasks, user?.accountId]
   );
 
   // Remove derived priority by clearing it from all tasks
@@ -486,12 +499,25 @@ export const TaskProvider = ({ children }) => {
           tasksToUpdate.map((task) => updateTask(task.id, { priority: "" }))
         );
         await refreshTasks();
+
+        // Force refresh priorities state to recalculate derived ones
+        const prioritiesCollection = database.collections.get("priorities");
+        const updatedPriorities = await prioritiesCollection
+          .query(
+            Q.or(
+              Q.where("user_id", user?.accountId || ""),
+              Q.where("user_id", null)
+            )
+          )
+          .fetch();
+        setPriorities(updatedPriorities);
+
         showInfo(`Removed priority "${name}" from all tasks`);
       } catch (e) {
         showError("Failed to remove derived priority");
       }
     },
-    [tasks, updateTask, refreshTasks]
+    [tasks, updateTask, refreshTasks, user?.accountId]
   );
 
   // Delete category

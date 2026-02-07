@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableFreeze, enableScreens } from "react-native-screens";
+import NotificationQueue from "../components/notifications/NotificationQueue";
+import useGamificationNotifications from "../components/notifications/useGamificationNotifications";
 import { TaskProvider, useTasks } from "../context/TasksContext";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { UserProvider, useUser } from "../context/UserContext";
@@ -205,6 +207,18 @@ export default function RootLayout() {
   );
 }
 
+const GamificationNotificationsWrapper = ({ children }) => {
+  // Initialize the gamification notifications hook
+  useGamificationNotifications();
+
+  return (
+    <>
+      {children}
+      <NotificationQueue />
+    </>
+  );
+};
+
 const RootLayoutWrapper = () => {
   const { isDark } = useTheme();
 
@@ -215,7 +229,7 @@ const RootLayoutWrapper = () => {
     } else {
       // Android: Use StatusBar instead of NavigationBar
       StatusBar.setBarStyle(isDark ? "light-content" : "dark-content");
-      // Also set the navigation bar color if needed
+      // Also set navigation bar color if needed
       NavigationBar.setBackgroundColorAsync(isDark ? "#1F2937" : "#FFFBF5");
     }
   }, [isDark]);
@@ -232,7 +246,9 @@ const RootLayoutWrapper = () => {
         backgroundColor="transparent"
         translucent={true}
       />
-      <RootLayoutContent />
+      <GamificationNotificationsWrapper>
+        <RootLayoutContent />
+      </GamificationNotificationsWrapper>
       <Toasts
         position="bottom"
         offset={20}
