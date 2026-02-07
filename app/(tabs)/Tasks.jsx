@@ -178,6 +178,7 @@ const Tasks = () => {
                   { key: "completed", label: "✅ Completed tasks" },
                   { key: "incomplete", label: "⏳ Incomplete tasks" },
                   { key: "overdue", label: "🔴 Overdue tasks" },
+                  { key: "dueToday", label: "📅 Due today" },
                 ].map((opt) => (
                   <TouchableOpacity
                     key={opt.key}
@@ -231,10 +232,15 @@ const Tasks = () => {
                 {sortOption === "completed" && "No completed tasks yet"}
                 {sortOption === "incomplete" && "All tasks are completed!"}
                 {sortOption === "overdue" && "No overdue tasks - great job!"}
+                {sortOption === "dueToday" && "No tasks due today!"}
                 {searchQuery && `No tasks matching "${searchQuery}"`}
-                {!["classes", "completed", "incomplete", "overdue"].includes(
-                  sortOption
-                ) &&
+                {![
+                  "classes",
+                  "completed",
+                  "incomplete",
+                  "overdue",
+                  "dueToday",
+                ].includes(sortOption) &&
                   !searchQuery &&
                   "No tasks available"}
               </Text>

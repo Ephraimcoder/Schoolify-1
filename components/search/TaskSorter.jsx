@@ -48,6 +48,17 @@ const TaskSorter = ({ filteredTasks, sortOption }) => {
           return dueDate < today;
         });
 
+      case "dueToday":
+        return filteredTasks.filter((task) => {
+          if (!task || !task.dueDate) return false;
+
+          // Check if due date is today
+          const today = new Date().toDateString();
+          const taskDate = new Date(task.dueDate).toDateString();
+
+          return taskDate === today;
+        });
+
       default:
         return filteredTasks;
     }

@@ -120,7 +120,7 @@ const Home = () => {
                 <Text
                   className={`text-lg font-quicksandBold ${isDark ? "text-gray-100" : "text-gray-800"}`}
                 >
-                  Today's Tasks
+                  Upcoming Tasks
                 </Text>
                 <TouchableOpacity onPress={() => router.push("/Tasks")}>
                   <Text className="text-indigo-600 font-quicksandMedium">

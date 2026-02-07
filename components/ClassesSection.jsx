@@ -76,11 +76,31 @@ const ClassesSection = () => {
   const { isDark, colors } = useTheme();
   const router = useRouter();
 
-  // Filter and memoize class tasks
+  // Filter and memoize class tasks for the NEXT WEEK
   const classTasks = useMemo(() => {
-    return tasks.filter(
-      (task) => task.category === "Class" && !task.isCompleted
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day
+
+    const oneWeekFromNow = new Date(today);
+    oneWeekFromNow.setDate(today.getDate() + 7);
+    oneWeekFromNow.setHours(23, 59, 59, 999); // Set to end of day
+
+    return tasks
+      .filter((task) => {
+        // Only show incomplete classes that are scheduled within the next week
+        if (task.category !== "Class") return false;
+        if (task.isCompleted) return false;
+        if (!task.dueTime) return false;
+
+        const classDate = new Date(task.dueTime);
+        return classDate >= today && classDate <= oneWeekFromNow;
+      })
+      .sort((a, b) => {
+        // Sort by schedule time (earliest first)
+        const dateA = new Date(a.dueTime);
+        const dateB = new Date(b.dueTime);
+        return dateA.getTime() - dateB.getTime();
+      });
   }, [tasks]);
 
   const handleClassPress = (classTask) => {
@@ -96,7 +116,7 @@ const ClassesSection = () => {
               isDark ? "text-gray-100" : "text-gray-800"
             }`}
           >
-            My Classes
+            Upcoming Classes
           </Text>
           <TouchableOpacity>
             <Text className="text-indigo-600 font-quicksandSemiBold">
@@ -117,13 +137,7 @@ const ClassesSection = () => {
             isDark ? "text-gray-100" : "text-gray-800"
           }`}
         >
-          <Text
-            className={`text-lg font-quicksandBold ${
-              isDark ? "text-gray-100" : "text-gray-800"
-            }`}
-          >
-            My Classes
-          </Text>
+          Upcoming Classes
         </Text>
         <TouchableOpacity
           onPress={() =>
@@ -173,7 +187,7 @@ const ClassesSection = () => {
               isDark ? "text-gray-400" : "text-gray-500"
             }`}
           >
-            You don't have any classes yet.
+            No classes scheduled this week.
           </Text>
           <TouchableOpacity
             onPress={() =>

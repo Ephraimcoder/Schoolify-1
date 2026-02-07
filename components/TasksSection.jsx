@@ -15,22 +15,38 @@ const TasksSection = React.memo(() => {
   const { tasks } = useContext(TasksContext);
   const { isDark } = useTheme();
 
-  // Filter, sort by priority, and limit tasks for TODAY only
+  // Filter, sort by priority, and limit tasks for the NEXT WEEK
   const filteredAndSortedTasks = useMemo(() => {
-    const today = new Date().toDateString();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day
+
+    const oneWeekFromNow = new Date(today);
+    oneWeekFromNow.setDate(today.getDate() + 7);
+    oneWeekFromNow.setHours(23, 59, 59, 999); // Set to end of day
+
     return tasks
       .filter((task) => {
-        // Only show non-class, incomplete tasks that are due today
+        // Only show non-class, incomplete tasks that are due within the next week
         if (task.category === "Class") return false;
         if (!task.dueDate) return false;
         if (task.isCompleted) return false;
-        return new Date(task.dueDate).toDateString() === today;
+
+        const taskDueDate = new Date(task.dueDate);
+        return taskDueDate >= today && taskDueDate <= oneWeekFromNow;
       })
       .sort((a, b) => {
-        // Sort by priority (High > Medium > Low)
+        // Sort by due date first (earliest first), then by priority
+        const dateA = new Date(a.dueDate);
+        const dateB = new Date(b.dueDate);
+
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA.getTime() - dateB.getTime(); // Earlier due date first
+        }
+
+        // If same due date, sort by priority (High > Medium > Low)
         const priorityA = PRIORITY_ORDER[a.priority] || 0;
         const priorityB = PRIORITY_ORDER[b.priority] || 0;
-        return priorityB - priorityA; // Higher priority first
+        return priorityB - priorityA;
       })
       .slice(0, 5); // Limit to 5 tasks
   }, [tasks]);
@@ -64,7 +80,7 @@ const TasksSection = React.memo(() => {
                 isDark ? "text-gray-300" : "text-gray-500"
               }`}
             >
-              No tasks due today!
+              No tasks due this week!
             </Text>
             <Text
               className={`font-quicksand text-center text-sm mt-1 ${

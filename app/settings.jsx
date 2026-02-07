@@ -415,7 +415,7 @@ const Settings = () => {
           </View>
 
           {/* Support */}
-          <View
+          {/* <View
             className={`rounded-xl mx-4 my-4 overflow-hidden ${
               isDark ? "bg-gray-800" : "bg-white"
             }`}
@@ -445,7 +445,7 @@ const Settings = () => {
               title="Rate the App"
               onPress={() => {}}
             />
-          </View>
+          </View> */}
 
           {/* App Info */}
           <View className="items-center py-6">
