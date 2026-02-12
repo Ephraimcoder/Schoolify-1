@@ -142,9 +142,10 @@ export const formatTimeDisplay = (hour, minute) => {
 if (Platform.OS === "android") {
   Notifications.setNotificationChannelAsync("daily-reminders", {
     name: "Daily Reminders",
-    importance: Notifications.AndroidImportance.HIGH,
+    importance: Notifications.AndroidImportance.MAX,
     sound: true,
-    vibrationPattern: [0, 250, 250, 250],
+    vibrationPattern: [0, 400, 200, 400],
     lightColor: "#4F46E5",
+    enableVibrate: true,
   });
 }

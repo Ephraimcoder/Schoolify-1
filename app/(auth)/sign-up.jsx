@@ -81,7 +81,7 @@ export default function SignUp() {
     } catch (error) {
       console.error("OTP request error:", error);
       showError(
-        error.message || "Failed to send verification code. Please try again."
+        error.message || "Failed to send verification code. Please try again.",
       );
     } finally {
       setIsSubmitting(false);

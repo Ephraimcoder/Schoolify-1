@@ -8,16 +8,16 @@ export const ThemeContext = createContext({
 });
 
 const lightColors = {
-  background: ["#FFFBF5", "#FEFBF6"],
-  card: "#FFFFFF",
-  text: "#1F2937",
+  background: ["#F8F5F2", "#F5F2F0"],
+  card: "#FDFDFD",
+  text: "#374151",
   textSecondary: "#6B7280",
   border: "#E5E7EB",
-  primary: "#4F46E5",
-  secondary: "#7C3AED",
-  success: "#10B981",
-  warning: "#F59E0B",
-  error: "#EF4444",
+  primary: "#6366F1",
+  secondary: "#8B5CF6",
+  success: "#059669",
+  warning: "#D97706",
+  error: "#DC2626",
   gray: "#9CA3AF",
 };
 

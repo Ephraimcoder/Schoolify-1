@@ -66,7 +66,7 @@ export default function SignIn() {
       console.error("Sign in error:", error);
       showError(
         error.message ||
-          "Failed to sign in. Please check your credentials and try again."
+          "Failed to sign in. Please check your credentials and try again.",
       );
     } finally {
       setIsSubmitting(false);

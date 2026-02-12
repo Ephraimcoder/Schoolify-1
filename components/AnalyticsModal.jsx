@@ -166,7 +166,13 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       <View className="flex-1 bg-black/50 justify-center p-5">
         <View
           className={`rounded-2xl p-6 ${isDark ? "bg-gray-800" : "bg-white"}`}
-          style={{ maxHeight: "85%" }}
+          style={{
+            maxHeight: "95%",
+            minHeight: "70%",
+            width: "100%",
+            maxWidth: 500,
+            alignSelf: "center",
+          }}
         >
           <View className="flex-row justify-between items-center mb-4">
             <View>

@@ -13,6 +13,25 @@ const SelectableButton = ({
   className = "",
 }) => {
   const { isDark } = useTheme();
+  const [scaleAnim] = React.useState(new Animated.Value(1));
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 8,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 8,
+    }).start();
+  };
 
   // Dynamic colors based on theme
   const dynamicUnselectedBgColor = isDark ? "bg-gray-800" : unselectedBgColor;
@@ -24,19 +43,28 @@ const SelectableButton = ({
   return (
     <TouchableOpacity
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
       className={`px-4 py-2 rounded-full border ${
         isSelected
           ? `${selectedBgColor} border-transparent`
           : `${dynamicUnselectedBgColor} ${dynamicBorderColor}`
       } ${className}`}
     >
-      <Text
-        className={`font-quicksand ${
-          isSelected ? selectedTextColor : dynamicUnselectedTextColor
-        }`}
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleAnim }],
+        }}
       >
-        {label}
-      </Text>
+        <Text
+          className={`font-quicksand ${
+            isSelected ? selectedTextColor : dynamicUnselectedTextColor
+          }`}
+        >
+          {label}
+        </Text>
+      </Animated.View>
     </TouchableOpacity>
   );
 };

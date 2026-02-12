@@ -52,11 +52,11 @@ export default function DailyReminder() {
         await cancelDailyReminder();
       }
 
-      router.replace("/(auth)/sign-in");
+      router.push("/(auth)/personalization/backup-settings");
     } catch (error) {
       console.error("Error saving daily reminder preference:", error);
       // Still proceed even if database save fails
-      router.replace("/(auth)/sign-in");
+      router.push("/(auth)/personalization/backup-settings");
     }
   };
 
@@ -74,11 +74,11 @@ export default function DailyReminder() {
         await cancelDailyReminder();
       }
 
-      router.replace("/(auth)/sign-in");
+      router.push("/(auth)/personalization/backup-settings");
     } catch (error) {
       console.error("Error saving daily reminder preference on skip:", error);
       // Still proceed even if database save fails
-      router.replace("/(auth)/sign-in");
+      router.push("/(auth)/personalization/backup-settings");
     }
   };
 
@@ -168,13 +168,13 @@ export default function DailyReminder() {
             className="text-5xl font-quicksandBold text-center"
             style={{ color: colors.text }}
           >
-            Daily Check-in
+            Daily Nudges
           </Text>
           <Text
             className="text-xl text-center font-quicksandMedium mt-3 leading-6"
             style={{ color: colors.textSecondary }}
           >
-            Get a daily summary of your tasks{"\n"}and stay organized
+            Gentle reminders to keep you on track
           </Text>
         </View>
 
@@ -205,6 +205,7 @@ export default function DailyReminder() {
                 onValueChange={setDailyReminder}
                 trackColor={{ false: "#E5E7EB", true: "#FED7AA" }}
                 thumbColor={dailyReminder ? "#EA580C" : "#9CA3AF"}
+                key={`daily-reminder-${dailyReminder}`}
               />
             </View>
 
@@ -307,7 +308,7 @@ export default function DailyReminder() {
             onPress={handleNext}
           >
             <Text className="text-white font-quicksandBold text-lg">
-              Get Started
+              Sounds good!
             </Text>
           </TouchableOpacity>
 
@@ -316,7 +317,7 @@ export default function DailyReminder() {
               className="font-quicksandMedium text-base"
               style={{ color: colors.textSecondary }}
             >
-              Skip for now
+              Maybe later
             </Text>
           </TouchableOpacity>
         </View>

@@ -126,13 +126,13 @@ export default function BackupSettings() {
             {/* Cloud backup illustration */}
             <View className="items-center">
               <View className="relative mb-4">
-                {/* Cloud shape */}
-                <View className="w-20 h-12 bg-blue-400 rounded-full" />
-                <View className="absolute -top-2 left-4 w-12 h-12 bg-blue-400 rounded-full" />
-                <View className="absolute -top-2 right-4 w-10 h-10 bg-blue-400 rounded-full" />
-                {/* Upload arrows */}
-                <View className="absolute top-6 left-8">
-                  <Ionicons name="cloud-upload" size={32} color="white" />
+                {/* Shield with cloud */}
+                <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center">
+                  <View className="w-12 h-12 bg-green-500 rounded-full items-center justify-center">
+                    <Ionicons name="cloud" size={24} color="white" />
+                  </View>
+                  {/* Shield effect */}
+                  <View className="absolute -top-1 -right-1 w-6 h-6 bg-green-400 rounded-full" />
                 </View>
               </View>
 
@@ -140,13 +140,13 @@ export default function BackupSettings() {
                 className="font-quicksandBold text-lg text-center"
                 style={{ color: colors.text }}
               >
-                Backup Your Data
+                Peace of Mind
               </Text>
               <Text
                 className="font-quicksandMedium text-sm text-center mt-1"
                 style={{ color: colors.textSecondary }}
               >
-                Never lose your tasks and progress
+                Your data is always safe
               </Text>
             </View>
           </View>
@@ -158,13 +158,13 @@ export default function BackupSettings() {
             className="text-5xl font-quicksandBold text-center"
             style={{ color: colors.text }}
           >
-            Auto Backup
+            Safe & Sound
           </Text>
           <Text
             className="text-xl text-center font-quicksandMedium mt-3 leading-6"
             style={{ color: colors.textSecondary }}
           >
-            Keep your data safe with automatic{"\n"}cloud backups
+            Your tasks, automatically backed up
           </Text>
         </View>
 
@@ -180,56 +180,57 @@ export default function BackupSettings() {
                   className="font-quicksandBold text-lg"
                   style={{ color: colors.text }}
                 >
-                  Enable Auto Backup
+                  Auto Backup
                 </Text>
                 <Text
                   className="font-quicksandMedium text-sm mt-1"
                   style={{ color: colors.textSecondary }}
                 >
-                  Automatically save your tasks to cloud
+                  Keep your tasks safe in the cloud
                 </Text>
               </View>
               <Switch
                 value={backupEnabled}
                 onValueChange={setBackupEnabled}
-                trackColor={{ false: "#E5E7EB", true: "#FED7AA" }}
-                thumbColor={backupEnabled ? "#EA580C" : "#9CA3AF"}
+                trackColor={{ false: "#E5E7EB", true: "#10B981" }}
+                thumbColor={backupEnabled ? "#059669" : "#9CA3AF"}
+                key={`backup-enabled-${backupEnabled}`}
               />
             </View>
 
             {/* Benefits */}
-            <View className="mt-6 space-y-3">
+            <View className="mt-8 space-y-5">
               <View className="flex-row items-center">
-                <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-3">
-                  <Ionicons name="checkmark" size={16} color="#16A34A" />
+                <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-4">
+                  <Ionicons name="shield-checkmark" size={16} color="#16A34A" />
                 </View>
                 <Text
-                  className="font-quicksandMedium text-sm"
-                  style={{ color: colors.text }}
-                >
-                  Restore data on any device
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-3">
-                  <Ionicons name="checkmark" size={16} color="#16A34A" />
-                </View>
-                <Text
-                  className="font-quicksandMedium text-sm"
-                  style={{ color: colors.text }}
+                  className="font-quicksandMedium text-sm flex-1"
+                  style={{ color: colors.text, lineHeight: 20 }}
                 >
                   Never lose your progress
                 </Text>
               </View>
               <View className="flex-row items-center">
-                <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-3">
-                  <Ionicons name="checkmark" size={16} color="#16A34A" />
+                <View className="w-6 h-6 rounded-full bg-blue-100 items-center justify-center mr-4">
+                  <Ionicons name="sync" size={16} color="#2563EB" />
                 </View>
                 <Text
-                  className="font-quicksandMedium text-sm"
-                  style={{ color: colors.text }}
+                  className="font-quicksandMedium text-sm flex-1"
+                  style={{ color: colors.text, lineHeight: 20 }}
                 >
-                  Sync across all your devices
+                  Access from any device
+                </Text>
+              </View>
+              <View className="flex-row items-center">
+                <View className="w-6 h-6 rounded-full bg-purple-100 items-center justify-center mr-4">
+                  <Ionicons name="lock-closed" size={16} color="#7C3AED" />
+                </View>
+                <Text
+                  className="font-quicksandMedium text-sm flex-1"
+                  style={{ color: colors.text, lineHeight: 20 }}
+                >
+                  Secure & private
                 </Text>
               </View>
             </View>

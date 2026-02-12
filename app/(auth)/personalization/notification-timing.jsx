@@ -35,16 +35,16 @@ export default function NotificationTiming() {
   const handleNext = async () => {
     try {
       await setNotificationLeadMinutes(leadMinutes);
-      router.push("/(auth)/personalization/daily-reminder");
+      router.replace("/(auth)/sign-in");
     } catch (error) {
       console.error("Error saving notification preference:", error);
       // Still proceed even if database save fails
-      router.push("/(auth)/personalization/daily-reminder");
+      router.replace("/(auth)/sign-in");
     }
   };
 
   const handleSkip = () => {
-    router.push("/(auth)/personalization/daily-reminder");
+    router.replace("/(auth)/sign-in");
   };
 
   const formatTimeDisplay = (minutes) => {
@@ -127,13 +127,13 @@ export default function NotificationTiming() {
             className="text-5xl font-quicksandBold text-center"
             style={{ color: colors.text }}
           >
-            When to Remind
+            Heads-Up Time
           </Text>
           <Text
             className="text-xl text-center font-quicksandMedium mt-3 leading-6"
             style={{ color: colors.textSecondary }}
           >
-            How early should we notify you{"\n"}before your tasks are due?
+            How much warning do you need before things are due?
           </Text>
         </View>
 
@@ -249,7 +249,7 @@ export default function NotificationTiming() {
             onPress={handleNext}
           >
             <Text className="text-white font-quicksandBold text-lg">
-              Continue
+              All set! Let's go
             </Text>
           </TouchableOpacity>
 
@@ -258,7 +258,7 @@ export default function NotificationTiming() {
               className="font-quicksandMedium text-base"
               style={{ color: colors.textSecondary }}
             >
-              Skip for now
+              I'll set this up later
             </Text>
           </TouchableOpacity>
         </View>

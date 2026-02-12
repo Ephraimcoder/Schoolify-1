@@ -1,29 +1,25 @@
 export const onboarding = [
   {
     id: 1,
-    title: "Ace Your Classes,\nStress-Free",
+    title: "Feeling buried under deadlines?",
     description:
-      "Never miss a deadline again. Smart reminders keep you ahead of your game.",
+      "Between classes, assignments, and trying to have a life, it's easy to feel like you're drowning in \"to-do\" lists.",
     image: require("../assets/images/Relaxing at home.gif"),
+    buttonText: "This is me",
   },
   {
     id: 2,
-    title: "Study Smarter,\n Not Harder",
-    description:
-      "All your assignments, exams, and class schedules in one powerful app.",
+    title: 'We turn your "To-Do" into "Done."',
+    description: "Focus on studying. We'll handle the rest.",
     image: require("../assets/images/Learning (1).gif"),
+    buttonText: "Show me how",
   },
   {
     id: 3,
-    title: "Never Fall Behind",
+    title: "Ready to ace your semester?",
     description:
-      "Track your progress, celebrate wins, and stay motivated all semester long.",
+      "Let's set up your experience in 30 seconds, then you can add your first class.",
     image: require("../assets/images/Schedule.gif"),
-  },
-  {
-    id: 4,
-    title: "Personalize Your Experience",
-    description: "Set up your preferences for a tailored learning experience.",
-    image: require("../assets/images/Personal settings.gif"),
+    buttonText: "Quick setup",
   },
 ];

@@ -161,11 +161,11 @@ const AddTask = () => {
             id,
             title,
             type: isClass ? "class" : "task",
-            isClass, // Include isClass in the notification data
+            isClass, // Include isClass in notification data
           },
           sound: "default",
           priority: Notifications.AndroidNotificationPriority.HIGH,
-          vibrate: [0, 250, 250, 250],
+          vibrate: [0, 300, 200, 300],
         },
         trigger: {
           type: "date",

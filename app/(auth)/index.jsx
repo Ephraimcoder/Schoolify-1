@@ -29,7 +29,7 @@ export default function Index() {
       setCurrentSlide(nextSlide);
       scrollViewRef.current?.scrollTo({ x: width * nextSlide, animated: true });
     } else {
-      // Finished onboarding, go to personalization flow
+      // Finished onboarding, go to quick personalization
       try {
         await AsyncStorage.setItem("onboarding_seen", "true");
       } catch {}
@@ -110,7 +110,7 @@ export default function Index() {
             <View
               key={index}
               style={{ width }}
-              className="justify-start px-6 pt-16 pb-32"
+              className="justify-start px-6 pt-16 pb-40"
             >
               {/* Brand header */}
               <View className="items-center mb-8">
@@ -137,7 +137,7 @@ export default function Index() {
               </View>
 
               {/* Title & description */}
-              <View className="px-4 items-center mb-12">
+              <View className="px-4 items-center mb-8">
                 <Text
                   className="text-4xl text-center font-quicksandBold leading-tight"
                   style={{ color: colors.text }}
@@ -152,42 +152,27 @@ export default function Index() {
                 </Text>
               </View>
 
-              {/* Pagination dots */}
-              <View className="flex-row justify-center space-x-2 mb-8">
-                {onboarding.map((_, i) => (
-                  <View
-                    key={i}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      currentSlide === i ? "w-8" : "w-2"
-                    }`}
-                    style={{
-                      backgroundColor:
-                        currentSlide === i ? colors.primary : colors.gray,
-                    }}
-                  />
-                ))}
-              </View>
-
               {/* Action buttons */}
-              <View className="absolute left-6 right-6 bottom-8">
+              <View className="absolute left-0 right-0 bottom-2 items-center justify-center">
                 <TouchableOpacity
                   onPress={handleNext}
-                  className="py-4 rounded-full items-center"
+                  className="py-3 rounded-full items-center w-48"
                   style={{ backgroundColor: colors.primary }}
                 >
-                  <Text className="text-white font-quicksandBold text-lg">
-                    {currentSlide === onboarding.length - 1
-                      ? "Get Started"
-                      : "Next"}
+                  <Text className="text-white font-quicksandBold text-base">
+                    {slide.buttonText ||
+                      (currentSlide === onboarding.length - 1
+                        ? "Get Started"
+                        : "Next")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSkip}
-                  className="mt-4 items-center py-2"
+                  className="mt-3 items-center py-2"
                 >
                   <Text
                     style={{ color: colors.textSecondary }}
-                    className="font-quicksandMedium"
+                    className="font-quicksandMedium text-sm"
                   >
                     Skip
                   </Text>

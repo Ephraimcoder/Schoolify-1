@@ -104,8 +104,9 @@ const Settings = () => {
         if (savedLeadMinutes !== null && savedLeadMinutes !== undefined) {
           setLeadMinutes(savedLeadMinutes);
         } else {
-          // Fallback to default if no saved preference exists
-          setLeadMinutes(15);
+          // Only use default if no saved preference exists
+          // The onboarding should have already set this
+          console.log("No saved notification lead time found, using default");
         }
 
         // Load daily reminder settings

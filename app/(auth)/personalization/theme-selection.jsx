@@ -79,11 +79,11 @@ export default function ThemeSelection() {
   };
 
   const handleNext = () => {
-    router.push("/(auth)/personalization/backup-settings");
+    router.push("/(auth)/personalization/daily-reminder");
   };
 
   const handleSkip = () => {
-    router.push("/(auth)/personalization/backup-settings");
+    router.push("/(auth)/personalization/daily-reminder");
   };
 
   return (
@@ -152,13 +152,13 @@ export default function ThemeSelection() {
             className="text-5xl font-quicksandBold text-center"
             style={{ color: colors.text }}
           >
-            Theme
+            Pick Your Vibe
           </Text>
           <Text
             className="text-xl text-center font-quicksandMedium mt-3 leading-6"
             style={{ color: colors.textSecondary }}
           >
-            Select how you want Schoolify to look
+            Choose the look that feels right for you
           </Text>
         </View>
 
@@ -261,7 +261,16 @@ export default function ThemeSelection() {
             onPress={handleNext}
           >
             <Text className="text-white font-quicksandBold text-lg">
-              Continue
+              Looks good! Continue
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleSkip} className="mt-3 items-center">
+            <Text
+              className="font-quicksandMedium text-base"
+              style={{ color: colors.textSecondary }}
+            >
+              I'll decide later
             </Text>
           </TouchableOpacity>
         </View>

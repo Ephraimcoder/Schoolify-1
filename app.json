@@ -8,6 +8,14 @@
     "slug": "Schoolify1",
     "version": "1.0.0",
     "orientation": "portrait",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "icon": "./assets/images/Schoolify main logo.png",
     "scheme": ["schoolify"],
     "userInterfaceStyle": "automatic",
