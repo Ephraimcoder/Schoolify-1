@@ -9,7 +9,7 @@ export const onboarding = [
   },
   {
     id: 2,
-    title: 'We turn your "To-Do" into "Done."',
+    title: 'We turn your "To-Do" \n into "Done."',
     description: "Focus on studying. We'll handle the rest.",
     image: require("../assets/images/Learning (1).gif"),
     buttonText: "Show me how",

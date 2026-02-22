@@ -1,18 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useContext, useMemo, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Animated, Text, TouchableOpacity, View } from "react-native";
 import { TasksContext } from "../context/TasksContext";
 import { useTheme } from "../context/ThemeContext";
+import { getProgressPercentage } from "../utils/taskStatus";
 import { showError, showSuccess } from "../utils/toast";
+
 const TaskCard = React.memo(({ task }) => {
   const { deleteTask } = useContext(TasksContext);
   const { isDark } = useTheme();
   const [isDeleting, setIsDeleting] = useState(false);
   const scaleAnim = useMemo(() => new Animated.Value(1), []);
 
-  // Calculate task status and progress
-  const taskStatus = useMemo(() => calculateTaskStatus(task), [task]);
+  // Calculate progress percentage
   const progressPercentage = useMemo(() => getProgressPercentage(task), [task]);
 
   const handlePressIn = useCallback(() => {
@@ -148,7 +149,6 @@ const TaskCard = React.memo(({ task }) => {
                   {category}
                 </Text>
               )}
-              <StatusBadge status={taskStatus} size="small" />
             </View>
             <Text
               className={`text-lg font-quicksandBold mb-3 ${

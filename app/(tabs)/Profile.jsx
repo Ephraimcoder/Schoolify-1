@@ -111,25 +111,19 @@ const Profile = () => {
   const [syncStatus, setSyncStatus] = useState("");
   const [progress, setProgress] = useState({ step: "", message: "" });
 
-  // Check backup preference on mount and set up listener
+  // Check backup preference on mount
   useEffect(() => {
     const checkBackupPreference = async () => {
       try {
         const enabled = await isBackupEnabled();
-
         setBackupEnabled(enabled);
       } catch (error) {
-        showError("Error finding backup prefrence");
+        showError("Error finding backup preference");
         setBackupEnabled(true); // Default to enabled
       }
     };
 
     checkBackupPreference();
-
-    // Set up interval to check for backup preference changes
-    const interval = setInterval(checkBackupPreference, 2000); // Check every 2 seconds
-
-    return () => clearInterval(interval); // Cleanup on unmount
   }, []);
 
   // Monitor backup state changes
@@ -158,7 +152,7 @@ const Profile = () => {
     if (!isOnline) {
       Alert.alert(
         "Offline",
-        "Sync requires an internet connection. Please check your network and try again."
+        "Sync requires an internet connection. Please check your network and try again.",
       );
       return;
     }
@@ -167,7 +161,7 @@ const Profile = () => {
     if (!backupEnabled) {
       Alert.alert(
         "Backup Disabled",
-        "Sync is disabled because backup is turned off. Please enable backup in settings to use sync features."
+        "Sync is disabled because backup is turned off. Please enable backup in settings to use sync features.",
       );
       return;
     }
@@ -181,7 +175,7 @@ const Profile = () => {
       if (results.success) {
         const summary = results.summary;
         setSyncStatus(
-          `✅ Sync Complete! ${summary.totalCreated} created, ${summary.totalUpdated} updated, ${summary.totalDeleted} deleted, ${summary.totalMerged} merged`
+          `✅ Sync Complete! ${summary.totalCreated} created, ${summary.totalUpdated} updated, ${summary.totalDeleted} deleted, ${summary.totalMerged} merged`,
         );
       } else {
         setSyncStatus(`❌ Sync failed`);
@@ -199,7 +193,7 @@ const Profile = () => {
     if (!isOnline) {
       Alert.alert(
         "Offline",
-        "Sync requires an internet connection. Please check your network and try again."
+        "Sync requires an internet connection. Please check your network and try again.",
       );
       return;
     }
@@ -208,7 +202,7 @@ const Profile = () => {
     if (!backupEnabled) {
       Alert.alert(
         "Backup Disabled",
-        "Sync is disabled because backup is turned off. Please enable backup in settings to use sync features."
+        "Sync is disabled because backup is turned off. Please enable backup in settings to use sync features.",
       );
       return;
     }
@@ -249,7 +243,8 @@ const Profile = () => {
         value: `${
           tasks.length > 0
             ? Math.round(
-                (tasks.filter((t) => t.isCompleted).length / tasks.length) * 100
+                (tasks.filter((t) => t.isCompleted).length / tasks.length) *
+                  100,
               )
             : 0
         }%`,
@@ -265,7 +260,7 @@ const Profile = () => {
         onPress: () => setShowAnalytics(true),
       },
     ],
-    [tasks]
+    [tasks],
   );
 
   const profile = {

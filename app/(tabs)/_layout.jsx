@@ -7,15 +7,17 @@ import {
 } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 const AddTaskIcon = ({ focused }) => (
   <View style={styles.addTaskContainer}>
-    <MaterialCommunityIcons name="plus" size={32} color="white" />
+    <MaterialCommunityIcons name="plus" size={24} color="white" />
   </View>
 );
 
 const TabsLayout = () => {
   const { isDark, colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -25,12 +27,24 @@ const TabsLayout = () => {
         tabBarShowLabel: false,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDark ? colors.background[1] : colors.background[0],
-          borderTopWidth: isDark ? 1 : 0,
-          borderTopColor: isDark ? colors.border : "transparent",
-          height: 60,
-          paddingBottom: 5,
-          paddingTop: 10,
+          position: "absolute",
+          bottom: insets.bottom + 10,
+          left: 20,
+          right: 20,
+          height: 50,
+          backgroundColor: isDark ? "#1F2937" : colors.background[0],
+          borderRadius: 25,
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: isDark ? "#374151" : "rgba(0, 0, 0, 0.1)",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.3,
+          shadowRadius: 20,
+          elevation: 15,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         },
         // Performance and transition tweaks
         lazy: false, // Keep screens loaded for faster navigation
@@ -39,9 +53,10 @@ const TabsLayout = () => {
         tabBarHideOnKeyboard: true,
         animationEnabled: true,
         animationTypeForReplace: "push",
-        // Add scene container style to prevent white flash
+        // Add scene container style to prevent white flash and create space for floating tab bar
         sceneStyle: {
-          backgroundColor: isDark ? colors.background[0] : colors.background[0],
+          backgroundColor: isDark ? "#111827" : colors.background[0],
+          paddingBottom: 70, // Create space for floating tab bar
         },
       }}
     >
@@ -50,7 +65,7 @@ const TabsLayout = () => {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Feather name="home" size={22} color={color} />
           ),
         }}
       />
@@ -59,7 +74,7 @@ const TabsLayout = () => {
         options={{
           title: "Tasks",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome5 name="tasks" size={size} color={color} />
+            <FontAwesome5 name="tasks" size={22} color={color} />
           ),
         }}
       />
@@ -75,11 +90,7 @@ const TabsLayout = () => {
         options={{
           title: "Calendar",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              name="calendar-number-outline"
-              size={size}
-              color={color}
-            />
+            <Ionicons name="calendar-outline" size={22} color={color} />
           ),
         }}
       />
@@ -88,7 +99,7 @@ const TabsLayout = () => {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person-outline" size={size} color={color} />
+            <MaterialIcons name="person-outline" size={22} color={color} />
           ),
         }}
       />
@@ -99,12 +110,12 @@ const TabsLayout = () => {
 const styles = StyleSheet.create({
   addTaskContainer: {
     backgroundColor: "#FF6B47",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20, // Elevate the button
+    marginBottom: 11, // Elevate button
     shadowColor: "#000",
     shadowOffset: {
       width: 0,

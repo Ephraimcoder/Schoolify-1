@@ -1,5 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
-
 /**
  * Calculate task status based on subtask completion
  * @param {Object} task - Task object with subtasks array
@@ -8,16 +6,18 @@ import { Ionicons } from '@expo/vector-icons';
 export const calculateTaskStatus = (task) => {
   // No subtasks case
   if (!task.subtasks || task.subtasks.length === 0) {
-    return task.completed ? 'completed' : 'todo';
+    return task.completed ? "completed" : "todo";
   }
-  
+
   // Has subtasks case
-  const completedSubtasks = task.subtasks.filter(subtask => subtask.completed).length;
+  const completedSubtasks = task.subtasks.filter(
+    (subtask) => subtask.completed,
+  ).length;
   const totalSubtasks = task.subtasks.length;
-  
-  if (completedSubtasks === 0) return 'todo';
-  if (completedSubtasks === totalSubtasks) return 'completed';
-  return 'in_progress';
+
+  if (completedSubtasks === 0) return "todo";
+  if (completedSubtasks === totalSubtasks) return "completed";
+  return "in_progress";
 };
 
 /**
@@ -26,11 +26,15 @@ export const calculateTaskStatus = (task) => {
  * @returns {string} - Color hex code
  */
 export const getStatusColor = (status) => {
-  switch(status) {
-    case 'todo': return '#6B7280'; // Gray
-    case 'in_progress': return '#3B82F6'; // Blue  
-    case 'completed': return '#10B981'; // Green
-    default: return '#6B7280';
+  switch (status) {
+    case "todo":
+      return "#6B7280"; // Gray
+    case "in_progress":
+      return "#3B82F6"; // Blue
+    case "completed":
+      return "#10B981"; // Green
+    default:
+      return "#6B7280";
   }
 };
 
@@ -40,11 +44,15 @@ export const getStatusColor = (status) => {
  * @returns {string} - Ionicons icon name
  */
 export const getStatusIcon = (status) => {
-  switch(status) {
-    case 'todo': return 'radio-button-off';
-    case 'in_progress': return 'radio-button-on';
-    case 'completed': return 'checkmark-circle';
-    default: return 'radio-button-off';
+  switch (status) {
+    case "todo":
+      return "ellipse-outline";
+    case "in_progress":
+      return "time-outline";
+    case "completed":
+      return "checkmark-circle";
+    default:
+      return "ellipse-outline";
   }
 };
 
@@ -54,11 +62,15 @@ export const getStatusIcon = (status) => {
  * @returns {string} - Human readable label
  */
 export const getStatusLabel = (status) => {
-  switch(status) {
-    case 'todo': return 'To Do';
-    case 'in_progress': return 'In Progress';
-    case 'completed': return 'Completed';
-    default: return 'To Do';
+  switch (status) {
+    case "todo":
+      return "To Do";
+    case "in_progress":
+      return "In Progress";
+    case "completed":
+      return "Completed";
+    default:
+      return "To Do";
   }
 };
 
@@ -71,9 +83,11 @@ export const getProgressPercentage = (task) => {
   if (!task.subtasks || task.subtasks.length === 0) {
     return task.completed ? 100 : 0;
   }
-  
-  const completedSubtasks = task.subtasks.filter(subtask => subtask.completed).length;
+
+  const completedSubtasks = task.subtasks.filter(
+    (subtask) => subtask.completed,
+  ).length;
   const totalSubtasks = task.subtasks.length;
-  
+
   return Math.round((completedSubtasks / totalSubtasks) * 100);
 };

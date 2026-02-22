@@ -183,7 +183,7 @@ const AddTask = () => {
   // Add notification handler for when app is in foreground
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener(
-      (notification) => {}
+      (notification) => {},
     );
 
     // Set notification handler
@@ -272,7 +272,7 @@ const AddTask = () => {
       priority,
       dueDate,
       dueTime,
-    ])
+    ]),
   );
 
   const handleInputChange = (field, value) => {
@@ -367,7 +367,7 @@ const AddTask = () => {
             view: { padding: 20 },
             text: { fontSize: 16, color: "green", fontFamily: "QuicksandBold" },
           },
-        }
+        },
       );
     } catch (error) {
       toast.error("Failed to save. Please try again.", {
@@ -552,7 +552,7 @@ const AddTask = () => {
                           "category",
                           formData.category === category.name
                             ? ""
-                            : category.name
+                            : category.name,
                         );
                       }}
                       selectedBgColor="bg-blue-500"
@@ -593,7 +593,7 @@ const AddTask = () => {
                   onPress={() => {
                     handleInputChange(
                       "priority",
-                      formData.priority === priority.name ? "" : priority.name
+                      formData.priority === priority.name ? "" : priority.name,
                     );
                   }}
                   selectedBgColor={

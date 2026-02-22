@@ -140,7 +140,7 @@ const Settings = () => {
         // If time is already set, schedule the reminder
         await scheduleDailyReminder(
           reminderTime.getHours(),
-          reminderTime.getMinutes()
+          reminderTime.getMinutes(),
         );
         showSuccess("Daily reminder enabled");
       }
@@ -163,12 +163,12 @@ const Settings = () => {
     // Schedule the reminder with the new time
     const success = await scheduleDailyReminder(
       selectedTime.getHours(),
-      selectedTime.getMinutes()
+      selectedTime.getMinutes(),
     );
 
     if (success) {
       showSuccess(
-        `Daily reminder set for ${formatTimeDisplay(selectedTime.getHours(), selectedTime.getMinutes())}`
+        `Daily reminder set for ${formatTimeDisplay(selectedTime.getHours(), selectedTime.getMinutes())}`,
       );
     }
   };

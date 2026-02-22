@@ -1,4 +1,5 @@
-import { Text, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import { Animated, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 
 const SelectableButton = ({
@@ -13,7 +14,7 @@ const SelectableButton = ({
   className = "",
 }) => {
   const { isDark } = useTheme();
-  const [scaleAnim] = React.useState(new Animated.Value(1));
+  const [scaleAnim] = useState(new Animated.Value(1));
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {

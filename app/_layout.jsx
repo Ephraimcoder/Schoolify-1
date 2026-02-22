@@ -151,7 +151,7 @@ function RootLayoutContent() {
           // Android: Use StatusBar for status bar and NavigationBar for navigation bar
           StatusBar.setBarStyle(isDarkTheme ? "light-content" : "dark-content");
           await NavigationBar.setBackgroundColorAsync(
-            isDarkTheme ? "#1F2937" : "#FFFBF5"
+            isDarkTheme ? "#1F2937" : "#FFFBF5",
           );
         }
       } catch (error) {

@@ -199,7 +199,7 @@ export default function BackupSettings() {
             </View>
 
             {/* Benefits */}
-            <View className="mt-8 space-y-5">
+            <View className="mt-8 space-y-5 gap-2">
               <View className="flex-row items-center">
                 <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-4">
                   <Ionicons name="shield-checkmark" size={16} color="#16A34A" />

@@ -1,8 +1,13 @@
 import { MaterialIcons } from "@expo/vector-icons";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import NetInfo from "@react-native-community/netinfo";
+
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
+
 import { useEffect, useState } from "react";
+
 import {
   Platform,
   ScrollView,
@@ -11,37 +16,53 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import ScreenAnimation from "../../components/ScreenAnimation";
+
 import { useTheme } from "../../context/ThemeContext";
+
 import { useUser } from "../../context/UserContext";
+
 import { showError, showSuccess, showWarning } from "../../utils/toast";
+
 export default function SignUp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [isOffline, setIsOffline] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
+
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   const { register, requestEmailOtp } = useUser();
+
   const { isDark } = useTheme();
+
   const router = useRouter();
+
   const params = useLocalSearchParams();
 
   useEffect(() => {
     // Mark onboarding as seen as soon as user hits any auth screen
+
     AsyncStorage.setItem("onboarding_seen", "true").catch(() => {});
   }, []);
 
   useEffect(() => {
     // Check initial network status
+
     const checkNetworkStatus = async () => {
       const netInfo = await NetInfo.fetch();
+
       setIsOffline(!netInfo.isConnected);
     };
 
     checkNetworkStatus();
 
     // Set up network status listener
+
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsOffline(!state.isConnected);
     });
@@ -52,6 +73,7 @@ export default function SignUp() {
   const submit = async () => {
     if (isOffline) {
       showWarning("You need to be online to create an account.");
+
       return;
     }
 
@@ -59,27 +81,37 @@ export default function SignUp() {
 
     if (!name || !email || !password) {
       showError("Please fill in all fields");
+
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       const response = await requestEmailOtp(email, { isSignup: true });
+
       showSuccess("Verification code sent to your email!");
 
       // Navigate to OTP verification with signup data
+
       router.push({
         pathname: "/(auth)/otp-verify",
+
         params: {
           userId: response.userId,
+
           email: email,
+
           isSignup: "true",
+
           name: name,
+
           password: password,
         },
       });
     } catch (error) {
       console.error("OTP request error:", error);
+
       showError(
         error.message || "Failed to send verification code. Please try again.",
       );
@@ -89,14 +121,20 @@ export default function SignUp() {
   };
 
   // UI-only: subtle shadow styling for hero card
+
   const cardShadow = Platform.select({
     ios: {
       shadowColor: "#000",
+
       shadowOpacity: 0.12,
+
       shadowOffset: { width: 0, height: 6 },
+
       shadowRadius: 12,
     },
+
     android: { elevation: 6 },
+
     default: {},
   });
 
@@ -108,12 +146,15 @@ export default function SignUp() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 24,
+
             paddingTop: 40,
+
             paddingBottom: 40,
           }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Brand header */}
+
           <View className="items-center">
             <Text
               className={`text-2xl font-quicksandBold ${
@@ -125,6 +166,7 @@ export default function SignUp() {
           </View>
 
           {/* Illustration style hero card */}
+
           <View className="items-center mt-6">
             <View
               className={`w-11/12 h-44 rounded-3xl items-center justify-center ${
@@ -134,15 +176,24 @@ export default function SignUp() {
             >
               <View className="items-center">
                 {/* Graduation cap illustration */}
+
                 <View className="relative mb-4">
                   {/* Cap base */}
+
                   <View className="w-16 h-10 bg-orange-600 rounded-t-full" />
+
                   {/* Cap top */}
+
                   <View className="absolute -top-2 left-0 w-16 h-4 bg-orange-700 rounded-t-lg" />
+
                   {/* Tassel */}
+
                   <View className="absolute top-0 right-2 w-1 h-8 bg-orange-800" />
+
                   <View className="absolute top-6 right-1 w-3 h-3 bg-orange-500 rounded-full" />
+
                   {/* Board */}
+
                   <View className="absolute -top-4 left-6 w-4 h-8 bg-orange-600 rounded" />
                 </View>
 
@@ -153,6 +204,7 @@ export default function SignUp() {
                 >
                   Start Your Journey!
                 </Text>
+
                 <Text
                   className={`font-quicksandMedium text-sm text-center mt-1 ${
                     isDark ? "text-gray-400" : "text-gray-600"
@@ -165,6 +217,7 @@ export default function SignUp() {
           </View>
 
           {/* Offline Banner */}
+
           {isOffline && (
             <View
               className={`p-3 rounded-lg mt-6 border-l-4 ${
@@ -184,6 +237,7 @@ export default function SignUp() {
           )}
 
           {/* Header */}
+
           <View className="items-center mt-8">
             <Text
               className={`text-5xl font-quicksandBold text-center ${
@@ -192,6 +246,7 @@ export default function SignUp() {
             >
               Create Account
             </Text>
+
             <Text
               className={`text-xl text-center font-quicksandMedium mt-3 leading-6 ${
                 isDark ? "text-gray-400" : "text-gray-600"
@@ -202,6 +257,7 @@ export default function SignUp() {
           </View>
 
           {/* Form */}
+
           <View className="mt-10">
             <View className="mb-5">
               <TextInput
@@ -254,6 +310,7 @@ export default function SignUp() {
                 placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                 style={{ fontFamily: "Quicksand-Regular" }}
               />
+
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 className="absolute right-0 top-0 h-16 w-14 items-center justify-center"
@@ -268,6 +325,7 @@ export default function SignUp() {
           </View>
 
           {/* CTA + link */}
+
           <View className="mt-8">
             <TouchableOpacity
               className="bg-purple-600 h-16 rounded-full items-center justify-center"
@@ -288,6 +346,7 @@ export default function SignUp() {
               >
                 Already have an account?{" "}
               </Text>
+
               <Link
                 href="/(auth)/sign-in"
                 className="text-orange-500 font-quicksandBold text-base"

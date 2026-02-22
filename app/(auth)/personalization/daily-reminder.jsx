@@ -259,7 +259,7 @@ export default function DailyReminder() {
             )}
 
             {/* Benefits */}
-            <View className="mt-6 space-y-3">
+            <View className="mt-6 space-y-3 gap-2">
               <View className="flex-row items-center">
                 <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center mr-3">
                   <Ionicons name="checkmark" size={16} color="#16A34A" />

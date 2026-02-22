@@ -22,10 +22,10 @@ const TaskProgress = React.memo(() => {
     // Today's tasks
     const today = new Date().toDateString();
     const todayTaskList = tasks.filter(
-      (task) => task.dueDate && new Date(task.dueDate).toDateString() === today
+      (task) => task.dueDate && new Date(task.dueDate).toDateString() === today,
     );
     const todayCompleted = todayTaskList.filter(
-      (task) => task.isCompleted
+      (task) => task.isCompleted,
     ).length;
     const todayTotal = todayTaskList.length;
 
@@ -34,7 +34,7 @@ const TaskProgress = React.memo(() => {
       (task) =>
         task.dueDate &&
         new Date(task.dueDate) < new Date().setHours(0, 0, 0, 0) &&
-        !task.isCompleted
+        !task.isCompleted,
     );
 
     // This week's tasks (all tasks, not just today)
@@ -62,7 +62,7 @@ const TaskProgress = React.memo(() => {
                 ? new Date(completionDate).toDateString()
                 : null;
             })
-            .filter(Boolean)
+            .filter(Boolean),
         ),
       ].sort((a, b) => new Date(b) - new Date(a));
 

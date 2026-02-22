@@ -1,8 +1,13 @@
 import { MaterialIcons } from "@expo/vector-icons";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import NetInfo from "@react-native-community/netinfo";
+
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
+
 import { useEffect, useState } from "react";
+
 import {
   Platform,
   ScrollView,
@@ -11,33 +16,49 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import ScreenAnimation from "../../components/ScreenAnimation";
+
 import { useTheme } from "../../context/ThemeContext";
+
 import { useUser } from "../../context/UserContext";
+
 import { showError, showSuccess, showWarning } from "../../utils/toast";
+
 export default function SignIn() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [isOffline, setIsOffline] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
+
   const [form, setForm] = useState({ email: "", password: "" });
+
   const { login } = useUser();
+
   const { isDark } = useTheme();
+
   const router = useRouter();
+
   const params = useLocalSearchParams();
 
   useEffect(() => {
     // Mark onboarding as seen as soon as user hits any auth screen
+
     AsyncStorage.setItem("onboarding_seen", "true").catch(() => {});
   }, []);
 
   useEffect(() => {
     // Check if we're offline from the router params
+
     if (params.offline === "true") {
       setIsOffline(true);
     }
 
     // Set up network status listener
+
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsOffline(!state.isConnected);
     });
@@ -48,22 +69,29 @@ export default function SignIn() {
   const submit = async () => {
     if (isOffline) {
       showWarning("You need to be online to sign in.");
+
       return;
     }
 
     const { email, password } = form;
+
     if (!form.email || !form.password) {
       showError("Please enter a valid email and password");
+
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       await login(email, password);
+
       showSuccess("User signed in successfully");
+
       router.replace("/(tabs)/Home");
     } catch (error) {
       console.error("Sign in error:", error);
+
       showError(
         error.message ||
           "Failed to sign in. Please check your credentials and try again.",
@@ -73,15 +101,30 @@ export default function SignIn() {
     }
   };
 
-  // UI-only: subtle shadow styling for hero card
+  const clearAsyncStorage = async () => {
+    try {
+      await AsyncStorage.clear();
+      showSuccess("AsyncStorage cleared successfully");
+    } catch (error) {
+      console.error("Error clearing AsyncStorage:", error);
+      showError("Failed to clear AsyncStorage");
+    }
+  };
+
+  // Modern glassmorphism shadow helper
   const cardShadow = Platform.select({
     ios: {
       shadowColor: "#000",
+
       shadowOpacity: 0.12,
+
       shadowOffset: { width: 0, height: 6 },
+
       shadowRadius: 12,
     },
+
     android: { elevation: 6 },
+
     default: {},
   });
 
@@ -93,12 +136,15 @@ export default function SignIn() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 24,
+
             paddingTop: 40,
+
             paddingBottom: 40,
           }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Brand header */}
+
           <View className="items-center">
             <Text
               className={`text-2xl font-quicksandBold ${
@@ -110,6 +156,7 @@ export default function SignIn() {
           </View>
 
           {/* Illustration style hero card */}
+
           <View className="items-center mt-6">
             <View
               className={`w-11/12 h-44 rounded-3xl items-center justify-center ${
@@ -119,12 +166,18 @@ export default function SignIn() {
             >
               <View className="items-center">
                 {/* Book illustration */}
+
                 <View className="relative mb-4">
                   <View className="w-16 h-12 bg-orange-500 rounded-lg shadow-md" />
+
                   <View className="absolute top-1 left-1 w-14 h-10 bg-orange-600 rounded-lg" />
+
                   <View className="absolute top-2 left-2 w-12 h-8 bg-white rounded" />
+
                   <View className="absolute top-3 left-3 w-10 h-1 bg-orange-200 rounded" />
+
                   <View className="absolute top-5 left-3 w-8 h-1 bg-orange-200 rounded" />
+
                   <View className="absolute top-7 left-3 w-9 h-1 bg-orange-200 rounded" />
                 </View>
 
@@ -135,6 +188,7 @@ export default function SignIn() {
                 >
                   Welcome Back!
                 </Text>
+
                 <Text
                   className={`font-quicksandMedium text-sm text-center mt-1 ${
                     isDark ? "text-gray-400" : "text-gray-600"
@@ -147,6 +201,7 @@ export default function SignIn() {
           </View>
 
           {/* Offline Banner */}
+
           {isOffline && (
             <View
               className={`p-3 rounded-lg mt-6 border-l-4 ${
@@ -159,12 +214,13 @@ export default function SignIn() {
                 className={`${isDark ? "text-yellow-300" : "text-yellow-800"}`}
                 style={{ fontFamily: "Quicksand-Medium" }}
               >
-                You're currently offline. Some features may be limited.
+                You're currently offline, Sign in will not be functional.
               </Text>
             </View>
           )}
 
           {/* Header */}
+
           <View className="items-center mt-8">
             <Text
               className={`text-5xl font-quicksandBold text-center ${
@@ -173,6 +229,7 @@ export default function SignIn() {
             >
               Login
             </Text>
+
             <Text
               className={`text-xl text-center font-quicksandMedium mt-3 leading-6 ${
                 isDark ? "text-gray-400" : "text-gray-600"
@@ -183,6 +240,7 @@ export default function SignIn() {
           </View>
 
           {/* Form */}
+
           <View className="mt-10">
             <View className="mb-5">
               <TextInput
@@ -219,6 +277,7 @@ export default function SignIn() {
                   placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                   style={{ fontFamily: "Quicksand-Regular" }}
                 />
+
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
                   className="absolute right-0 top-0 h-16 w-14 items-center justify-center"
@@ -234,6 +293,7 @@ export default function SignIn() {
           </View>
 
           {/* CTA + links */}
+
           <View className="mt-8">
             <TouchableOpacity
               className="bg-purple-600 h-16 rounded-full items-center justify-center"
@@ -264,6 +324,7 @@ export default function SignIn() {
               >
                 Don't have an account?{" "}
               </Text>
+
               <Link
                 href="/(auth)/sign-up"
                 className="text-orange-500 font-quicksandBold text-base"
@@ -272,6 +333,16 @@ export default function SignIn() {
                 Sign Up
               </Link>
             </View>
+
+            <TouchableOpacity
+              onPress={clearAsyncStorage}
+              className="mt-4 items-center"
+              activeOpacity={0.6}
+            >
+              <Text className="text-white/40 font-quicksandMedium text-xs">
+                Clear Storage & Reset
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>

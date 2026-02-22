@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  Alert,
   Animated,
   ScrollView,
   Text,
@@ -134,8 +133,7 @@ const PersonalDetails = () => {
               />
             ))}
           </View>
-
-          {/* Danger Zone Section */}
+          {/* Danger Zone Section
           <View className="px-5 mt-8 mb-6">
             <View className="mb-4">
               <Text
@@ -172,7 +170,7 @@ const PersonalDetails = () => {
                           await deleteAccount();
                           Alert.alert(
                             "Account Deleted",
-                            "Your account has been successfully deleted."
+                            "Your account has been successfully deleted.",
                           );
                           router.replace("/(auth)/sign-in");
                         } catch (error) {
@@ -180,7 +178,7 @@ const PersonalDetails = () => {
                         }
                       },
                     },
-                  ]
+                  ],
                 );
               }}
               className={`flex-row items-center justify-between rounded-2xl py-4 px-4 mb-3 border ${
@@ -213,7 +211,7 @@ const PersonalDetails = () => {
                 />
               </View>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </ScrollView>
       </Animated.View>
     </SafeAreaView>
