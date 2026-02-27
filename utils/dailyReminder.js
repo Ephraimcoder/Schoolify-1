@@ -28,6 +28,23 @@ const requestPermissions = async () => {
   return status === "granted";
 };
 
+// Get today's task count for smarter notifications
+const getTodayTaskCount = async () => {
+  try {
+    const tasks = await database.collections.get("tasks").query().fetch();
+    const today = new Date();
+    const todayTasks = tasks.filter((task) => {
+      if (!task.dueDate) return false;
+      const taskDate = new Date(task.dueDate);
+      return taskDate.toDateString() === today.toDateString();
+    });
+    return todayTasks.length;
+  } catch (error) {
+    console.error("Error getting today's task count:", error);
+    return 0;
+  }
+};
+
 export const scheduleDailyReminder = async (hour, minute) => {
   try {
     const hasPermission = await requestPermissions();
@@ -38,27 +55,24 @@ export const scheduleDailyReminder = async (hour, minute) => {
     // Cancel any existing notifications
     await Notifications.cancelAllScheduledNotificationsAsync();
 
-    // Set the time for the notification
-    const now = new Date();
-    const scheduledTime = new Date(now);
-    scheduledTime.setHours(hour, minute, 0, 0);
-
-    // If the time has already passed today, schedule for tomorrow
-    if (scheduledTime <= now) {
-      scheduledTime.setDate(scheduledTime.getDate() + 1);
-    }
+    // Get today's task count for smarter message
+    const taskCount = await getTodayTaskCount();
+    const notificationBody =
+      taskCount > 0
+        ? `You have ${taskCount} task${taskCount !== 1 ? "s" : ""} today! 📋`
+        : "No tasks for today. Enjoy your day! 🎉";
 
     // Schedule the notification
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Daily Reminder",
-        body: "Don't forget to check your tasks for today!",
+        body: notificationBody,
         data: { type: "daily-reminder" },
       },
       trigger: {
-        type: "date",
-        date: scheduledTime,
-        repeats: true,
+        type: "daily",
+        hour: hour,
+        minute: minute,
         channelId: "daily-reminders",
       },
     });

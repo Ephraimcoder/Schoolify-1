@@ -41,5 +41,6 @@ yarn-error.*
 #todos
 todos.md
 SYNC_CONFLICT_RESOLUTION.md
+UPGRADE_TO_SDK_54.md
 
 app-example

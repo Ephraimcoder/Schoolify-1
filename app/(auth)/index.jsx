@@ -174,7 +174,7 @@ export default function Index() {
                 </View>
 
                 {/* Title & description with modern typography - moved to lower third */}
-                <View className="px-4 items-center absolute bottom-40 left-0 right-0">
+                <View className="px-4 items-center absolute bottom-44 left-0 right-0">
                   <Text className="text-3xl text-center font-quicksandBold leading-tight text-white mb-3">
                     {slide.title}
                   </Text>

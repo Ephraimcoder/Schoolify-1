@@ -66,7 +66,7 @@ const AddTask = () => {
 
   const [selectedCategory, setSelectedCategory] = useState("Design");
   const [selectedPriority, setSelectedPriority] = useState("Low");
-  const [alertEnabled, setAlertEnabled] = useState(false);
+  const [alertEnabled, setAlertEnabled] = useState(true);
   const [isSubtaskModalVisible, setIsSubtaskModalVisible] = useState(false);
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [modalType, setModalType] = useState(""); // 'category' or 'priority'
@@ -217,12 +217,12 @@ const AddTask = () => {
               dueDate: taskToEdit.dueDate || new Date().toISOString(),
               dueTime: taskToEdit.dueTime || new Date().toISOString(),
               isCompleted: !!taskToEdit.isCompleted,
-              alertEnabled: false,
+              alertEnabled: true,
             });
             setSelectedCategory(taskToEdit.category || "");
             setSelectedPriority(taskToEdit.priority || "Low");
             setSubTasks(taskToEdit.subTasks || []);
-            setAlertEnabled(false);
+            setAlertEnabled(true);
           }
         } else {
           // Creating a new task
@@ -238,7 +238,7 @@ const AddTask = () => {
               dueDate: dueDate || new Date().toISOString(),
               dueTime: dueTime || new Date().toISOString(),
               isCompleted: false,
-              alertEnabled: false,
+              alertEnabled: true,
             });
             setSelectedCategory(prefillCategory || "");
             setSelectedPriority(priority || "Low");
@@ -255,7 +255,7 @@ const AddTask = () => {
             setSelectedPriority("Low");
           }
           setSubTasks([]);
-          setAlertEnabled(false);
+          setAlertEnabled(true);
         }
       });
 
@@ -348,7 +348,7 @@ const AddTask = () => {
       setSubTasks([]);
       setSelectedCategory("");
       setSelectedPriority("Low");
-      setAlertEnabled(false);
+      setAlertEnabled(true);
       router.back();
 
       const isClass = formData.category === "Class";
@@ -440,7 +440,7 @@ const AddTask = () => {
                   setSubTasks([]);
                   setSelectedCategory("");
                   setSelectedPriority("Low");
-                  setAlertEnabled(false);
+                  setAlertEnabled(true);
                   router.back();
                 }}
               >

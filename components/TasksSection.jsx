@@ -68,23 +68,24 @@ const TasksSection = React.memo(() => {
             <TaskCard key={task.id} task={task} />
           ))
         ) : (
-          <View className="w-full items-center justify-center">
-            <Ionicons
-              name="checkmark-done-circle-outline"
-              size={48}
-              color={isDark ? "#6B7280" : "#9CA3AF"}
-              className="mb-2"
-            />
+          <View className="w-full items-center justify-center py-8">
+            <View className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-3xl items-center justify-center mb-4">
+              <Ionicons
+                name="checkmark-done-circle-outline"
+                size={40}
+                color="#10B981"
+              />
+            </View>
             <Text
-              className={`font-quicksandSemiBold text-center ${
-                isDark ? "text-gray-300" : "text-gray-500"
+              className={`font-quicksandSemiBold text-center text-lg mb-2 ${
+                isDark ? "text-gray-300" : "text-gray-700"
               }`}
             >
               No tasks due this week!
             </Text>
             <Text
-              className={`font-quicksand text-center text-sm mt-1 ${
-                isDark ? "text-gray-400" : "text-gray-400"
+              className={`font-quicksand text-center text-sm ${
+                isDark ? "text-gray-400" : "text-gray-500"
               }`}
             >
               Great job staying on top of things 🎉

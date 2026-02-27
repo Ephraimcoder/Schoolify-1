@@ -1,6 +1,5 @@
 import {
   Feather,
-  FontAwesome5,
   Ionicons,
   MaterialCommunityIcons,
   MaterialIcons,
@@ -74,7 +73,7 @@ const TabsLayout = () => {
         options={{
           title: "Tasks",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome5 name="tasks" size={22} color={color} />
+            <MaterialIcons name="assignment" size={22} color={color} />
           ),
         }}
       />

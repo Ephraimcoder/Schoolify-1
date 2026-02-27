@@ -19,7 +19,7 @@
     "icon": "./assets/images/Schoolify main logo.png",
     "scheme": ["schoolify"],
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true
@@ -41,9 +41,12 @@
     },
     "plugins": [
       "expo-router",
-      ["@lovesworking/watermelondb-expo-plugin-sdk-52-plus", {
-      "jscFlavor": "android-jsc-intl"
-    }], 
+      [
+        "@lovesworking/watermelondb-expo-plugin-sdk-52-plus",
+        {
+          "jscFlavor": "android-jsc-intl"
+        }
+      ],
 
       [
         "expo-splash-screen",
@@ -55,16 +58,17 @@
         }
       ],
       "expo-secure-store",
-     [ "expo-build-properties",
-     {
-        "android": {
-          "kotlinVersion": "2.0.21",
-          "packagingOptions": {
-            "pickFirst": ["**/libc++_shared.so"]
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.21",
+            "packagingOptions": {
+              "pickFirst": ["**/libc++_shared.so"]
+            }
           }
         }
-      }
-    ]
+      ]
     ],
     "experiments": {
       "typedRoutes": true

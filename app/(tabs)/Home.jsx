@@ -62,27 +62,42 @@ const Home = () => {
     // This would ideally come from TasksContext but for now we'll keep it simple
     return 0; // This will be updated when we integrate with TasksContext
   }, []);
+
+  // Safe navigation function
+  const navigateSafely = useCallback(
+    (path) => {
+      try {
+        if (router && router.push) {
+          router.push(path);
+        }
+      } catch (error) {
+        console.warn("Navigation error:", error);
+      }
+    },
+    [router],
+  );
   return (
     <ScreenAnimation duration={400}>
       <LinearGradient colors={colors.background} className="flex-1">
-        <SafeAreaView className="flex-1 px-6 mt-2">
+        <SafeAreaView className="flex-1 px-5 mt-2">
           {/* Header Section */}
-          <View className="flex-row items-center justify-between mt-6 mb-6">
-            <View className="flex-row items-center">
+          <View className="flex-row items-center justify-between mt-4 mb-6">
+            <View className="flex-row items-center flex-1">
               <View className="relative">
+                <View className="w-1 h-12 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full absolute -left-1 top-2" />
                 <Image
                   source={{ uri: avatarUrl }}
-                  className="w-16 h-16 rounded-2xl mr-4 border-2 border-white shadow-sm"
+                  className="w-14 h-14 rounded-2xl mr-4 border-2 border-white/20 shadow-lg"
                 />
               </View>
-              <View>
+              <View className="flex-1">
                 <Text
-                  className={`text-gray-500 font-quicksand text-sm ${isDark ? "text-gray-400" : ""}`}
+                  className={`text-sm font-quicksandMedium mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                 >
                   {greeting} 👋
                 </Text>
                 <Text
-                  className={`text-xl font-bold font-quicksandBold ${isDark ? "text-gray-100" : "text-gray-800"}`}
+                  className={`text-2xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
                 >
                   {user?.name || "Welcome back"}
                 </Text>
@@ -91,10 +106,19 @@ const Home = () => {
 
             {/* Network Status Indicator */}
             <View
-              className={`px-3 py-1 rounded-full ${isOnline ? "bg-green-100" : "bg-yellow-100"}`}
+              className={`px-3 py-1.5 rounded-full flex-row items-center ${
+                isOnline ? "bg-green-500/20" : "bg-amber-500/20"
+              }`}
             >
+              <View
+                className={`w-2 h-2 rounded-full mr-1.5 ${
+                  isOnline ? "bg-green-500" : "bg-amber-500"
+                }`}
+              />
               <Text
-                className={`text-xs font-quicksandMedium ${isOnline ? "text-green-700" : "text-yellow-700"}`}
+                className={`text-xs font-quicksandSemiBold ${
+                  isOnline ? "text-green-600" : "text-amber-600"
+                }`}
               >
                 {isOnline ? "Online" : "Offline"}
               </Text>
@@ -107,7 +131,8 @@ const Home = () => {
           </View> */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 30 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            className="flex-1"
           >
             {/* Progress Section */}
             <View className="mb-6">
@@ -115,15 +140,21 @@ const Home = () => {
             </View>
 
             {/* Tasks Section */}
-            <View className="mb-6">
-              <View className="flex-row justify-between items-center mb-4">
-                <Text
-                  className={`text-lg font-quicksandBold ${isDark ? "text-gray-100" : "text-gray-800"}`}
+            <View className="mb-8">
+              <View className="flex-row justify-between items-center mb-4 px-2">
+                <View className="flex-row items-center">
+                  <View className="w-1 h-6 bg-indigo-500 rounded-full mr-3" />
+                  <Text
+                    className={`text-xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
+                    Upcoming Tasks
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => navigateSafely("/Tasks")}
+                  className="px-3 py-1.5 bg-indigo-50 rounded-full"
                 >
-                  Upcoming Tasks
-                </Text>
-                <TouchableOpacity onPress={() => router.push("/Tasks")}>
-                  <Text className="text-indigo-600 font-quicksandMedium">
+                  <Text className="text-indigo-600 font-quicksandSemiBold text-sm">
                     See All
                   </Text>
                 </TouchableOpacity>
@@ -132,7 +163,7 @@ const Home = () => {
             </View>
 
             {/* Classes Section */}
-            <View>
+            <View className="mb-6">
               <ClassesSection />
             </View>
           </ScrollView>

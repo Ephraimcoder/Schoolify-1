@@ -49,17 +49,11 @@ export async function schedulePushNotification(
   title,
   body,
   data = {},
-  date = null
+  date = null,
 ) {
   try {
     // If no date is provided, default to 1 second from now
-    // Combine date and time into a single Date object (if not already)
     const dueDateTime = new Date(date);
-    if (dueTime) {
-      // Merge dueDate and dueTime
-      const time = new Date(dueTime);
-      dueDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
-    }
 
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -96,7 +90,7 @@ const handleNotificationResponse = (response) => {
 // Add notification response listener
 const notificationListener =
   Notifications.addNotificationResponseReceivedListener(
-    handleNotificationResponse
+    handleNotificationResponse,
   );
 
 // Cleanup function to remove listeners
