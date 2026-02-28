@@ -20,7 +20,7 @@ const calculateStreak = (tasks) => {
             ? new Date(completionDate).toDateString()
             : null;
         })
-        .filter(Boolean)
+        .filter(Boolean),
     ),
   ].sort((a, b) => new Date(b) - new Date(a));
 
@@ -134,7 +134,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
           } else {
             toast.error(
               `Task ${task.id} has invalid date format:`,
-              completionDate
+              completionDate,
             );
           }
         } catch (e) {
@@ -150,7 +150,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
 
     // Find the day with the most completed tasks
     const mostProductive = Object.entries(dayCount).reduce((a, b) =>
-      a[1] > b[1] ? a : b
+      a[1] > b[1] ? a : b,
     );
 
     return days[mostProductive[0]];
@@ -163,18 +163,16 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
       visible={visible}
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-black/50 justify-center p-5">
+      <View className="flex-1 bg-black/50 justify-end">
         <View
-          className={`rounded-2xl p-6 ${isDark ? "bg-gray-800" : "bg-white"}`}
+          className={`rounded-t-3xl ${isDark ? "bg-gray-800" : "bg-white"}`}
           style={{
-            maxHeight: "95%",
-            minHeight: "70%",
+            maxHeight: "90%",
+            minHeight: "60%",
             width: "100%",
-            maxWidth: 500,
-            alignSelf: "center",
           }}
         >
-          <View className="flex-row justify-between items-center mb-4">
+          <View className="flex-row justify-between items-center p-6 pb-4">
             <View>
               <Text
                 className={`text-2xl font-quicksandBold ${
@@ -207,9 +205,9 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
 
           <ScrollView
             showsVerticalScrollIndicator={false}
-            className="mt-2"
-            contentContainerStyle={{ paddingBottom: 20 }}
-            nestedScrollEnabled={true}
+            className="flex-1 px-6"
+            contentContainerStyle={{ paddingBottom: 40 }}
+            nestedScrollEnabled={false}
           >
             {/* Loading State */}
             {isCalculating ? (
@@ -326,7 +324,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                         >
                           Current Streak
                         </Text>
-                        <View className="flex-row items-baseline space-x-1.5">
+                        <View className="flex-row items-baseline space-x-1.5 gap-1">
                           <Text
                             className={`text-2xl font-quicksandBold ${
                               isDark ? "text-purple-400" : "text-purple-600"
@@ -395,7 +393,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                           ];
                           const color = colors[index % colors.length];
                           const percentage = Math.round(
-                            (count / stats.total) * 100
+                            (count / stats.total) * 100,
                           );
 
                           return (
@@ -454,7 +452,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
                               </View>
                             </View>
                           );
-                        }
+                        },
                       )}
                     </View>
                   </View>

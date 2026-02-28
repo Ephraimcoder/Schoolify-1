@@ -50,8 +50,13 @@ const TabsLayout = () => {
         detachInactiveScreens: false, // Prevent screen destruction
         freezeOnBlur: false, // Keep screens responsive
         tabBarHideOnKeyboard: true,
-        animationEnabled: true,
-        animationTypeForReplace: "push",
+        animationEnabled: true, // Enable tab animations
+        animationTypeForReplace: "push", // Animation when replacing tabs
+
+        // Tab transition animation options:
+        // For iOS: slide_from_left, slide_from_right, fade, none
+        // For Android: fade, none (slide animations not supported on Android tabs)
+
         // Add scene container style to prevent white flash and create space for floating tab bar
         sceneStyle: {
           backgroundColor: isDark ? "#111827" : colors.background[0],

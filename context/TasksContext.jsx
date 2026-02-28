@@ -91,62 +91,69 @@ export const TaskProvider = ({ children }) => {
     try {
       setIsLoading(true);
 
-      // Load tasks
+      // Load tasks first (critical path)
       const tasksCollection = database.collections.get("tasks");
       const loadedTasks = await tasksCollection
         .query(Q.where("user_id", user?.accountId || ""))
         .fetch();
       setTasks(loadedTasks.map(mapTaskModelToUi));
 
-      // Load categories for current user (or global ones without user_id)
-      const categoriesCollection = database.collections.get("categories");
-      let loadedCategories = await categoriesCollection
-        .query(
-          Q.or(
-            Q.where("user_id", user?.accountId || ""),
-            Q.where("user_id", null)
-          )
-        )
-        .fetch();
+      // Load categories and priorities in background for better UX
+      setTimeout(async () => {
+        try {
+          // Load categories for current user (or global ones without user_id)
+          const categoriesCollection = database.collections.get("categories");
+          let loadedCategories = await categoriesCollection
+            .query(
+              Q.or(
+                Q.where("user_id", user?.accountId || ""),
+                Q.where("user_id", null),
+              ),
+            )
+            .fetch();
 
-      // If no categories exist, create default ones
-      if (loadedCategories.length === 0) {
-        await database.write(async () => {
-          for (const category of DEFAULT_CATEGORIES) {
-            await categoriesCollection.create((cat) => {
-              cat.name = category.name;
-              cat.userId = user?.accountId || null;
+          // If no categories exist, create default ones
+          if (loadedCategories.length === 0) {
+            await database.write(async () => {
+              for (const category of DEFAULT_CATEGORIES) {
+                await categoriesCollection.create((cat) => {
+                  cat.name = category.name;
+                  cat.userId = user?.accountId || null;
+                });
+              }
             });
+            loadedCategories = await categoriesCollection.query().fetch();
           }
-        });
-        loadedCategories = await categoriesCollection.query().fetch();
-      }
-      setCategories(loadedCategories);
+          setCategories(loadedCategories);
 
-      // Load priorities for current user (or global ones without user_id)
-      const prioritiesCollection = database.collections.get("priorities");
-      let loadedPriorities = await prioritiesCollection
-        .query(
-          Q.or(
-            Q.where("user_id", user?.accountId || ""),
-            Q.where("user_id", null)
-          )
-        )
-        .fetch();
+          // Load priorities for current user (or global ones without user_id)
+          const prioritiesCollection = database.collections.get("priorities");
+          let loadedPriorities = await prioritiesCollection
+            .query(
+              Q.or(
+                Q.where("user_id", user?.accountId || ""),
+                Q.where("user_id", null),
+              ),
+            )
+            .fetch();
 
-      // If no priorities exist, create default ones
-      if (loadedPriorities.length === 0) {
-        await database.write(async () => {
-          for (const priority of DEFAULT_PRIORITIES) {
-            await prioritiesCollection.create((prio) => {
-              prio.name = priority.name;
-              prio.level = priority.level;
+          // If no priorities exist, create default ones
+          if (loadedPriorities.length === 0) {
+            await database.write(async () => {
+              for (const priority of DEFAULT_PRIORITIES) {
+                await prioritiesCollection.create((prio) => {
+                  prio.name = priority.name;
+                  prio.level = priority.level;
+                });
+              }
             });
+            loadedPriorities = await prioritiesCollection.query().fetch();
           }
-        });
-        loadedPriorities = await prioritiesCollection.query().fetch();
-      }
-      setPriorities(loadedPriorities);
+          setPriorities(loadedPriorities);
+        } catch (error) {
+          console.error("Background data loading failed:", error);
+        }
+      }, 100); // Small delay to not block initial render
     } catch (error) {
       showError("Failed to load data. Please restart the app.");
     } finally {
@@ -206,7 +213,7 @@ export const TaskProvider = ({ children }) => {
         throw error;
       }
     },
-    [refreshTasks, user?.accountId]
+    [refreshTasks, user?.accountId],
   );
 
   // Update an existing task
@@ -253,7 +260,7 @@ export const TaskProvider = ({ children }) => {
         throw error;
       }
     },
-    [refreshTasks]
+    [refreshTasks],
   );
 
   // Delete a task
@@ -274,14 +281,14 @@ export const TaskProvider = ({ children }) => {
         throw error;
       }
     },
-    [refreshTasks]
+    [refreshTasks],
   );
 
   const getTaskById = useCallback(
     (id) => {
       return tasks.find((task) => task.id === id);
     },
-    [tasks]
+    [tasks],
   );
 
   const handleAddTask = useCallback(
@@ -317,7 +324,7 @@ export const TaskProvider = ({ children }) => {
         showError("Failed to add task. Please try again.");
       }
     },
-    [formData, subTasks, resetForm, refreshTasks, user?.accountId]
+    [formData, subTasks, resetForm, refreshTasks, user?.accountId],
   );
 
   const addSubTask = useCallback((title) => {
@@ -357,9 +364,9 @@ export const TaskProvider = ({ children }) => {
     tasks.forEach((t) => {
       if (!t?.category) return;
 
-      // Skip if it's already part of the default list
+      // Skip if it's already part of default list
       const isDefault = DEFAULT_CATEGORIES.some(
-        (cat) => cat.name.toLowerCase() === String(t.category).toLowerCase()
+        (cat) => cat.name.toLowerCase() === String(t.category).toLowerCase(),
       );
       if (isDefault) return;
 
@@ -380,7 +387,7 @@ export const TaskProvider = ({ children }) => {
       if (!t?.priority) return;
 
       const isDefault = DEFAULT_PRIORITIES.some(
-        (prio) => prio.name.toLowerCase() === String(t.priority).toLowerCase()
+        (prio) => prio.name.toLowerCase() === String(t.priority).toLowerCase(),
       );
       if (isDefault) return;
 
@@ -398,7 +405,7 @@ export const TaskProvider = ({ children }) => {
     if (!categories?.length && !derivedCategories.length) return [];
 
     const existingNames = new Set(
-      (categories || []).map((c) => String(c.name).toLowerCase())
+      (categories || []).map((c) => String(c.name).toLowerCase()),
     );
 
     const extra = derivedCategories.filter((dc) => {
@@ -415,7 +422,7 @@ export const TaskProvider = ({ children }) => {
     if (!priorities?.length && !derivedPriorities.length) return [];
 
     const existingNames = new Set(
-      (priorities || []).map((p) => String(p.name).toLowerCase())
+      (priorities || []).map((p) => String(p.name).toLowerCase()),
     );
 
     const extra = derivedPriorities.filter((dp) => {
@@ -445,8 +452,8 @@ export const TaskProvider = ({ children }) => {
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
-              Q.where("user_id", null)
-            )
+              Q.where("user_id", null),
+            ),
           )
           .fetch();
         setCategories(updatedCategories);
@@ -457,7 +464,7 @@ export const TaskProvider = ({ children }) => {
         return null;
       }
     },
-    [user?.accountId]
+    [user?.accountId],
   );
 
   // Remove derived category by clearing it from all tasks
@@ -466,7 +473,7 @@ export const TaskProvider = ({ children }) => {
       try {
         const tasksToUpdate = tasks.filter((task) => task.category === name);
         await Promise.all(
-          tasksToUpdate.map((task) => updateTask(task.id, { category: "" }))
+          tasksToUpdate.map((task) => updateTask(task.id, { category: "" })),
         );
         await refreshTasks();
 
@@ -476,8 +483,8 @@ export const TaskProvider = ({ children }) => {
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
-              Q.where("user_id", null)
-            )
+              Q.where("user_id", null),
+            ),
           )
           .fetch();
         setCategories(updatedCategories);
@@ -487,7 +494,7 @@ export const TaskProvider = ({ children }) => {
         showError("Failed to remove derived category");
       }
     },
-    [tasks, updateTask, refreshTasks, user?.accountId]
+    [tasks, updateTask, refreshTasks, user?.accountId],
   );
 
   // Remove derived priority by clearing it from all tasks
@@ -496,7 +503,7 @@ export const TaskProvider = ({ children }) => {
       try {
         const tasksToUpdate = tasks.filter((task) => task.priority === name);
         await Promise.all(
-          tasksToUpdate.map((task) => updateTask(task.id, { priority: "" }))
+          tasksToUpdate.map((task) => updateTask(task.id, { priority: "" })),
         );
         await refreshTasks();
 
@@ -506,8 +513,8 @@ export const TaskProvider = ({ children }) => {
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
-              Q.where("user_id", null)
-            )
+              Q.where("user_id", null),
+            ),
           )
           .fetch();
         setPriorities(updatedPriorities);
@@ -517,7 +524,7 @@ export const TaskProvider = ({ children }) => {
         showError("Failed to remove derived priority");
       }
     },
-    [tasks, updateTask, refreshTasks, user?.accountId]
+    [tasks, updateTask, refreshTasks, user?.accountId],
   );
 
   // Delete category
@@ -544,8 +551,8 @@ export const TaskProvider = ({ children }) => {
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
-              Q.where("user_id", null)
-            )
+              Q.where("user_id", null),
+            ),
           )
           .fetch();
         setCategories(updatedCategories);
@@ -554,7 +561,7 @@ export const TaskProvider = ({ children }) => {
         showError("Failed to delete category. Please try again.");
       }
     },
-    [user?.accountId]
+    [user?.accountId],
   );
 
   // Add new priority
@@ -581,8 +588,8 @@ export const TaskProvider = ({ children }) => {
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
-              Q.where("user_id", null)
-            )
+              Q.where("user_id", null),
+            ),
           )
           .fetch();
         setPriorities(updatedPriorities);
@@ -593,7 +600,7 @@ export const TaskProvider = ({ children }) => {
         return null;
       }
     },
-    [user?.accountId]
+    [user?.accountId],
   );
 
   // Delete priority
@@ -620,8 +627,8 @@ export const TaskProvider = ({ children }) => {
           .query(
             Q.or(
               Q.where("user_id", user?.accountId || ""),
-              Q.where("user_id", null)
-            )
+              Q.where("user_id", null),
+            ),
           )
           .fetch();
         setPriorities(updatedPriorities);
@@ -630,7 +637,7 @@ export const TaskProvider = ({ children }) => {
         showError("Failed to delete priority. Please try again.");
       }
     },
-    [user?.accountId]
+    [user?.accountId],
   );
 
   // Manual Appwrite Sync Functions using helper
@@ -744,7 +751,7 @@ export const TaskProvider = ({ children }) => {
       try {
         const results = await performIntelligentSync(
           user.accountId,
-          onProgress
+          onProgress,
         );
 
         // Refresh local tasks after full sync
@@ -760,7 +767,7 @@ export const TaskProvider = ({ children }) => {
         setIsSyncing(false);
       }
     },
-    [user?.accountId, refreshTasks]
+    [user?.accountId, refreshTasks],
   );
 
   const value = useMemo(
@@ -797,8 +804,8 @@ export const TaskProvider = ({ children }) => {
     }),
     [
       tasks,
-      categories,
-      priorities,
+      mergedCategories,
+      mergedPriorities,
       isLoading,
       isSyncing,
       syncError,
@@ -814,7 +821,7 @@ export const TaskProvider = ({ children }) => {
       mergeAppwriteTasks,
       syncDeletedTasks,
       syncAllTasksIntelligently,
-    ]
+    ],
   );
 
   return (
@@ -845,7 +852,7 @@ export const useAppwriteSync = () => {
       context.mergeAppwriteTasks,
       context.syncDeletedTasks,
       context.syncAllTasksIntelligently,
-    ]
+    ],
   );
 };
 
@@ -867,7 +874,7 @@ export const useTasks = () => {
       context.isLoading,
       context.refreshTasks,
       context.getTaskById,
-    ]
+    ],
   );
 };
 
@@ -897,7 +904,7 @@ export const useForm = () => {
       context.addSubTask,
       context.deleteSubTask,
       context.clearSubTasks,
-    ]
+    ],
   );
 };
 
@@ -913,7 +920,7 @@ export const useCategories = () => {
       addCategory: context.addCategory,
       deleteCategory: context.deleteCategory,
     }),
-    [context.categories, context.addCategory, context.deleteCategory]
+    [context.categories, context.addCategory, context.deleteCategory],
   );
 };
 
@@ -929,7 +936,7 @@ export const usePriorities = () => {
       addPriority: context.addPriority,
       deletePriority: context.deletePriority,
     }),
-    [context.priorities, context.addPriority, context.deletePriority]
+    [context.priorities, context.addPriority, context.deletePriority],
   );
 };
 
@@ -951,7 +958,7 @@ export const useTaskActions = () => {
       context.updateTask,
       context.deleteTask,
       context.handleAddTask,
-    ]
+    ],
   );
 };
 

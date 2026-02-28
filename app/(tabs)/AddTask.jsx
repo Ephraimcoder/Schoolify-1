@@ -82,121 +82,123 @@ const AddTask = () => {
     dueTime,
   } = useLocalSearchParams();
 
-  const scheduleTaskNotification = async ({
-    id,
-    title,
-    description,
-    dueDate,
-    dueTime,
-    isClass = false, // Add isClass parameter with default false
-  }) => {
-    // Allow notifications for classes even if alert toggle is off
-    if (!alertEnabled && !isClass) return;
+  const scheduleTaskNotification = useCallback(
+    async ({ id, title, description, dueDate, dueTime, isClass = false }) => {
+      // Allow notifications for classes even if alert toggle is off
+      if (!alertEnabled && !isClass) return;
 
-    // Combine date and time into a single Date object
-    const dueDateTime = new Date(dueDate);
-    if (dueTime) {
-      const time = new Date(dueTime);
-      dueDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
-    }
-
-    // Apply user's preferred lead time (minutes before)
-    const leadMinutes = await getNotificationLeadMinutes();
-    const triggerTime = new Date(dueDateTime.getTime() - leadMinutes * 60000);
-
-    // Don't schedule in the past
-    if (!triggerTime || triggerTime <= new Date()) {
-      toast.error("Skipping past notification time");
-      return null;
-    }
-
-    try {
-      // Request permissions if not already granted
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
+      // Combine date and time into a single Date object
+      const dueDateTime = new Date(dueDate);
+      if (dueTime) {
+        const time = new Date(dueTime);
+        dueDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
       }
 
-      if (finalStatus !== "granted") {
-        toast.error("Notification permissions not granted");
+      // Apply user's preferred lead time (minutes before)
+      const leadMinutes = await getNotificationLeadMinutes();
+      const triggerTime = new Date(dueDateTime.getTime() - leadMinutes * 60000);
+
+      // Don't schedule in the past
+      if (!triggerTime || triggerTime <= new Date()) {
+        toast.error("Skipping past notification time");
         return null;
       }
 
-      // Set up notification channel for Android
-      if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-          name: "default",
-          importance: Notifications.AndroidImportance.HIGH,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#FF231F7C",
-          sound: "default",
-          enableVibrate: true,
-          showBadge: true,
-        });
-      }
+      try {
+        // Request permissions if not already granted
+        const { status: existingStatus } =
+          await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
 
-      // Cancel any existing notification with this ID
-      await Notifications.cancelScheduledNotificationAsync(id);
+        if (existingStatus !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
 
-      // Customize notification content based on whether it's a class or task
-      const notificationTitle = isClass
-        ? `📚 Your class ${title} is starting soon!`
-        : `🔔 Your Task ${title} is due soon`;
+        if (finalStatus !== "granted") {
+          toast.error("Notification permissions not granted");
+          return null;
+        }
 
-      const notificationBody = isClass
-        ? `Your class is about to begin. Don't be late!`
-        : `Don't forget to complete your task!`;
+        // Set up notification channel for Android
+        if (Platform.OS === "android") {
+          await Notifications.setNotificationChannelAsync("default", {
+            name: "default",
+            importance: Notifications.AndroidImportance.HIGH,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: "#FF231F7C",
+            sound: "default",
+            enableVibrate: true,
+            showBadge: true,
+          });
+        }
 
-      // Schedule the notification using the adjusted trigger time
-      await Notifications.scheduleNotificationAsync({
-        identifier: id,
-        content: {
-          title: notificationTitle,
-          body: notificationBody,
-          data: {
-            id,
-            title,
-            type: isClass ? "class" : "task",
-            isClass, // Include isClass in notification data
+        // Cancel any existing notification with this ID
+        await Notifications.cancelScheduledNotificationAsync(id);
+
+        // Customize notification content based on whether it's a class or task
+        const notificationTitle = isClass
+          ? `📚 Your class ${title} is starting soon!`
+          : `🔔 Your Task ${title} is due soon`;
+
+        const notificationBody = isClass
+          ? `Your class is about to begin. Don't be late!`
+          : `Don't forget to complete your task!`;
+
+        // Schedule the notification using the adjusted trigger time
+        await Notifications.scheduleNotificationAsync({
+          identifier: id,
+          content: {
+            title: notificationTitle,
+            body: notificationBody,
+            data: {
+              id,
+              title,
+              type: isClass ? "class" : "task",
+              isClass,
+            },
+            sound: "default",
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            vibrate: [0, 300, 200, 300],
           },
-          sound: "default",
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          vibrate: [0, 300, 200, 300],
-        },
-        trigger: {
-          type: "date",
-          date: triggerTime,
-        },
+          trigger: {
+            type: "date",
+            date: triggerTime,
+          },
+        });
+
+        return id;
+      } catch (error) {
+        toast.error("Failed to set reminder");
+        return null;
+      }
+    },
+    [alertEnabled],
+  );
+
+  // Add notification handler for when app is in foreground - defer to background
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const subscription = Notifications.addNotificationReceivedListener(
+        (notification) => {},
+      );
+
+      // Set notification handler
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        }),
       });
 
-      return id;
-    } catch (error) {
-      toast.error("Failed to set reminder");
-      return null;
-    }
-  };
-
-  // Add notification handler for when app is in foreground
-  useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(
-      (notification) => {},
-    );
-
-    // Set notification handler
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-      }),
-    });
+      return () => {
+        subscription.remove();
+      };
+    }, 200); // Defer notification setup to not block initial render
 
     return () => {
-      subscription.remove();
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -275,14 +277,55 @@ const AddTask = () => {
     ]),
   );
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleAddSubtask = useCallback(
+    (title) => {
+      addSubTask(title);
+    },
+    [addSubTask],
+  );
+
+  const handleDeleteSubtask = useCallback(
+    (index) => {
+      deleteSubTask(index);
+    },
+    [deleteSubTask],
+  );
+
+  const handleOpenModal = useCallback((type) => {
+    setModalType(type);
+    setIsItemModalVisible(true);
+  }, []);
+
+  const handleAddItem = useCallback(
+    (name) => {
+      if (modalType === "category") {
+        addCategory(name);
+      } else {
+        addPriority(name);
+      }
+    },
+    [modalType, addCategory, addPriority],
+  );
+
+  const handleDeleteItem = useCallback(
+    (id) => {
+      if (modalType === "category") {
+        deleteCategory(id);
+      } else {
+        deletePriority(id);
+      }
+    },
+    [modalType, deleteCategory, deletePriority],
+  );
+
+  const handleSubmit = useCallback(async () => {
     const { title, description, category, priority, dueDate, dueTime } =
       formData;
 
@@ -379,36 +422,17 @@ const AddTask = () => {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleAddSubtask = (title) => {
-    addSubTask(title);
-  };
-
-  const handleDeleteSubtask = (index) => {
-    deleteSubTask(index);
-  };
-
-  const handleOpenModal = (type) => {
-    setModalType(type);
-    setIsItemModalVisible(true);
-  };
-
-  const handleAddItem = (name) => {
-    if (modalType === "category") {
-      addCategory(name);
-    } else {
-      addPriority(name);
-    }
-  };
-
-  const handleDeleteItem = (id) => {
-    if (modalType === "category") {
-      deleteCategory(id);
-    } else {
-      deletePriority(id);
-    }
-  };
+  }, [
+    formData,
+    subTasks,
+    alertEnabled,
+    taskId,
+    scheduleTaskNotification,
+    updateTask,
+    handleAddTask,
+    resetForm,
+    router,
+  ]);
 
   return (
     <ScreenAnimation duration={400}>

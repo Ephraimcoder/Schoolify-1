@@ -96,13 +96,13 @@ const TaskProgress = React.memo(() => {
 
   const uncompletedTasks = totalTasks - completedTasks;
 
-  // Debug log to check progress values
-  console.log("TaskProgress Debug:", {
-    totalTasks,
-    completedTasks,
-    progress,
-    progressPercentage: Math.round(progress * 100),
-  });
+  // // Debug log to check progress values
+  // console.log("TaskProgress Debug:", {
+  //   totalTasks,
+  //   completedTasks,
+  //   progress,
+  //   progressPercentage: Math.round(progress * 100),
+  // });
 
   return (
     <View

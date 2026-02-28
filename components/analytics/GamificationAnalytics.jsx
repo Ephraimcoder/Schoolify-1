@@ -19,7 +19,7 @@ const calculateStreak = (tasks) => {
             ? new Date(completionDate).toDateString()
             : null;
         })
-        .filter(Boolean)
+        .filter(Boolean),
     ),
   ].sort((a, b) => new Date(b) - new Date(a));
 
@@ -114,7 +114,7 @@ const GamificationAnalytics = ({ tasks }) => {
 
     // Priority achievements
     const highPriorityCompleted = completedTasks.filter(
-      (task) => task.priority === "high"
+      (task) => task.priority === "high",
     ).length;
 
     achievements.push({
@@ -189,7 +189,7 @@ const GamificationAnalytics = ({ tasks }) => {
     const timelinessScore = calculateTimelinessScore(completedTasks);
 
     const productivityScore = Math.round(
-      completionRate * 0.4 + consistencyScore * 0.3 + timelinessScore * 0.3
+      completionRate * 0.4 + consistencyScore * 0.3 + timelinessScore * 0.3,
     );
 
     // Personal bests
@@ -270,7 +270,7 @@ const GamificationAnalytics = ({ tasks }) => {
 
     // Find the day with the most completed tasks
     const mostProductive = Object.entries(dayCount).reduce((a, b) =>
-      a[1] > b[1] ? a : b
+      a[1] > b[1] ? a : b,
     );
 
     return days[mostProductive[0]];
@@ -386,7 +386,7 @@ const GamificationAnalytics = ({ tasks }) => {
             : "bg-blue-50 border-blue-200"
         }`}
       >
-        <View className="flex-row justify-between items-center mb-2">
+        <View className="flex-row justify-between items-center mb-2 gap-1">
           <Text
             className={`font-quicksandMedium ${
               isDark ? "text-blue-300" : "text-blue-700"
@@ -394,19 +394,20 @@ const GamificationAnalytics = ({ tasks }) => {
           >
             Productivity Score
           </Text>
-          <View className="flex-row items-center space-x-2">
+          <View className="flex-row items-center space-x-2 gap-1">
             <Text
               className={`text-2xl font-quicksandBold ${getScoreColor(gamificationData.productivityScore)}`}
             >
               {gamificationData.productivityScore}
             </Text>
-            <Text
-              className={`text-sm font-quicksandMedium ${getScoreColor(gamificationData.productivityScore)}`}
-            >
-              {getScoreLabel(gamificationData.productivityScore)}
-            </Text>
           </View>
         </View>
+
+        <Text
+          className={`text-sm font-quicksandMedium ${getScoreColor(gamificationData.productivityScore)}`}
+        >
+          {getScoreLabel(gamificationData.productivityScore)}
+        </Text>
 
         <View className="space-y-2">
           <View className="flex-row justify-between items-center">
@@ -423,7 +424,8 @@ const GamificationAnalytics = ({ tasks }) => {
               }`}
             >
               {Math.round(
-                (tasks.filter((t) => t.isCompleted).length / tasks.length) * 100
+                (tasks.filter((t) => t.isCompleted).length / tasks.length) *
+                  100,
               ) || 0}
               %
             </Text>
@@ -458,7 +460,7 @@ const GamificationAnalytics = ({ tasks }) => {
               }`}
             >
               {Math.round(
-                calculateTimelinessScore(tasks.filter((t) => t.isCompleted))
+                calculateTimelinessScore(tasks.filter((t) => t.isCompleted)),
               )}
               %
             </Text>
