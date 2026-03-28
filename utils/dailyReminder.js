@@ -2,8 +2,8 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { database } from "../database/database";
 
-const DAILY_REMINDER_TIME_KEY = "@Schoolify:dailyReminderTime";
-const DAILY_REMINDER_ENABLED_KEY = "@Schoolify:dailyReminderEnabled";
+const DAILY_REMINDER_TIME_KEY = "@ScholarFlow:dailyReminderTime";
+const DAILY_REMINDER_ENABLED_KEY = "@ScholarFlow:dailyReminderEnabled";
 
 // Configure notification handler
 Notifications.setNotificationHandler({

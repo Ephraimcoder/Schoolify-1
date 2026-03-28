@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from "react";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { TasksContext } from "../context/TasksContext";
 import { useTheme } from "../context/ThemeContext";
 
@@ -106,7 +106,7 @@ const TaskProgress = React.memo(() => {
 
   return (
     <View
-      className={`p-6 rounded-3xl my-4 mx-2 shadow-lg ${
+      className={`p-4 rounded-2xl my-3 mx-2 shadow-md ${
         isDark ? "bg-gray-800/50 backdrop-blur" : "bg-white/80 backdrop-blur"
       }`}
       style={{
@@ -114,161 +114,101 @@ const TaskProgress = React.memo(() => {
         borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
       }}
     >
-      <View className="flex-row justify-between items-center mb-6">
+      {/* Header */}
+      <View className="flex-row justify-between items-center mb-4">
         <View className="flex-row items-center">
-          <View className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl items-center justify-center mr-3">
-            <Text className="text-white font-quicksandBold text-sm">📊</Text>
+          <View className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg items-center justify-center mr-2">
+            <Text className="text-white font-quicksandBold text-xs">📊</Text>
           </View>
           <Text
-            className={`text-xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
+            className={`text-lg font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
           >
-            Task Progress
+            Today's Overview
           </Text>
         </View>
-        <View className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-md">
-          <Text className="text-white font-quicksandSemiBold text-sm font-semibold">
-            {Math.round(progress * 100)}% Complete
+        <View className="px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full">
+          <Text className="text-white font-quicksandSemiBold text-xs">
+            {Math.round(progress * 100)}%
           </Text>
         </View>
       </View>
 
-      {/* Quick Stats Row */}
-      <View className="flex-row justify-between mb-6">
-        <View className="flex-1 items-center bg-blue-50 rounded-2xl py-4 mx-1">
-          <View className="w-12 h-12 bg-blue-500 rounded-xl items-center justify-center mb-2">
-            <Text className="text-white font-quicksandBold text-lg">📅</Text>
+      {/* Key Metrics */}
+      <View className="flex-row justify-between mb-4">
+        <TouchableOpacity className="flex-1 items-center bg-blue-50 rounded-xl py-3 mx-1">
+          <View className="w-8 h-8 bg-blue-500 rounded-lg items-center justify-center mb-1">
+            <Text className="text-white font-quicksandBold text-sm">📅</Text>
           </View>
-          <Text className="text-2xl font-quicksandBold text-blue-600">
+          <Text className="text-lg font-quicksandBold text-blue-600">
             {todayTasks}
           </Text>
-          <Text className="text-xs font-quicksandMedium text-blue-700 mt-1">
+          <Text className="text-xs font-quicksandMedium text-blue-700">
             Due Today
           </Text>
-        </View>
-        <View className="flex-1 items-center bg-red-50 rounded-2xl py-4 mx-1">
-          <View className="w-12 h-12 bg-red-500 rounded-xl items-center justify-center mb-2">
-            <Text className="text-white font-quicksandBold text-lg">⚠️</Text>
+        </TouchableOpacity>
+        <TouchableOpacity className="flex-1 items-center bg-red-50 rounded-xl py-3 mx-1">
+          <View className="w-8 h-8 bg-red-500 rounded-lg items-center justify-center mb-1">
+            <Text className="text-white font-quicksandBold text-sm">⚠️</Text>
           </View>
-          <Text className="text-2xl font-quicksandBold text-red-600">
+          <Text className="text-lg font-quicksandBold text-red-600">
             {overdueTasks}
           </Text>
-          <Text className="text-xs font-quicksandMedium text-red-700 mt-1">
+          <Text className="text-xs font-quicksandMedium text-red-700">
             Overdue
           </Text>
-        </View>
-        <View className="flex-1 items-center bg-green-50 rounded-2xl py-4 mx-1">
-          <View className="w-12 h-12 bg-green-500 rounded-xl items-center justify-center mb-2">
-            <Text className="text-white font-quicksandBold text-lg">📈</Text>
+        </TouchableOpacity>
+        <TouchableOpacity className="flex-1 items-center bg-green-50 rounded-xl py-3 mx-1">
+          <View className="w-8 h-8 bg-green-500 rounded-lg items-center justify-center mb-1">
+            <Text className="text-white font-quicksandBold text-sm">📈</Text>
           </View>
-          <Text className="text-2xl font-quicksandBold text-green-600">
+          <Text className="text-lg font-quicksandBold text-green-600">
             {thisWeekTasks}
           </Text>
-          <Text className="text-xs font-quicksandMedium text-green-700 mt-1">
+          <Text className="text-xs font-quicksandMedium text-green-700">
             This Week
           </Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
-      <View className="mb-6">
-        <View className="flex-row justify-between mb-3">
+      {/* Progress Bar */}
+      <View>
+        <View className="flex-row justify-between mb-2">
           <Text
-            className={`text-sm font-quicksandSemiBold ${isDark ? "text-gray-300" : "text-gray-700"}`}
+            className={`text-xs font-quicksandSemiBold ${isDark ? "text-gray-400" : "text-gray-600"}`}
           >
-            Overall Progress
+            Weekly Progress
           </Text>
           <Text
-            className={`text-sm font-quicksandSemiBold ${isDark ? "text-gray-300" : "text-gray-700"}`}
+            className={`text-xs font-quicksandSemiBold ${isDark ? "text-gray-400" : "text-gray-600"}`}
           >
-            {completedTasks} of {totalTasks} tasks
+            {completedTasks}/{totalTasks} tasks
           </Text>
         </View>
         <View
-          className={`h-3 ${isDark ? "bg-gray-700" : "bg-gray-100"} rounded-full overflow-hidden shadow-inner`}
+          className={`h-2 ${isDark ? "bg-gray-700" : "bg-gray-100"} rounded-full overflow-hidden`}
         >
           <View
-            className="h-full rounded-full shadow-lg"
+            className="h-full rounded-full"
             style={{
-              width: `${Math.max(progress * 100, 2)}%`, // Minimum 2% for visibility
-              minWidth: 8, // Minimum 8px width for very small progress
-              backgroundColor: "#6366F1", // Explicit indigo color as fallback
-              background: "linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%)", // Explicit gradient
+              width: `${Math.max(progress * 100, 2)}%`,
+              minWidth: 4,
+              backgroundColor: "#6366F1",
             }}
           />
         </View>
       </View>
 
-      <View className="flex-row justify-between">
-        <View className="items-center flex-1">
-          <View
-            className={`w-12 h-12 ${isDark ? "bg-green-900/50" : "bg-green-50"} rounded-2xl items-center justify-center mb-2 border ${isDark ? "border-green-700/50" : "border-green-200"}`}
-          >
-            <Text className="text-green-600 font-quicksandBold text-lg">✓</Text>
-          </View>
-          <Text className="text-xl font-quicksandBold text-green-600">
-            {completedTasks}
-          </Text>
-          <Text
-            className={`text-xs font-quicksandMedium ${isDark ? "text-gray-400" : "text-gray-600"}`}
-          >
-            Completed
-          </Text>
-        </View>
-
-        <View className="items-center flex-1">
-          <View
-            className={`w-12 h-12 ${isDark ? "bg-amber-900/50" : "bg-amber-50"} rounded-2xl items-center justify-center mb-2 border ${isDark ? "border-amber-700/50" : "border-amber-200"}`}
-          >
-            <Text className="text-amber-600 font-quicksandBold text-lg">
-              ⏳
-            </Text>
-          </View>
-          <Text className="text-xl font-quicksandBold text-amber-600">
-            {uncompletedTasks}
-          </Text>
-          <Text
-            className={`text-xs font-quicksandMedium ${isDark ? "text-gray-400" : "text-gray-600"}`}
-          >
-            Remaining
-          </Text>
-        </View>
-
-        <View className="items-center flex-1">
-          <View
-            className={`w-12 h-12 ${isDark ? "bg-indigo-900/50" : "bg-indigo-50"} rounded-2xl items-center justify-center mb-2 border ${isDark ? "border-indigo-700/50" : "border-indigo-200"}`}
-          >
-            <Text className="text-indigo-600 font-quicksandBold text-lg">
-              📋
-            </Text>
-          </View>
-          <Text className="text-xl font-quicksandBold text-indigo-600">
-            {totalTasks}
-          </Text>
-          <Text
-            className={`text-xs font-quicksandMedium ${isDark ? "text-gray-400" : "text-gray-600"}`}
-          >
-            Total Tasks
-          </Text>
-        </View>
-      </View>
-
-      {/* Study Streak */}
+      {/* Study Streak - More Compact */}
       {streak > 0 && (
         <View
-          className={`flex-row items-center justify-center mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-100"}`}
+          className={`flex-row items-center justify-center mt-3 pt-3 border-t ${isDark ? "border-gray-700" : "border-gray-100"}`}
         >
-          <View className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl items-center justify-center mr-3 shadow-md">
-            <Text className="text-white text-lg">🔥</Text>
+          <View className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg items-center justify-center mr-2">
+            <Text className="text-white text-sm">🔥</Text>
           </View>
-          <View>
-            <Text className="text-lg font-quicksandBold text-orange-600">
-              {streak} Day{streak !== 1 ? "s" : ""} Streak!
-            </Text>
-            <Text
-              className={`text-xs font-quicksandMedium ${isDark ? "text-gray-400" : "text-gray-500"}`}
-            >
-              Keep up the great work!
-            </Text>
-          </View>
+          <Text className="text-sm font-quicksandBold text-orange-600">
+            {streak} Day{streak !== 1 ? "s" : ""} Streak!
+          </Text>
         </View>
       )}
     </View>

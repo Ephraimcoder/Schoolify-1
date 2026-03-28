@@ -455,14 +455,14 @@ const Settings = () => {
                 isDark ? "text-gray-400" : "text-gray-400"
               }`}
             >
-              Schoolify v{appVersion}
+              Scholar Flow v{appVersion}
             </Text>
             <Text
               className={`font-quicksand text-xs mt-1 ${
                 isDark ? "text-gray-500" : "text-gray-400"
               }`}
             >
-              {new Date().getFullYear()} Schoolify. All rights reserved.
+              {new Date().getFullYear()} Scholar Flow. All rights reserved.
             </Text>
           </View>
         </ScrollView>

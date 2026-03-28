@@ -113,7 +113,7 @@ export default function BackupSettings() {
             className="text-2xl font-quicksandBold"
             style={{ color: colors.text }}
           >
-            Schoolify<Text style={{ color: colors.primary }}>.</Text>
+            Scholar Flow<Text style={{ color: colors.primary }}>.</Text>
           </Text>
         </View>
 

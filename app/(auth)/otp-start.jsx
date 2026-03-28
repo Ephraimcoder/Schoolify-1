@@ -97,7 +97,7 @@ export default function OtpStart() {
               isDark ? "text-gray-100" : "text-gray-900"
             }`}
           >
-            Schoolify<Text className="text-orange-600">.</Text>
+            Scholar Flow<Text className="text-orange-600">.</Text>
           </Text>
         </View>
 

@@ -14,7 +14,7 @@ import schema from "./schema";
 const adapter = new SQLiteAdapter({
   schema,
   migrations,
-  dbName: "schoolify_v2", // Force new database with user_id support
+  dbName: "scholarflow_v2", // Force new database with user_id support
   // jsi: true, // Use JSI for better performance (requires extra setup in some RN versions)
   onSetUpError: (error) => {
     console.error("Database failed to load", error);

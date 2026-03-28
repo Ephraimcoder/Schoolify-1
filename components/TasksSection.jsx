@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useContext, useMemo } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { TasksContext } from "../context/TasksContext";
 import { useTheme } from "../context/ThemeContext";
 import TaskCard from "./TaskCard";
+
 // Priority order for sorting (higher number = higher priority)
 const PRIORITY_ORDER = {
   High: 3,
@@ -14,6 +16,7 @@ const PRIORITY_ORDER = {
 const TasksSection = React.memo(() => {
   const { tasks } = useContext(TasksContext);
   const { isDark } = useTheme();
+  const router = useRouter();
 
   // Filter, sort by priority, and limit tasks for the NEXT WEEK
   const filteredAndSortedTasks = useMemo(() => {
@@ -51,9 +54,38 @@ const TasksSection = React.memo(() => {
       .slice(0, 5); // Limit to 5 tasks
   }, [tasks]);
 
+  const handleSeeAll = () => {
+    router.push("/(tabs)/Tasks");
+  };
+
   return (
-    <View className="my-4">
-      <View className="flex-row justify-between items-center mb-4 mx-2"></View>
+    <View className="my-3">
+      {/* Header with better spacing */}
+      <View className="flex-row justify-between items-center mb-3 px-2">
+        <View className="flex-row items-center">
+          <View className="w-1 h-5 bg-indigo-500 rounded-full mr-2" />
+          <Text
+            className={`text-lg font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
+          >
+            Upcoming Tasks
+          </Text>
+          <View className="ml-2 px-2 py-1 bg-indigo-100 rounded-full">
+            <Text className="text-xs font-quicksandSemiBold text-indigo-700">
+              {filteredAndSortedTasks.length}
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          onPress={handleSeeAll}
+          className="flex-row items-center px-3 py-1.5 bg-indigo-50 rounded-full"
+        >
+          <Text className="text-indigo-600 font-quicksandSemiBold text-sm mr-1">
+            See All
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color="#6366F1" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -68,27 +100,27 @@ const TasksSection = React.memo(() => {
             <TaskCard key={task.id} task={task} />
           ))
         ) : (
-          <View className="w-full items-center justify-center py-8">
-            <View className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-3xl items-center justify-center mb-4">
+          <View className="w-full items-center justify-center py-6">
+            <View className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl items-center justify-center mb-3">
               <Ionicons
                 name="checkmark-done-circle-outline"
-                size={40}
+                size={32}
                 color="#10B981"
               />
             </View>
             <Text
-              className={`font-quicksandSemiBold text-center text-lg mb-2 ${
+              className={`font-quicksandSemiBold text-center text-base mb-1 ${
                 isDark ? "text-gray-300" : "text-gray-700"
               }`}
             >
-              No tasks due this week!
+              All caught up! 🎉
             </Text>
             <Text
               className={`font-quicksand text-center text-sm ${
                 isDark ? "text-gray-400" : "text-gray-500"
               }`}
             >
-              Great job staying on top of things 🎉
+              No tasks due this week
             </Text>
           </View>
         )}

@@ -2,7 +2,7 @@ import NetInfo from "@react-native-community/netinfo";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ClassesSection from "../../components/ClassesSection";
 import ScreenAnimation from "../../components/ScreenAnimation";
@@ -79,39 +79,39 @@ const Home = () => {
   return (
     <ScreenAnimation duration={400}>
       <LinearGradient colors={colors.background} className="flex-1">
-        <SafeAreaView className="flex-1 px-5 mt-2">
-          {/* Header Section */}
-          <View className="flex-row items-center justify-between mt-4 mb-6">
+        <SafeAreaView className="flex-1 px-4 mt-2">
+          {/* Header Section - More Compact */}
+          <View className="flex-row items-center justify-between mt-2 mb-4">
             <View className="flex-row items-center flex-1">
               <View className="relative">
-                <View className="w-1 h-12 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full absolute -left-1 top-2" />
+                <View className="w-1 h-10 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full absolute -left-1 top-1" />
                 <Image
                   source={{ uri: avatarUrl }}
-                  className="w-14 h-14 rounded-2xl mr-4 border-2 border-white/20 shadow-lg"
+                  className="w-12 h-12 rounded-xl mr-3 border-2 border-white/20 shadow-md"
                 />
               </View>
               <View className="flex-1">
                 <Text
-                  className={`text-sm font-quicksandMedium mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  className={`text-xs font-quicksandMedium mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                 >
                   {greeting} 👋
                 </Text>
                 <Text
-                  className={`text-2xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
+                  className={`text-xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
                 >
                   {user?.name || "Welcome back"}
                 </Text>
               </View>
             </View>
 
-            {/* Network Status Indicator */}
+            {/* Network Status Indicator - Smaller */}
             <View
-              className={`px-3 py-1.5 rounded-full flex-row items-center ${
+              className={`px-2 py-1 rounded-full flex-row items-center ${
                 isOnline ? "bg-green-500/20" : "bg-amber-500/20"
               }`}
             >
               <View
-                className={`w-2 h-2 rounded-full mr-1.5 ${
+                className={`w-1.5 h-1.5 rounded-full mr-1 ${
                   isOnline ? "bg-green-500" : "bg-amber-500"
                 }`}
               />
@@ -125,45 +125,23 @@ const Home = () => {
             </View>
           </View>
 
-          {/* Search Bar */}
-          {/* <View className="mb-6">
-            <SearchBar />
-          </View> */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 80 }}
             className="flex-1"
           >
-            {/* Progress Section */}
-            <View className="mb-6">
+            {/* Progress Section - Reduced margin */}
+            <View className="mb-4">
               <TaskProgress />
             </View>
 
-            {/* Tasks Section */}
-            <View className="mb-8">
-              <View className="flex-row justify-between items-center mb-4 px-2">
-                <View className="flex-row items-center">
-                  <View className="w-1 h-6 bg-indigo-500 rounded-full mr-3" />
-                  <Text
-                    className={`text-xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
-                  >
-                    Upcoming Tasks
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => navigateSafely("/Tasks")}
-                  className="px-3 py-1.5 bg-indigo-50 rounded-full"
-                >
-                  <Text className="text-indigo-600 font-quicksandSemiBold text-sm">
-                    See All
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            {/* Tasks Section - Reduced margin */}
+            <View className="mb-6">
               <TasksSection />
             </View>
 
-            {/* Classes Section */}
-            <View className="mb-6">
+            {/* Classes Section - Reduced margin */}
+            <View className="mb-4">
               <ClassesSection />
             </View>
           </ScrollView>

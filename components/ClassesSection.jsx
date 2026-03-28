@@ -192,15 +192,20 @@ const ClassesSection = () => {
   }
 
   return (
-    <View className="my-4">
-      <View className="flex-row justify-between items-center mb-4 px-2">
+    <View className="my-3">
+      <View className="flex-row justify-between items-center mb-3 px-2">
         <View className="flex-row items-center">
-          <View className="w-1 h-6 bg-purple-500 rounded-full mr-3" />
+          <View className="w-1 h-5 bg-purple-500 rounded-full mr-2" />
           <Text
-            className={`text-xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
+            className={`text-lg font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
           >
             Upcoming Classes
           </Text>
+          <View className="ml-2 px-2 py-1 bg-purple-100 rounded-full">
+            <Text className="text-xs font-quicksandSemiBold text-purple-700">
+              {classTasks.length}
+            </Text>
+          </View>
         </View>
         <TouchableOpacity
           onPress={() =>
@@ -209,9 +214,9 @@ const ClassesSection = () => {
               params: { category: "Class" },
             })
           }
-          className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-2xl items-center justify-center shadow-md"
+          className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl items-center justify-center shadow-sm"
         >
-          <Ionicons name="add" size={20} color="#fff" />
+          <Ionicons name="add" size={16} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -236,21 +241,21 @@ const ClassesSection = () => {
             alignSelf: "center",
             justifyContent: "center",
             alignItems: "center",
-            paddingVertical: 40,
+            paddingVertical: 32,
           }}
         >
-          <View className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-3xl items-center justify-center mb-4">
-            <Ionicons name="school-outline" size={40} color="#6366F1" />
+          <View className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl items-center justify-center mb-3">
+            <Ionicons name="school-outline" size={32} color="#6366F1" />
           </View>
           <Text
-            className={`text-gray-500 font-quicksandMedium text-center text-lg mb-2 ${
+            className={`font-quicksandMedium text-center text-base mb-1 ${
               isDark ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            No classes scheduled this week.
+            No classes scheduled
           </Text>
           <Text
-            className={`text-gray-400 font-quicksand text-center text-sm mb-6 ${
+            className={`font-quicksand text-center text-sm mb-4 ${
               isDark ? "text-gray-500" : "text-gray-500"
             }`}
           >
@@ -263,11 +268,11 @@ const ClassesSection = () => {
                 params: { category: "Class" },
               })
             }
-            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl shadow-md flex-row items-center"
+            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl shadow-sm flex-row items-center"
           >
-            <Ionicons name="add" size={18} color="#fff" className="mr-2" />
-            <Text className="text-white font-quicksandSemiBold font-semibold">
-              Add A Class
+            <Ionicons name="add" size={16} color="#fff" className="mr-1" />
+            <Text className="text-white font-quicksandSemiBold text-sm">
+              Add Class
             </Text>
           </TouchableOpacity>
         </View>

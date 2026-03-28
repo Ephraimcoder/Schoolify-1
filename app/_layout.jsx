@@ -114,7 +114,7 @@ const UnifiedLoading = ({ children }) => {
             fontFamily: "QuicksandMedium",
           }}
         >
-          Loading Schoolify...
+          Loading Scholar Flow...
         </Text>
       </View>
     );

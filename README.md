@@ -1,4 +1,4 @@
-# Schoolify - Student Task Management App 🎓
+# Scholar Flow - Student Task Management App 🎓
 
 A comprehensive task management application designed specifically for students, combining powerful productivity features with gamification to make learning engaging and organized.
 

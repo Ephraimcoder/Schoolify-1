@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -108,11 +107,13 @@ export default function Index() {
   return (
     <SafeAreaView className="flex-1">
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-      <LinearGradient
-        colors={gradientColors}
-        style={{ flex: 1 }}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? colors.background[0] : "#F8F5F2",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
       >
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <ScrollView
@@ -134,90 +135,96 @@ export default function Index() {
               <View
                 key={index}
                 style={{ width }}
-                className="justify-start px-6 pt-8 pb-32"
+                className="justify-between px-6 py-12"
               >
-                {/* Modern brand header with glassmorphism */}
-                <View className="items-center mb-4">
-                  <View className="backdrop-blur-xl bg-white/10 rounded-2xl px-6 py-3 border border-white/20">
-                    <Text className="text-2xl font-quicksandBold text-white">
-                      Schoolify<Text className="text-yellow-300">.</Text>
-                    </Text>
-                  </View>
-                </View>
+                {/* Status bar area */}
+                <View className="h-8" />
 
-                {/* Hero image with modern glassmorphism card */}
-                <View className="items-center mb-4">
-                  <View className="relative">
-                    {/* Glow effect */}
-                    <View className="absolute inset-0 bg-yellow-400/20 rounded-3xl blur-xl" />
-
-                    {/* Main card */}
-                    <View
-                      className="w-96 h-96 rounded-3xl items-center justify-center overflow-hidden backdrop-blur-xl border border-white/20"
-                      style={[
-                        cardShadow,
-                        {
-                          backgroundColor: isDark
-                            ? "rgba(255, 255, 255, 0.08)"
-                            : "rgba(255, 255, 255, 0.25)",
-                        },
-                      ]}
-                    >
+                {/* Main content area */}
+                <View className="flex-1 justify-center items-center">
+                  {slide.image ? (
+                    <View className="items-center mb-8">
                       <Image
                         source={slide.image}
-                        className="w-full h-full"
+                        className="w-80 h-80"
                         resizeMode="contain"
                         style={{ backgroundColor: "transparent" }}
                       />
                     </View>
-                  </View>
-                </View>
+                  ) : (
+                    /* Welcome screen with abstract graphic */
+                    <View className="items-center justify-center h-80 mb-8">
+                      <View
+                        className="w-64 h-64 rounded-full items-center justify-center"
+                        style={{
+                          backgroundColor: isDark
+                            ? "rgba(99, 102, 241, 0.1)"
+                            : "rgba(99, 102, 241, 0.05)",
+                          borderWidth: 2,
+                          borderColor: isDark ? "#6366F1" : "#6366F130",
+                        }}
+                      >
+                        <Text className="text-6xl">📚</Text>
+                      </View>
+                    </View>
+                  )}
 
-                {/* Title & description with modern typography - moved to lower third */}
-                <View className="px-4 items-center absolute bottom-44 left-0 right-0">
-                  <Text className="text-3xl text-center font-quicksandBold leading-tight text-white mb-3">
+                  {/* Title */}
+                  <Text
+                    className={`text-center font-quicksandBold mb-4 ${
+                      slide.image ? "text-4xl" : "text-5xl"
+                    }`}
+                    style={{
+                      color: isDark ? colors.text : "#1F2937",
+                      lineHeight: slide.image ? 48 : 56,
+                    }}
+                  >
                     {slide.title}
                   </Text>
-                  <Text className="text-lg text-center font-quicksandMedium leading-relaxed text-white/80">
-                    {slide.description}
-                  </Text>
+
+                  {/* Description - only show if not welcome screen */}
+                  {slide.image && (
+                    <Text
+                      className="text-center text-base font-quicksandMedium px-4"
+                      style={{
+                        color: isDark ? colors.textSecondary : "#6B7280",
+                        lineHeight: 24,
+                      }}
+                    >
+                      {slide.description}
+                    </Text>
+                  )}
                 </View>
 
-                {/* Modern action buttons with glassmorphism */}
-                <View className="absolute left-0 right-0 bottom-8 items-center justify-center">
+                {/* Bottom navigation area */}
+                <View className="flex-row justify-between items-center px-4">
+                  {/* Skip button */}
+                  <TouchableOpacity onPress={handleSkip} activeOpacity={0.7}>
+                    <Text
+                      className="font-quicksandMedium text-base"
+                      style={{
+                        color: isDark ? colors.textSecondary : "#6B7280",
+                      }}
+                    >
+                      Skip
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Next button */}
                   <TouchableOpacity
                     onPress={handleNext}
-                    className="py-4 rounded-full items-center w-56 backdrop-blur-xl border border-white/30"
+                    className="w-14 h-14 rounded-full items-center justify-center"
                     style={{
-                      backgroundColor: "rgba(255, 255, 255, 0.2)",
-                      shadowColor: "#000",
+                      backgroundColor: "#6366F1",
+                      shadowColor: "#6366F1",
                       shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 12,
-                      elevation: 8,
+                      shadowOpacity: 0.3,
+                      shadowRadius: 8,
+                      elevation: 6,
                     }}
                     activeOpacity={0.8}
                   >
-                    <View className="flex-row items-center">
-                      <Text className="text-white font-quicksandBold text-base mr-2">
-                        {slide.buttonText ||
-                          (currentSlide === onboarding.length - 1
-                            ? "Get Started"
-                            : "Next")}
-                      </Text>
-                      <Ionicons name="arrow-forward" size={18} color="white" />
-                    </View>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleSkip}
-                    className="mt-4 items-center py-3 px-6 backdrop-blur-xl rounded-full border border-white/20"
-                    style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
-                    activeOpacity={0.7}
-                  >
-                    <Text className="text-white/70 font-quicksandMedium text-sm">
-                      Skip
-                    </Text>
+                    <Ionicons name="arrow-forward" size={24} color="white" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -225,7 +232,7 @@ export default function Index() {
           </ScrollView>
 
           {/* Modern page indicators */}
-          <View className="absolute left-0 right-0 top-20 flex-row justify-center space-x-2">
+          <View className="absolute left-0 right-0 top-16 flex-row justify-center space-x-2">
             {onboarding.map((_, index) => (
               <Animated.View
                 key={index}
@@ -235,14 +242,18 @@ export default function Index() {
                 style={{
                   backgroundColor:
                     index === currentSlide
-                      ? "rgba(255, 255, 255, 0.9)"
-                      : "rgba(255, 255, 255, 0.3)",
+                      ? isDark
+                        ? colors.primary
+                        : "#6366F1"
+                      : isDark
+                        ? "rgba(255, 255, 255, 0.3)"
+                        : "rgba(0, 0, 0, 0.1)",
                 }}
               />
             ))}
           </View>
         </Animated.View>
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 }
