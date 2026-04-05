@@ -180,7 +180,7 @@ export default function BackupSettings() {
                   className="font-quicksandBold text-lg"
                   style={{ color: colors.text }}
                 >
-                  Auto Backup
+                  Backup
                 </Text>
                 <Text
                   className="font-quicksandMedium text-sm mt-1"

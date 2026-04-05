@@ -15,10 +15,12 @@
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/be36c56d-4cc6-4068-ab56-b0ed27cef796"
+      "url": "https://u.expo.dev/4997db7f-0865-42a0-b5b1-d10ccba4535d"
     },
     "icon": "./assets/images/Scholarflowlightmode.png",
-    "scheme": ["scholarflow"],
+    "scheme": [
+      "scholarflow"
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
@@ -31,7 +33,7 @@
         "backgroundColor": "#d6cbb8"
       },
       "edgeToEdgeEnabled": false,
-      "package": "com.jms.scholar-flow",
+      "package": "com.ephraimcoder.scholarflow",
       "jsEngine": "hermes",
       "newArchEnabled": false
     },
@@ -64,7 +66,9 @@
           "android": {
             "kotlinVersion": "2.0.21",
             "packagingOptions": {
-              "pickFirst": ["**/libc++_shared.so"]
+              "pickFirst": [
+                "**/libc++_shared.so"
+              ]
             }
           }
         }
@@ -76,7 +80,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "be36c56d-4cc6-4068-ab56-b0ed27cef796"
+        "projectId": "4997db7f-0865-42a0-b5b1-d10ccba4535d"
       }
     },
     "owner": "ephraimcoder"
