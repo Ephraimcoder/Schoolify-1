@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-const TaskSorter = ({ filteredTasks, sortOption }) => {
+const TaskSorter = ({ filteredTasks, sortOption, activeFilter }) => {
   // Priority ranking helper (memoized)
   const priorityRank = useMemo(() => {
     const rank = (p) => {
@@ -21,13 +21,10 @@ const TaskSorter = ({ filteredTasks, sortOption }) => {
     }
 
     const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    switch (sortOption) {
-      case "classes":
-        return filteredTasks.filter(
-          (task) => task && task.category === "Class"
-        );
-
+    switch (activeFilter) {
       case "completed":
         return filteredTasks.filter((task) => task && task.isCompleted);
 
@@ -37,32 +34,28 @@ const TaskSorter = ({ filteredTasks, sortOption }) => {
       case "overdue":
         return filteredTasks.filter((task) => {
           if (!task || task.isCompleted || !task.dueDate) return false;
-
-          // Optimized date comparison
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
           const dueDate = new Date(task.dueDate);
           dueDate.setHours(0, 0, 0, 0);
-
           return dueDate < today;
         });
 
       case "dueToday":
         return filteredTasks.filter((task) => {
           if (!task || !task.dueDate) return false;
-
-          // Check if due date is today
-          const today = new Date().toDateString();
-          const taskDate = new Date(task.dueDate).toDateString();
-
-          return taskDate === today;
+          const dueDate = new Date(task.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === today.getTime();
         });
 
-      default:
+      case "classes":
+        return filteredTasks.filter(
+          (task) => task && task.category === "Class",
+        );
+
+      default: // "all"
         return filteredTasks;
     }
-  }, [filteredTasks, sortOption]);
+  }, [filteredTasks, activeFilter]);
 
   // Group tasks by date (optimized)
   const tasksByDate = useMemo(() => {
@@ -89,19 +82,19 @@ const TaskSorter = ({ filteredTasks, sortOption }) => {
       switch (sortOption) {
         case "createdNew":
           return copy.sort(
-            (a, b) => new Date(b.date || 0) - new Date(a.date || 0)
+            (a, b) => new Date(b.date || 0) - new Date(a.date || 0),
           );
         case "createdOld":
           return copy.sort(
-            (a, b) => new Date(a.date || 0) - new Date(b.date || 0)
+            (a, b) => new Date(a.date || 0) - new Date(b.date || 0),
           );
         case "priorityHighLow":
           return copy.sort(
-            (a, b) => priorityRank(b.priority) - priorityRank(a.priority)
+            (a, b) => priorityRank(b.priority) - priorityRank(a.priority),
           );
         case "priorityLowHigh":
           return copy.sort(
-            (a, b) => priorityRank(a.priority) - priorityRank(b.priority)
+            (a, b) => priorityRank(a.priority) - priorityRank(b.priority),
           );
         case "dueDateDesc":
         case "dueDateAsc":
@@ -131,7 +124,7 @@ const TaskSorter = ({ filteredTasks, sortOption }) => {
   // Apply in-group sorting
   const tasksByDateSorted = useMemo(() => {
     return Object.fromEntries(
-      sortedDates.map((d) => [d, sortTasksInGroup(tasksByDate[d])])
+      sortedDates.map((d) => [d, sortTasksInGroup(tasksByDate[d])]),
     );
   }, [tasksByDate, sortedDates, sortTasksInGroup]);
 

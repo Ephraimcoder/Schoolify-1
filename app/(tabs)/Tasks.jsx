@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import DateProcessor from "../../components/search/DateProcessor";
@@ -22,6 +22,7 @@ const Tasks = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [sortVisible, setSortVisible] = useState(false);
   const [sortOption, setSortOption] = useState("dueDateDesc");
+  const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'completed' | 'incomplete' | 'overdue' | 'dueToday'
 
   // Optimize refresh handler
   const onRefresh = useCallback(async () => {
@@ -61,7 +62,7 @@ const Tasks = () => {
     sortedDates,
     flatMode,
     flatTasks,
-  } = TaskSorter({ filteredTasks, sortOption });
+  } = TaskSorter({ filteredTasks, sortOption, activeFilter });
 
   // Helpers for search highlight
   const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -152,6 +153,47 @@ const Tasks = () => {
             />
           </View>
 
+          {/* Filter Chips */}
+          <View className="mb-4">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View className="flex-row gap-2 px-1">
+                {[
+                  { id: "all", label: "All Tasks" },
+                  { id: "completed", label: "Completed" },
+                  { id: "incomplete", label: "Incomplete" },
+                  { id: "overdue", label: "Overdue" },
+                  { id: "dueToday", label: "Due Today" },
+                ].map((filter) => (
+                  <TouchableOpacity
+                    key={filter.id}
+                    onPress={() => setActiveFilter(filter.id)}
+                    className={`px-4 py-2 rounded-full border-2 ${
+                      activeFilter === filter.id
+                        ? isDark
+                          ? "bg-indigo-600 border-indigo-600"
+                          : "bg-indigo-500 border-indigo-500"
+                        : isDark
+                          ? "bg-gray-700 border-gray-600"
+                          : "bg-white border-gray-300"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-quicksandMedium ${
+                        activeFilter === filter.id
+                          ? "text-white"
+                          : isDark
+                            ? "text-gray-300"
+                            : "text-gray-700"
+                      }`}
+                    >
+                      {filter.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
           {/* Sort Dropdown */}
           {sortVisible && (
             <>
@@ -175,10 +217,13 @@ const Tasks = () => {
                   { key: "priorityHighLow", label: "Priority: High → Low" },
                   { key: "priorityLowHigh", label: "Priority: Low → High" },
                   { key: "classes", label: "📚 Classes only" },
-                  { key: "completed", label: "✅ Completed tasks" },
-                  { key: "incomplete", label: "⏳ Incomplete tasks" },
-                  { key: "overdue", label: "🔴 Overdue tasks" },
-                  { key: "dueToday", label: "📅 Due today" },
+                  // { key: "completed", label: "✅ Completed tasks" },
+
+                  // { key: "incomplete", label: "⏳ Incomplete tasks" },
+
+                  // { key: "overdue", label: "🔴 Overdue tasks" },
+
+                  // { key: "dueToday", label: "📅 Due today" },
                 ].map((opt) => (
                   <TouchableOpacity
                     key={opt.key}
