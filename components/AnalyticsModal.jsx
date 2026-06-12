@@ -167,8 +167,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
         <View
           className={`rounded-t-3xl ${isDark ? "bg-gray-800" : "bg-white"}`}
           style={{
-            maxHeight: "90%",
-            minHeight: "60%",
+            height: "90%",
             width: "100%",
           }}
         >
@@ -206,7 +205,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
           <ScrollView
             showsVerticalScrollIndicator={false}
             className="flex-1 px-6"
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
             nestedScrollEnabled={false}
           >
             {/* Loading State */}

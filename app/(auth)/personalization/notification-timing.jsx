@@ -32,6 +32,22 @@ export default function NotificationTiming() {
   const minuteOptions = [5, 10, 15, 30, 60, 120];
   const { isDark, colors } = useTheme();
 
+  // Load saved notification preference on mount
+  useEffect(() => {
+    const loadSavedPreference = async () => {
+      try {
+        const savedMinutes = await getNotificationLeadMinutes();
+        if (savedMinutes !== null && savedMinutes !== undefined) {
+          setLeadMinutes(savedMinutes);
+        }
+      } catch (error) {
+        console.error("Error loading notification preference:", error);
+        // Keep default if load fails
+      }
+    };
+    loadSavedPreference();
+  }, []);
+
   const handleNext = async () => {
     try {
       await setNotificationLeadMinutes(leadMinutes);

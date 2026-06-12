@@ -1,7 +1,7 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
-import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -111,25 +111,22 @@ const Profile = () => {
   const [syncStatus, setSyncStatus] = useState("");
   const [progress, setProgress] = useState({ step: "", message: "" });
 
-  // Check backup preference on mount
-  useEffect(() => {
-    const checkBackupPreference = async () => {
-      try {
-        const enabled = await isBackupEnabled();
-        setBackupEnabled(enabled);
-      } catch (error) {
-        showError("Error finding backup preference");
-        setBackupEnabled(true); // Default to enabled
-      }
-    };
+  // Check backup preference when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      const checkBackupPreference = async () => {
+        try {
+          const enabled = await isBackupEnabled();
+          setBackupEnabled(enabled);
+        } catch (error) {
+          showError("Error finding backup preference");
+          setBackupEnabled(true); // Default to enabled
+        }
+      };
 
-    checkBackupPreference();
-  }, []);
-
-  // Monitor backup state changes
-  useEffect(() => {
-    // Current backupEnabled state: ${backupEnabled}
-  }, [backupEnabled]);
+      checkBackupPreference();
+    }, []),
+  );
 
   // Monitor network status
   useEffect(() => {

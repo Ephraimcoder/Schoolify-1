@@ -18,9 +18,7 @@
       "url": "https://u.expo.dev/4997db7f-0865-42a0-b5b1-d10ccba4535d"
     },
     "icon": "./assets/images/Scholarflowlightmode.png",
-    "scheme": [
-      "scholarflow"
-    ],
+    "scheme": ["scholarflow"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
@@ -54,7 +52,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/Scholarflowtransparent.png",
-          "imageWidth": 250,
+          "imageWidth": 180,
           "resizeMode": "contain",
           "backgroundColor": "#d6cbb8"
         }
@@ -66,9 +64,7 @@
           "android": {
             "kotlinVersion": "2.0.21",
             "packagingOptions": {
-              "pickFirst": [
-                "**/libc++_shared.so"
-              ]
+              "pickFirst": ["**/libc++_shared.so"]
             }
           }
         }

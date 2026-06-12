@@ -24,7 +24,7 @@ import {
   getNotificationLeadMinutes,
   setNotificationLeadMinutes,
 } from "../utils/notificationPrefs";
-import { showSuccess } from "../utils/toast";
+import { showError, showSuccess } from "../utils/toast";
 
 const Settings = () => {
   const router = useRouter();
@@ -85,8 +85,10 @@ const Settings = () => {
       });
 
       showSuccess(`Backup ${enabled ? "enabled" : "disabled"}`);
+      return enabled; // Return the saved value
     } catch (error) {
       console.error("Error saving backup preference:", error);
+      throw error; // Throw error so caller can handle it
     }
   };
 
@@ -404,9 +406,14 @@ const Settings = () => {
               rightComponent={
                 <Switch
                   value={backupEnabled}
-                  onValueChange={(value) => {
-                    setBackupEnabled(value);
-                    saveBackupPreference(value);
+                  onValueChange={async (value) => {
+                    try {
+                      await saveBackupPreference(value);
+                      setBackupEnabled(value);
+                    } catch (error) {
+                      // If save fails, revert to current state
+                      showError("Failed to update backup setting");
+                    }
                   }}
                   trackColor={{ false: "#E5E7EB", true: "#A5B4FC" }}
                   thumbColor={backupEnabled ? "#4F46E5" : "#F3F4F6"}
