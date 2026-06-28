@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -12,8 +13,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import TimePickerModal from "../components/TimePickerModal";
 import { useTheme } from "../context/ThemeContext";
+import { useUser } from "../context/UserContext";
 import { database } from "../database/database";
 import { useFadeAnimation } from "../hooks/useBackTransition";
+import {
+  exportTasksToBackupFile,
+  importTasksFromBackupFile,
+} from "../helpers/backupHelper";
 import {
   cancelDailyReminder,
   formatTimeDisplay,
@@ -29,6 +35,7 @@ import { showError, showSuccess } from "../utils/toast";
 const Settings = () => {
   const router = useRouter();
   const { isDark, toggleTheme } = useTheme();
+  const { user } = useUser();
   const [dailyReminder, setDailyReminder] = useState(false);
   const [reminderTime, setReminderTime] = useState(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -37,6 +44,7 @@ const Settings = () => {
   const [appVersion] = useState("1.0.0");
   const [showNotificationSettings, setShowNotificationSettings] =
     useState(false);
+  const [backupStatus, setBackupStatus] = useState("");
   const fadeAnim = useFadeAnimation();
 
   const minuteOptions = [5, 10, 15, 30, 60, 120];
@@ -172,6 +180,55 @@ const Settings = () => {
       showSuccess(
         `Daily reminder set for ${formatTimeDisplay(selectedTime.getHours(), selectedTime.getMinutes())}`,
       );
+    }
+  };
+
+  const handleExportBackup = async () => {
+    if (!backupEnabled) {
+      showError("Enable local backup first.");
+      return;
+    }
+
+    try {
+      setBackupStatus("Preparing backup...");
+      const result = await exportTasksToBackupFile(user?.accountId || "");
+      setBackupStatus(`Backup saved to ${result.fileName}`);
+      showSuccess(`Backup exported successfully (${result.taskCount} tasks)`);
+    } catch (error) {
+      setBackupStatus("Backup export failed.");
+      showError(error.message || "Backup export failed.");
+    }
+  };
+
+  const handleImportBackup = async () => {
+    if (!backupEnabled) {
+      showError("Enable local backup first.");
+      return;
+    }
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/json",
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets?.[0]?.uri) {
+        setBackupStatus("Import cancelled.");
+        return;
+      }
+
+      setBackupStatus("Importing backup...");
+      const importResult = await importTasksFromBackupFile(
+        result.assets[0].uri,
+        user?.accountId || "",
+      );
+      setBackupStatus(
+        `Imported ${importResult.created} new task${importResult.created === 1 ? "" : "s"}${importResult.skipped > 0 ? `, skipped ${importResult.skipped} duplicate${importResult.skipped === 1 ? "" : "s"}` : ""}`,
+      );
+      showSuccess("Backup imported successfully.");
+    } catch (error) {
+      setBackupStatus("Backup import failed.");
+      showError(error.message || "Backup import failed.");
     }
   };
 
@@ -401,8 +458,8 @@ const Settings = () => {
 
             <SettingItem
               icon="cloud-upload-outline"
-              title="Backup & Sync"
-              description="Automatically back up your data"
+              title="Local Backup"
+              description="Export or import your tasks as a local backup file"
               rightComponent={
                 <Switch
                   value={backupEnabled}
@@ -410,8 +467,10 @@ const Settings = () => {
                     try {
                       await saveBackupPreference(value);
                       setBackupEnabled(value);
+                      setBackupStatus(
+                        value ? "Local backup enabled." : "Local backup disabled.",
+                      );
                     } catch (error) {
-                      // If save fails, revert to current state
                       showError("Failed to update backup setting");
                     }
                   }}
@@ -420,6 +479,58 @@ const Settings = () => {
                 />
               }
             />
+
+            <View
+              className={`px-5 pb-4 border-t ${
+                isDark ? "border-gray-700" : "border-gray-100"
+              }`}
+            >
+              <Text
+                className={`font-quicksand text-sm mt-3 ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                Keep a local JSON backup of your tasks and restore it on another device.
+              </Text>
+
+              <View className="mt-3 gap-2">
+                <TouchableOpacity
+                  onPress={handleExportBackup}
+                  className="rounded-xl px-4 py-3 items-center"
+                  style={{ backgroundColor: "#4F46E5" }}
+                >
+                  <Text className="text-white font-quicksandSemiBold">
+                    Export Backup
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleImportBackup}
+                  className={`rounded-xl px-4 py-3 items-center border ${
+                    isDark ? "border-gray-600" : "border-gray-200"
+                  }`}
+                  style={{ backgroundColor: isDark ? "#1F2937" : "#F9FAFB" }}
+                >
+                  <Text
+                    className={`font-quicksandSemiBold ${
+                      isDark ? "text-gray-100" : "text-gray-700"
+                    }`}
+                  >
+                    Import Backup
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {backupStatus ? (
+                <Text
+                  className={`font-quicksand text-xs mt-3 ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  {backupStatus}
+                </Text>
+              ) : null}
+            </View>
           </View>
 
           {/* Support */}
