@@ -71,6 +71,7 @@ const AddTask = () => {
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [modalType, setModalType] = useState(""); // 'category' or 'priority'
   const [isSaving, setIsSaving] = useState(false);
+  const [isQuickMode, setIsQuickMode] = useState(true);
   const router = useRouter();
   const {
     taskId,
@@ -130,6 +131,9 @@ const AddTask = () => {
             sound: "default",
             enableVibrate: true,
             showBadge: true,
+            enableLights: true,
+            lockscreenVisibility:
+              Notifications.AndroidNotificationVisibility.PUBLIC,
           });
         }
 
@@ -210,6 +214,9 @@ const AddTask = () => {
         if (taskId) {
           const taskToEdit = getTaskById(taskId);
           if (taskToEdit) {
+            // Disable quick mode when editing to preserve all fields
+            setIsQuickMode(false);
+
             // Set all fields explicitly from the task, avoiding stale spreads
             setFormData({
               title: taskToEdit.title || "",
@@ -227,7 +234,8 @@ const AddTask = () => {
             setAlertEnabled(true);
           }
         } else {
-          // Creating a new task
+          // Creating a new task - enable quick mode by default
+          setIsQuickMode(true);
           resetForm();
 
           // Check if this is a duplicate task with pre-filled data
@@ -325,19 +333,90 @@ const AddTask = () => {
     [modalType, deleteCategory, deletePriority],
   );
 
+  const handleQuickSave = useCallback(async () => {
+    const { title, dueDate, dueTime } = formData;
+
+    // Validate only title and date/time for quick mode
+    if (!title.trim() || !dueDate || !dueTime) {
+      toast.error("Please enter a title and select date/time", {
+        styles: {
+          view: { padding: 20, margin: 10 },
+          text: { fontSize: 16, color: "red", fontFamily: "QuicksandBold" },
+        },
+      });
+      return;
+    }
+
+    // Set default values for quick mode
+    const taskData = {
+      ...formData,
+      description: "",
+      category: "Personal",
+      priority: "Low",
+      subTasks: [],
+      alertEnabled,
+    };
+
+    let notificationId = null;
+
+    if (alertEnabled) {
+      notificationId = await scheduleTaskNotification({
+        id: taskId || `task-${Date.now()}`,
+        title: taskData.title,
+        description: taskData.description,
+        dueDate: taskData.dueDate,
+        dueTime: taskData.dueTime,
+        isClass: false,
+      });
+    }
+
+    const finalTaskData = {
+      ...taskData,
+      notificationId,
+    };
+
+    try {
+      setIsSaving(true);
+      await handleAddTask(finalTaskData);
+
+      router.setParams({
+        taskId: undefined,
+        category: undefined,
+        title: undefined,
+        description: undefined,
+        priority: undefined,
+        dueDate: undefined,
+        dueTime: undefined,
+      });
+      resetForm();
+      setSubTasks([]);
+      setSelectedCategory("");
+      setSelectedPriority("Low");
+      setAlertEnabled(true);
+      router.back();
+
+      toast.success("Quick task saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    formData,
+    alertEnabled,
+    taskId,
+    scheduleTaskNotification,
+    handleAddTask,
+    resetForm,
+    router,
+  ]);
+
   const handleSubmit = useCallback(async () => {
     const { title, description, category, priority, dueDate, dueTime } =
       formData;
 
-    // Validate required fields
-    if (
-      !title.trim() ||
-      !description.trim() ||
-      !category ||
-      !priority ||
-      !dueDate ||
-      !dueTime
-    ) {
+    // Validate required fields for full mode - description is optional
+    if (!title.trim() || !category || !priority || !dueDate || !dueTime) {
       toast.error("Please fill in all required fields", {
         styles: {
           view: { padding: 20, margin: 10 },
@@ -490,6 +569,28 @@ const AddTask = () => {
               <View className="w-10" />
             </View>
 
+            {/* Quick Mode Toggle - Hide when editing */}
+            {!taskId && (
+              <View className="flex-row justify-between items-center mb-4">
+                <Text
+                  className={`text-base font-quicksandBold ${
+                    isDark ? "text-gray-100" : "text-gray-900"
+                  }`}
+                >
+                  Quick Mode
+                </Text>
+                <Switch
+                  trackColor={{
+                    false: isDark ? "#374151" : "#E5E7EB",
+                    true: isDark ? "#6366F1" : "#A5B4FC",
+                  }}
+                  thumbColor={isQuickMode ? "#4F46E5" : "#F3F4F6"}
+                  onValueChange={setIsQuickMode}
+                  value={isQuickMode}
+                />
+              </View>
+            )}
+
             {/* Form */}
             <FormInput
               placeholder={
@@ -500,23 +601,26 @@ const AddTask = () => {
               label={formData.category === "Class" ? "Class Name" : "Title"}
             />
 
-            <TextInput
-              placeholder={
-                formData.category === "Class"
-                  ? "Add class description and important notes"
-                  : "Add your task details"
-              }
-              placeholderTextColor="#A0A0A0"
-              value={formData.description}
-              onChangeText={(text) => handleInputChange("description", text)}
-              multiline
-              className={`border rounded-xl p-4 h-28 text-base font-quicksand my-2 ${
-                isDark
-                  ? "bg-gray-800 border-gray-700 text-gray-100"
-                  : "bg-white border-gray-200 text-gray-900"
-              }`}
-              textAlignVertical="top"
-            />
+            {/* Description - Only show in Full Mode */}
+            {!isQuickMode && (
+              <TextInput
+                placeholder={
+                  formData.category === "Class"
+                    ? "Add class description and important notes"
+                    : "Add your task details"
+                }
+                placeholderTextColor="#A0A0A0"
+                value={formData.description}
+                onChangeText={(text) => handleInputChange("description", text)}
+                multiline
+                className={`border rounded-xl p-4 h-28 text-base font-quicksand my-2 ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700 text-gray-100"
+                    : "bg-white border-gray-200 text-gray-900"
+                }`}
+                textAlignVertical="top"
+              />
+            )}
 
             {/* Date and Time Picker */}
             <View className="flex-row justify-between my-4">
@@ -545,8 +649,8 @@ const AddTask = () => {
               />
             </View>
 
-            {/* Category - Hide when creating a class */}
-            {formData.category !== "Class" && (
+            {/* Category - Hide when creating a class or in Quick Mode */}
+            {!isQuickMode && formData.category !== "Class" && (
               <>
                 <View className="flex-row items-center justify-between">
                   <Text
@@ -590,112 +694,132 @@ const AddTask = () => {
               </>
             )}
 
-            {/* Priority */}
-            <View className="flex-row items-center justify-between">
-              <Text
-                className={`text-lg font-quicksandBold my-2 ${
-                  isDark ? "text-gray-100" : "text-gray-900"
-                }`}
-              >
-                Priority
-              </Text>
-              <TouchableOpacity
-                className={`p-2 rounded ${
-                  isDark ? "bg-gray-700" : "bg-gray-100"
-                }`}
-                onPress={() => handleOpenModal("priority")}
-              >
-                <Ionicons name="pencil" size={14} color="#4B5563" />
-              </TouchableOpacity>
-            </View>
-            <View className="flex-row flex-wrap gap-2 mb-4">
-              {priorities.map((priority) => (
-                <SelectableButton
-                  key={priority.id}
-                  label={priority.name}
-                  isSelected={formData.priority === priority.name}
-                  onPress={() => {
-                    handleInputChange(
-                      "priority",
-                      formData.priority === priority.name ? "" : priority.name,
-                    );
-                  }}
-                  selectedBgColor={
-                    priority.name.toLowerCase() === "high"
-                      ? "bg-red-500"
-                      : priority.name.toLowerCase() === "medium"
-                        ? "bg-amber-500"
-                        : "bg-green-500"
-                  }
-                  selectedTextColor="text-white"
-                  unselectedBgColor="bg-white"
-                  unselectedTextColor="text-gray-700"
-                  borderColor="border-gray-200"
-                />
-              ))}
-            </View>
+            {/* Priority - Only show in Full Mode */}
+            {!isQuickMode && (
+              <>
+                <View className="flex-row items-center justify-between">
+                  <Text
+                    className={`text-lg font-quicksandBold my-2 ${
+                      isDark ? "text-gray-100" : "text-gray-900"
+                    }`}
+                  >
+                    Priority
+                  </Text>
+                  <TouchableOpacity
+                    className={`p-2 rounded ${
+                      isDark ? "bg-gray-700" : "bg-gray-100"
+                    }`}
+                    onPress={() => handleOpenModal("priority")}
+                  >
+                    <Ionicons name="pencil" size={14} color="#4B5563" />
+                  </TouchableOpacity>
+                </View>
+                <View className="flex-row flex-wrap gap-2 mb-4">
+                  {priorities.map((priority) => (
+                    <SelectableButton
+                      key={priority.id}
+                      label={priority.name}
+                      isSelected={formData.priority === priority.name}
+                      onPress={() => {
+                        handleInputChange(
+                          "priority",
+                          formData.priority === priority.name
+                            ? ""
+                            : priority.name,
+                        );
+                      }}
+                      selectedBgColor={
+                        priority.name.toLowerCase() === "high"
+                          ? "bg-red-500"
+                          : priority.name.toLowerCase() === "medium"
+                            ? "bg-amber-500"
+                            : "bg-green-500"
+                      }
+                      selectedTextColor="text-white"
+                      unselectedBgColor="bg-white"
+                      unselectedTextColor="text-gray-700"
+                      borderColor="border-gray-200"
+                    />
+                  ))}
+                </View>
+              </>
+            )}
 
-            {/* Alert */}
-            <View className="flex-row justify-between items-center my-6">
-              <Text
-                className={`text-lg font-quicksandBold ${
-                  isDark ? "text-gray-100" : "text-gray-900"
-                }`}
-              >
-                {formData.category === "Class"
-                  ? "Get alert for this class"
-                  : "Get alert for this task"}
-              </Text>
-              <Switch
-                trackColor={{
-                  false: isDark ? "#374151" : "#E5E7EB",
-                  true: isDark ? "#6366F1" : "#FCA5A5",
-                }}
-                thumbColor={
-                  alertEnabled
-                    ? isDark
-                      ? "#8B5CF6"
-                      : "#EF4444"
-                    : isDark
-                      ? "#1F2937"
-                      : "#f4f3f4"
-                }
-                onValueChange={(value) => {
-                  setAlertEnabled(value);
-                  handleInputChange("alertEnabled", value);
-                }}
-                value={alertEnabled}
-              />
-            </View>
+            {/* Alert - Only show in Full Mode */}
+            {!isQuickMode && (
+              <>
+                <View className="flex-row justify-between items-center my-6">
+                  <Text
+                    className={`text-lg font-quicksandBold ${
+                      isDark ? "text-gray-100" : "text-gray-900"
+                    }`}
+                  >
+                    {formData.category === "Class"
+                      ? "Get alert for this class"
+                      : "Get alert for this task"}
+                  </Text>
+                  <Switch
+                    trackColor={{
+                      false: isDark ? "#374151" : "#E5E7EB",
+                      true: isDark ? "#6366F1" : "#FCA5A5",
+                    }}
+                    thumbColor={
+                      alertEnabled
+                        ? isDark
+                          ? "#8B5CF6"
+                          : "#EF4444"
+                        : isDark
+                          ? "#1F2937"
+                          : "#f4f3f4"
+                    }
+                    onValueChange={(value) => {
+                      setAlertEnabled(value);
+                      handleInputChange("alertEnabled", value);
+                    }}
+                    value={alertEnabled}
+                  />
+                </View>
 
-            {/* Add Subtask Button */}
-            <View className="mb-6">
-              <Text
-                className={`text-base font-quicksandBold mb-2 ${
-                  isDark ? "text-gray-300" : "text-gray-800"
-                }`}
-              >
-                Subtasks {subTasks.length > 0 && `(${subTasks.length})`}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setIsSubtaskModalVisible(true)}
-                className={`flex-row items-center justify-center border-2 border-dashed rounded-xl py-3 ${
-                  isDark ? "border-indigo-800" : "border-indigo-200"
-                }`}
-              >
-                <Ionicons name="add-circle-outline" size={20} color="#4F46E5" />
-                <Text className="text-indigo-600 font-quicksandBold ml-2">
-                  {subTasks.length > 0 ? "Edit Subtasks" : "Add Subtasks"}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                {/* Add Subtask Button */}
+                <View className="mb-6">
+                  <Text
+                    className={`text-base font-quicksandBold mb-2 ${
+                      isDark ? "text-gray-300" : "text-gray-800"
+                    }`}
+                  >
+                    Subtasks {subTasks.length > 0 && `(${subTasks.length})`}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setIsSubtaskModalVisible(true)}
+                    className={`flex-row items-center justify-center border-2 border-dashed rounded-xl py-3 ${
+                      isDark ? "border-indigo-800" : "border-indigo-200"
+                    }`}
+                  >
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={20}
+                      color="#4F46E5"
+                    />
+                    <Text className="text-indigo-600 font-quicksandBold ml-2">
+                      {subTasks.length > 0 ? "Edit Subtasks" : "Add Subtasks"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
 
-            {/* Create Button */}
+            {/* Create Button - Different based on mode */}
             <TouchableOpacity
               className={`py-4 rounded-xl my-6 ${isSaving ? "opacity-70" : ""} ${
-                isDark ? "bg-indigo-600" : "bg-[#F26D6D]"
+                isQuickMode && !taskId
+                  ? isDark
+                    ? "bg-green-600"
+                    : "bg-green-500"
+                  : isDark
+                    ? "bg-indigo-600"
+                    : "bg-[#F26D6D]"
               }`}
-              onPress={handleSubmit}
+              onPress={isQuickMode && !taskId ? handleQuickSave : handleSubmit}
               disabled={isSaving}
             >
               {isSaving ? (
@@ -707,13 +831,15 @@ const AddTask = () => {
                 </View>
               ) : (
                 <Text className="text-white text-center font-quicksandBold text-lg">
-                  {formData.category === "Class"
-                    ? taskId
-                      ? "Edit Class"
-                      : "Create Class"
-                    : taskId
-                      ? "Edit Task"
-                      : "Create Task"}
+                  {isQuickMode && !taskId
+                    ? "Quick Add"
+                    : formData.category === "Class"
+                      ? taskId
+                        ? "Edit Class"
+                        : "Create Class"
+                      : taskId
+                        ? "Edit Task"
+                        : "Create Task"}
                 </Text>
               )}
             </TouchableOpacity>

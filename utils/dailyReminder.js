@@ -52,8 +52,8 @@ export const scheduleDailyReminder = async (hour, minute) => {
       throw new Error("Notification permissions not granted");
     }
 
-    // Cancel any existing notifications
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    // Cancel only the daily reminder notification, not all notifications
+    await Notifications.cancelScheduledNotificationAsync("daily-reminder");
 
     // Get today's task count for smarter message
     const taskCount = await getTodayTaskCount();
@@ -62,8 +62,9 @@ export const scheduleDailyReminder = async (hour, minute) => {
         ? `You have ${taskCount} task${taskCount !== 1 ? "s" : ""} today! 📋`
         : "No tasks for today. Enjoy your day! 🎉";
 
-    // Schedule the notification
+    // Schedule the notification with a specific identifier
     await Notifications.scheduleNotificationAsync({
+      identifier: "daily-reminder",
       content: {
         title: "Daily Reminder",
         body: notificationBody,
@@ -106,7 +107,8 @@ export const scheduleDailyReminder = async (hour, minute) => {
 
 export const cancelDailyReminder = async () => {
   try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    // Cancel only the daily reminder notification, not all notifications
+    await Notifications.cancelScheduledNotificationAsync("daily-reminder");
 
     // Update the reminder preferences in WatermelonDB
     const reminderPrefs = database.collections.get("reminder_prefs");
@@ -156,10 +158,13 @@ export const formatTimeDisplay = (hour, minute) => {
 if (Platform.OS === "android") {
   Notifications.setNotificationChannelAsync("daily-reminders", {
     name: "Daily Reminders",
-    importance: Notifications.AndroidImportance.MAX,
+    importance: Notifications.AndroidImportance.HIGH,
     sound: true,
     vibrationPattern: [0, 400, 200, 400],
     lightColor: "#4F46E5",
     enableVibrate: true,
+    enableLights: true,
+    showBadge: true,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   });
 }

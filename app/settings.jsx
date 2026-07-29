@@ -15,11 +15,11 @@ import TimePickerModal from "../components/TimePickerModal";
 import { useTheme } from "../context/ThemeContext";
 import { useUser } from "../context/UserContext";
 import { database } from "../database/database";
-import { useFadeAnimation } from "../hooks/useBackTransition";
 import {
   exportTasksToBackupFile,
   importTasksFromBackupFile,
 } from "../helpers/backupHelper";
+import { useFadeAnimation } from "../hooks/useBackTransition";
 import {
   cancelDailyReminder,
   formatTimeDisplay,
@@ -192,8 +192,8 @@ const Settings = () => {
     try {
       setBackupStatus("Preparing backup...");
       const result = await exportTasksToBackupFile(user?.accountId || "");
-      setBackupStatus(`Backup saved to ${result.fileName}`);
-      showSuccess(`Backup exported successfully (${result.taskCount} tasks)`);
+      setBackupStatus(`Backup saved to ${result.fileUri}`);
+      showSuccess(`Backup exported successfully (${result.taskCount} tasks). If prompted, choose a folder on your device.`);
     } catch (error) {
       setBackupStatus("Backup export failed.");
       showError(error.message || "Backup export failed.");
@@ -208,7 +208,12 @@ const Settings = () => {
 
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "application/json",
+        type: [
+          "application/json",
+          "application/ld+json",
+          "text/plain",
+          "application/octet-stream",
+        ],
         copyToCacheDirectory: true,
       });
 
@@ -223,11 +228,11 @@ const Settings = () => {
         user?.accountId || "",
       );
       setBackupStatus(
-        `Imported ${importResult.created} new task${importResult.created === 1 ? "" : "s"}${importResult.skipped > 0 ? `, skipped ${importResult.skipped} duplicate${importResult.skipped === 1 ? "" : "s"}` : ""}`,
+        `Imported ${importResult.created} new task${importResult.created === 1 ? "" : "s"}${importResult.skipped > 0 ? `, kept ${importResult.skipped} existing task${importResult.skipped === 1 ? "" : "s"}` : ""}`,
       );
       showSuccess("Backup imported successfully.");
     } catch (error) {
-      setBackupStatus("Backup import failed.");
+      setBackupStatus(error.message || "Backup import failed.");
       showError(error.message || "Backup import failed.");
     }
   };

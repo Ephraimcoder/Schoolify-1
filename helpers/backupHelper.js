@@ -1,9 +1,18 @@
 import { Q } from "@nozbe/watermelondb";
-import * as FileSystem from "expo-file-system";
 import { database } from "../database/database";
 
 const BACKUP_VERSION = 1;
 const BACKUP_PREFIX = "scholar-flow-backup";
+
+const getFileSystem = () => {
+  try {
+    return require("expo-file-system");
+  } catch (error) {
+    throw new Error(
+      "Local backup requires a rebuilt native app. Please rebuild the dev client and try again.",
+    );
+  }
+};
 
 const formatBackupFileName = () => {
   const now = new Date();
@@ -22,23 +31,60 @@ const serializeTaskForBackup = (task) => ({
   isCompleted: !!task.isCompleted,
   alertEnabled: !!task.alertEnabled,
   subTasks: task.subtasksJson ? JSON.parse(task.subtasksJson) : [],
-  notificationId: task.notificationId || null,
   itemType: task.itemType || "task",
   color: task.color || null,
   userId: task.userId || null,
   createdAt: task.createdAt ? task.createdAt.toISOString() : null,
   updatedAt: task.updatedAt ? task.updatedAt.toISOString() : null,
-  appwriteId: task.appwriteId || null,
+});
+
+const normalizeSignatureValue = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value.trim().toLowerCase();
+  return String(value);
+};
+
+const normalizeSubtasks = (task) => {
+  const rawSubtasks = Array.isArray(task?.subTasks)
+    ? task.subTasks
+    : Array.isArray(task?.subtasks)
+      ? task.subtasks
+      : task?.subtasksJson
+        ? (() => {
+            try {
+              return JSON.parse(task.subtasksJson);
+            } catch (error) {
+              return [];
+            }
+          })()
+        : [];
+
+  return (rawSubtasks || [])
+    .map((subtask) => ({
+      title: normalizeSignatureValue(subtask?.title),
+      isCompleted: !!subtask?.isCompleted,
+    }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+};
+
+const buildComparableTaskPayload = (task) => ({
+  title: normalizeSignatureValue(task.title),
+  description: normalizeSignatureValue(task.description),
+  category: normalizeSignatureValue(task.category || task.categoryName),
+  priority: normalizeSignatureValue(task.priority || task.priorityName),
+  dueDate: normalizeSignatureValue(task.dueDate),
+  dueTime: normalizeSignatureValue(task.dueTime),
+  itemType: task.itemType || "task",
+  // Exclude mutable fields from deduplication:
+  // - isCompleted (changes when tasks are completed)
+  // - alertEnabled (notification settings change)
+  // - color (color settings change)
+  // - subTasks (subtask completion changes)
 });
 
 const buildTaskSignature = (task) => {
-  const normalizedTitle = (task.title || "").trim().toLowerCase();
-  const normalizedDescription = (task.description || "").trim().toLowerCase();
-  const normalizedDueDate = task.dueDate || "";
-  const normalizedDueTime = task.dueTime || "";
-  const normalizedStatus = task.isCompleted ? "done" : "pending";
-
-  return `${normalizedTitle}::${normalizedDescription}::${normalizedDueDate}::${normalizedDueTime}::${normalizedStatus}`;
+  return JSON.stringify(buildComparableTaskPayload(task));
 };
 
 const validateBackupPayload = (payload) => {
@@ -68,8 +114,68 @@ export const isBackupEnabled = async () => {
   }
 };
 
+const getBackupDirectory = async (FileSystem) => {
+  const candidates = [
+    FileSystem.downloadDirectory,
+    FileSystem.storageDirectory,
+    FileSystem.externalDirectory,
+    FileSystem.documentDirectory,
+    FileSystem.cacheDirectory,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate) {
+      return candidate.endsWith("/") ? candidate : `${candidate}/`;
+    }
+  }
+
+  return FileSystem.documentDirectory || FileSystem.cacheDirectory || "/";
+};
+
+const writeBackupFile = async (FileSystem, fileName, contents) => {
+  if (
+    typeof FileSystem.StorageAccessFramework
+      ?.requestDirectoryPermissionsAsync === "function"
+  ) {
+    try {
+      const directoryPermissions =
+        await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+      if (directoryPermissions?.granted) {
+        const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+          directoryPermissions.directoryUri,
+          fileName,
+          "application/json",
+        );
+
+        await FileSystem.writeAsStringAsync(fileUri, contents, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+
+        return fileUri;
+      }
+    } catch (error) {
+      console.warn(
+        "Storage Access Framework backup export failed, falling back:",
+        error,
+      );
+    }
+  }
+
+  const directoryUri = await getBackupDirectory(FileSystem);
+  await FileSystem.makeDirectoryAsync(directoryUri, { intermediates: true });
+  const fallbackFileUri = `${directoryUri}${fileName}`;
+
+  await FileSystem.writeAsStringAsync(fallbackFileUri, contents, {
+    encoding: FileSystem.EncodingType.UTF8,
+  });
+
+  return fallbackFileUri;
+};
+
 export const exportTasksToBackupFile = async (userId) => {
   try {
+    const FileSystem = getFileSystem();
     const tasksCollection = database.collections.get("tasks");
     const tasks = await tasksCollection
       .query(Q.where("user_id", userId || ""))
@@ -84,11 +190,8 @@ export const exportTasksToBackupFile = async (userId) => {
     };
 
     const fileName = formatBackupFileName();
-    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-
-    await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(backupPayload, null, 2), {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
+    const backupContent = JSON.stringify(backupPayload, null, 2);
+    const fileUri = await writeBackupFile(FileSystem, fileName, backupContent);
 
     return {
       fileName,
@@ -103,6 +206,7 @@ export const exportTasksToBackupFile = async (userId) => {
 
 export const importTasksFromBackupFile = async (fileUri, userId) => {
   try {
+    const FileSystem = getFileSystem();
     const rawContent = await FileSystem.readAsStringAsync(fileUri, {
       encoding: FileSystem.EncodingType.UTF8,
     });
@@ -112,9 +216,23 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
       throw new Error("This backup file is not supported.");
     }
 
+    if (!userId) {
+      throw new Error("Import requires an authenticated user.");
+    }
+
+    const invalidUserTask = backupPayload.tasks.find(
+      (task) => task.userId !== userId,
+    );
+
+    if (invalidUserTask) {
+      throw new Error(
+        "This backup belongs to a different user and cannot be imported.",
+      );
+    }
+
     const tasksCollection = database.collections.get("tasks");
     const existingTasks = await tasksCollection
-      .query(Q.where("user_id", userId || ""))
+      .query(Q.where("user_id", userId))
       .fetch();
     const existingSignatures = new Set(
       existingTasks.map((task) => buildTaskSignature(task)),
@@ -127,6 +245,7 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
       for (const backupTask of backupPayload.tasks) {
         const signature = buildTaskSignature(backupTask);
         if (existingSignatures.has(signature)) {
+          // Keep the existing local task and skip creating a duplicate.
           skipped += 1;
           continue;
         }
@@ -136,8 +255,12 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
           task.description = backupTask.description || "";
           task.categoryName = backupTask.category || "";
           task.priorityName = backupTask.priority || "";
-          task.dueDate = backupTask.dueDate ? new Date(backupTask.dueDate) : null;
-          task.dueTime = backupTask.dueTime ? new Date(backupTask.dueTime) : null;
+          task.dueDate = backupTask.dueDate
+            ? new Date(backupTask.dueDate)
+            : null;
+          task.dueTime = backupTask.dueTime
+            ? new Date(backupTask.dueTime)
+            : null;
           task.isCompleted = !!backupTask.isCompleted;
           task.itemType = backupTask.itemType || "task";
           task.alertEnabled = !!backupTask.alertEnabled;
