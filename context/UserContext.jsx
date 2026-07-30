@@ -62,7 +62,7 @@ export function UserProvider({ children }) {
       const response = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.userCollectionId,
-        [Query.equal("accountId", accountId)]
+        [Query.equal("accountId", accountId)],
       );
 
       if (response.documents.length === 0) {
@@ -78,7 +78,6 @@ export function UserProvider({ children }) {
         accountId: userDoc.accountId,
       };
     } catch (error) {
-      console.error("Failed to fetch user document:", error);
       throw error;
     }
   };
@@ -90,7 +89,7 @@ export function UserProvider({ children }) {
         // 1. Load from local storage
         const cachedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
         const lastSessionCheck = await AsyncStorage.getItem(
-          LAST_SESSION_CHECK_KEY
+          LAST_SESSION_CHECK_KEY,
         );
         const now = Date.now();
 
@@ -123,7 +122,6 @@ export function UserProvider({ children }) {
               currentAccount.$id !== currentUserData.accountId
             ) {
               // Session user doesn't match cached user - clear cache
-              console.log("Session user mismatch, clearing cache");
               await clearUser();
               currentUserData = null;
               if (mounted) {
@@ -161,7 +159,7 @@ export function UserProvider({ children }) {
           setUser(currentUserData);
         }
       } catch (e) {
-        console.error("Initialization failed", e);
+        showError("Failed to initialize user session. Please try again.");
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -181,7 +179,7 @@ export function UserProvider({ children }) {
       await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
     } catch (error) {
-      console.error("Failed to save user data", error);
+      showError("Failed to save session. You may need to login again.");
     }
   };
 
@@ -214,7 +212,6 @@ export function UserProvider({ children }) {
       await saveUser(userData);
       return userData;
     } catch (error) {
-      console.error("Login failed:", error);
       await clearUser();
       setUser(null);
       throw error;
@@ -225,7 +222,7 @@ export function UserProvider({ children }) {
 
   const requestEmailOtp = async (
     email,
-    { phrase = false, userId, isSignup = false } = {}
+    { phrase = false, userId, isSignup = false } = {},
   ) => {
     const netState = await NetInfo.fetch();
     if (!netState.isConnected) {
@@ -237,10 +234,9 @@ export function UserProvider({ children }) {
       const token = await account.createEmailToken(desiredId, email, phrase);
       return { userId: token.userId, phrase: token.phrase, isSignup };
     } catch (error) {
-      console.error("requestEmailOtp error:", error);
       // Re-throw a friendly message
       throw new Error(
-        error?.message || "Failed to send OTP. Please try again."
+        error?.message || "Failed to send OTP. Please try again.",
       );
     }
   };
@@ -291,7 +287,7 @@ export function UserProvider({ children }) {
               name: name,
               email: email,
               avatar: avatarUrl,
-            }
+            },
           );
           databaseDocumentCreated = true;
 
@@ -306,19 +302,11 @@ export function UserProvider({ children }) {
           await saveUser(userData);
           return userData;
         } catch (signupError) {
-          console.error(
-            "Signup process failed, initiating cleanup:",
-            signupError
-          );
-
           // Rollback: Clean up any partial creation
           try {
             if (databaseDocumentCreated) {
               // Database document was created, but we can't easily rollback without document ID
-              // This is a rare case, but we'll log it for manual cleanup
-              console.error(
-                "Database document created but subsequent operations failed - manual cleanup may be needed"
-              );
+              // This is a rare case, but manual cleanup may be needed
             }
 
             if (accountUpdated) {
@@ -330,16 +318,16 @@ export function UserProvider({ children }) {
               // Try to delete the entire account if it was just created
               // Note: Appwrite doesn't provide direct account deletion from client SDK
               // This would need server-side implementation
-              console.error(
-                "Account was created but setup incomplete - account may need manual cleanup"
+              showError(
+                "Account setup incomplete. Please contact support for assistance.",
               );
             }
           } catch (cleanupError) {
-            console.error("Cleanup failed:", cleanupError);
+            // Cleanup failed - backend maintenance issue
           }
 
           throw new Error(
-            "Account creation failed. Please try again or contact support if the issue persists."
+            "Account creation failed. Please try again or contact support if the issue persists.",
           );
         }
       }
@@ -365,7 +353,7 @@ export function UserProvider({ children }) {
               name: fallbackName,
               email: currentAccount.email,
               avatar: avatarUrl,
-            }
+            },
           );
           userData = {
             $id: newDoc.$id,
@@ -376,17 +364,14 @@ export function UserProvider({ children }) {
           };
         } catch (fallbackError) {
           // If fallback fails, clean up the session
-          console.error(
-            "Fallback user document creation failed:",
-            fallbackError
-          );
+          showError("Failed to complete account setup. Please try again.");
           try {
             await account.deleteSessions();
           } catch (cleanupError) {
-            console.error("Session cleanup failed:", cleanupError);
+            // Session cleanup failed - backend maintenance issue
           }
           throw new Error(
-            "Failed to complete account setup. Please try again."
+            "Failed to complete account setup. Please try again.",
           );
         }
       }
@@ -394,19 +379,17 @@ export function UserProvider({ children }) {
       await saveUser(userData);
       return userData;
     } catch (error) {
-      console.error("verifyEmailOtp error:", error);
-
       // If we failed early and created a session, clean it up
       if (sessionCreated && !isSignup) {
         try {
           await account.deleteSessions();
         } catch (cleanupError) {
-          console.error("Session cleanup failed:", cleanupError);
+          // Session cleanup failed - backend maintenance issue
         }
       }
 
       throw new Error(
-        error?.message || "Invalid or expired code. Please try again."
+        error?.message || "Invalid or expired code. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -423,12 +406,11 @@ export function UserProvider({ children }) {
       try {
         await account.deleteSessions();
       } catch (e) {
-        console.log("Could not revoke session, will retry on next app start");
+        // Session revocation failed, will retry on next app start
       }
 
       return { success: true };
     } catch (error) {
-      console.error("Logout error:", error);
       throw error;
     }
   };
@@ -443,7 +425,7 @@ export function UserProvider({ children }) {
       const tasksResponse = await databases.listDocuments(
         appwriteConfig.databaseId,
         appwriteConfig.tasksCollectionId,
-        [Query.equal("user_id", user.accountId)]
+        [Query.equal("user_id", user.accountId)],
       );
 
       if (tasksResponse.documents.length > 0) {
@@ -451,7 +433,7 @@ export function UserProvider({ children }) {
           await databases.deleteDocument(
             appwriteConfig.databaseId,
             appwriteConfig.tasksCollectionId,
-            taskDoc.$id
+            taskDoc.$id,
           );
         }
       }
@@ -475,7 +457,7 @@ export function UserProvider({ children }) {
         await databases.deleteDocument(
           appwriteConfig.databaseId,
           appwriteConfig.userCollectionId,
-          user.$id
+          user.$id,
         );
       } catch (error) {
         if (error.code !== 404) {
@@ -494,7 +476,6 @@ export function UserProvider({ children }) {
 
       return { success: true };
     } catch (error) {
-      console.error("Error deleting account:", error);
       throw new Error("Failed to delete account. Please try again later.");
     }
   };

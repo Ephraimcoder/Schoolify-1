@@ -40,7 +40,6 @@ const getTodayTaskCount = async () => {
     });
     return todayTasks.length;
   } catch (error) {
-    console.error("Error getting today's task count:", error);
     return 0;
   }
 };
@@ -100,7 +99,6 @@ export const scheduleDailyReminder = async (hour, minute) => {
 
     return true;
   } catch (error) {
-    console.error("Error scheduling daily reminder:", error);
     throw error;
   }
 };
@@ -124,7 +122,6 @@ export const cancelDailyReminder = async () => {
 
     return true;
   } catch (error) {
-    console.error("Error cancelling daily reminder:", error);
     throw error;
   }
 };
@@ -142,7 +139,6 @@ export const getScheduledReminder = async () => {
     }
     return null;
   } catch (error) {
-    console.error("Error getting scheduled reminder:", error);
     return null;
   }
 };

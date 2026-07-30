@@ -182,8 +182,9 @@ const AddTask = () => {
 
   // Add notification handler for when app is in foreground - defer to background
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const subscription = Notifications.addNotificationReceivedListener(
+    let subscription = null;
+    let timeoutId = setTimeout(() => {
+      subscription = Notifications.addNotificationReceivedListener(
         (notification) => {},
       );
 
@@ -195,14 +196,13 @@ const AddTask = () => {
           shouldSetBadge: true,
         }),
       });
-
-      return () => {
-        subscription.remove();
-      };
     }, 200); // Defer notification setup to not block initial render
 
     return () => {
       clearTimeout(timeoutId);
+      if (subscription) {
+        subscription.remove();
+      }
     };
   }, []);
 

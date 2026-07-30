@@ -1,5 +1,5 @@
-import { database } from "../database/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { database } from "../database/database";
 
 const DEFAULT_MINUTES = 15; // Default reminder time in minutes
 const ASYNC_KEY = "@ScholarFlow:notificationLeadMinutes";
@@ -38,7 +38,6 @@ export async function getNotificationLeadMinutes() {
 
     return DEFAULT_MINUTES;
   } catch (error) {
-    console.error("Error getting notification lead minutes:", error);
     try {
       const stored = await AsyncStorage.getItem(ASYNC_KEY);
       if (stored !== null) return parseInt(stored, 10) || DEFAULT_MINUTES;
@@ -53,7 +52,9 @@ export async function setNotificationLeadMinutes(minutes) {
     try {
       await AsyncStorage.setItem(ASYNC_KEY, String(m));
     } catch (e) {
-      console.warn("Failed to write lead minutes to AsyncStorage", e);
+      showError(
+        "Failed to save notification settings. Changes may not persist.",
+      );
     }
 
     try {
@@ -72,12 +73,14 @@ export async function setNotificationLeadMinutes(minutes) {
         }
       });
     } catch (dbErr) {
-      console.warn("Failed to persist lead minutes to DB, continuing with AsyncStorage", dbErr);
+      showError(
+        "Failed to save notification settings to database. Using local storage only.",
+      );
     }
 
     return m;
   } catch (error) {
-    console.error("Error setting notification lead minutes:", error);
+    showError("Failed to update notification settings. Please try again.");
     throw error;
   }
 }

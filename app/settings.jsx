@@ -116,7 +116,7 @@ const Settings = () => {
         } else {
           // Only use default if no saved preference exists
           // The onboarding should have already set this
-          console.log("No saved notification lead time found, using default");
+          setLeadMinutes(15);
         }
 
         // Load daily reminder settings
@@ -193,7 +193,9 @@ const Settings = () => {
       setBackupStatus("Preparing backup...");
       const result = await exportTasksToBackupFile(user?.accountId || "");
       setBackupStatus(`Backup saved to ${result.fileUri}`);
-      showSuccess(`Backup exported successfully (${result.taskCount} tasks). If prompted, choose a folder on your device.`);
+      showSuccess(
+        `Backup exported successfully (${result.taskCount} tasks). If prompted, choose a folder on your device.`,
+      );
     } catch (error) {
       setBackupStatus("Backup export failed.");
       showError(error.message || "Backup export failed.");
@@ -473,7 +475,9 @@ const Settings = () => {
                       await saveBackupPreference(value);
                       setBackupEnabled(value);
                       setBackupStatus(
-                        value ? "Local backup enabled." : "Local backup disabled.",
+                        value
+                          ? "Local backup enabled."
+                          : "Local backup disabled.",
                       );
                     } catch (error) {
                       showError("Failed to update backup setting");
@@ -495,7 +499,8 @@ const Settings = () => {
                   isDark ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                Keep a local JSON backup of your tasks and restore it on another device.
+                Keep a local JSON backup of your tasks and restore it on another
+                device.
               </Text>
 
               <View className="mt-3 gap-2">

@@ -109,7 +109,7 @@ export const isBackupEnabled = async () => {
     // Default to enabled if no preference exists
     return true;
   } catch (error) {
-    console.error("Error checking backup preference:", error);
+    showError("Backup settings unavailable. Using default backup enabled.");
     return true; // Default to enabled on error
   }
 };
@@ -155,10 +155,7 @@ const writeBackupFile = async (FileSystem, fileName, contents) => {
         return fileUri;
       }
     } catch (error) {
-      console.warn(
-        "Storage Access Framework backup export failed, falling back:",
-        error,
-      );
+      // Storage Access Framework backup export failed, falling back to standard export
     }
   }
 
@@ -199,7 +196,6 @@ export const exportTasksToBackupFile = async (userId) => {
       taskCount: tasks.length,
     };
   } catch (error) {
-    console.error("Error exporting backup file:", error);
     throw new Error("Failed to export backup file.");
   }
 };
@@ -283,7 +279,6 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
       total: backupPayload.tasks.length,
     };
   } catch (error) {
-    console.error("Error importing backup file:", error);
     throw new Error(
       error?.message || "Failed to import backup file. Please try again.",
     );

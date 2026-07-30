@@ -38,7 +38,7 @@ export async function registerForPushNotificationsAsync() {
       const projectId = "be36c56d-4cc6-4068-ab56-b0ed27cef796";
       token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
     } catch (error) {
-      console.error("Error getting push token:", error);
+      // Error getting push token
     }
   } else {
     // Must use physical device for Push Notifications
@@ -69,7 +69,7 @@ export async function schedulePushNotification(
       trigger: dueDateTime,
     });
   } catch (error) {
-    console.error("Error scheduling notification:", error);
+    // Error scheduling notification
   }
 }
 

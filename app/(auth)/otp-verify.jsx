@@ -47,7 +47,6 @@ export default function OtpVerify() {
     timerRef.current = setInterval(() => {
       setCooldown((c) => {
         if (c <= 1) {
-          clearInterval(timerRef.current);
           return 0;
         }
         return c - 1;
