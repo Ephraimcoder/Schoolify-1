@@ -214,7 +214,11 @@ const ClassesSection = () => {
               params: { category: "Class" },
             })
           }
-          className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl items-center justify-center shadow-sm"
+          className={`w-8 h-8 rounded-xl items-center justify-center shadow-sm ${
+            isDark
+              ? "bg-gradient-to-br from-purple-500 to-indigo-500"
+              : "bg-gradient-to-br from-purple-600 to-indigo-600"
+          }`}
         >
           <Ionicons name="add" size={16} color="#fff" />
         </TouchableOpacity>
@@ -268,7 +272,11 @@ const ClassesSection = () => {
                 params: { category: "Class" },
               })
             }
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl shadow-sm flex-row items-center"
+            className={`px-4 py-2 rounded-xl shadow-sm flex-row items-center ${
+              isDark
+                ? "bg-gradient-to-r from-purple-500 to-indigo-500"
+                : "bg-gradient-to-r from-purple-600 to-indigo-600"
+            }`}
           >
             <Ionicons name="add" size={16} color="#fff" className="mr-1" />
             <Text className="text-white font-quicksandSemiBold text-sm">

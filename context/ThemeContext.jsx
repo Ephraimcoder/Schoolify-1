@@ -8,11 +8,11 @@ export const ThemeContext = createContext({
 });
 
 const lightColors = {
-  background: ["#F8F5F2", "#F5F2F0"],
-  card: "#FDFDFD",
+  background: ["#E8E4E0", "#E0DCD8"],
+  card: "#F0EDE9",
   text: "#374151",
   textSecondary: "#6B7280",
-  border: "#E5E7EB",
+  border: "#D1D5DB",
   primary: "#6366F1",
   secondary: "#8B5CF6",
   success: "#059669",

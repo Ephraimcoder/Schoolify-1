@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenAnimation from "../../components/ScreenAnimation";
@@ -13,16 +14,23 @@ import TaskList from "../../components/taskList";
 import { useTasks } from "../../context/TasksContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
-
 const Tasks = () => {
   const { tasks, loading, refreshTasks } = useTasks();
   const { user } = useUser();
   const { isDark, colors } = useTheme();
+  const { filter: filterParam } = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [sortVisible, setSortVisible] = useState(false);
   const [sortOption, setSortOption] = useState("dueDateDesc");
   const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'completed' | 'incomplete' | 'overdue' | 'dueToday'
+
+  // Handle filter from URL params
+  useEffect(() => {
+    if (filterParam && ["dueToday", "overdue"].includes(filterParam)) {
+      setActiveFilter(filterParam);
+    }
+  }, [filterParam]);
 
   // Optimize refresh handler
   const onRefresh = useCallback(async () => {

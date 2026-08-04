@@ -2,67 +2,104 @@
   "expo": {
     "androidNavigationBar": {
       "visible": "immersive",
+
       "backgroundColor": "#00000000"
     },
+
     "name": "Scholar Flow",
+
     "slug": "scholar-flow",
+
     "version": "1.0.0",
+
     "orientation": "portrait",
+
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
+
     "updates": {
       "enabled": true,
+
       "checkAutomatically": "ON_LOAD",
+
       "fallbackToCacheTimeout": 0,
+
       "url": "https://u.expo.dev/4997db7f-0865-42a0-b5b1-d10ccba4535d"
     },
+
     "icon": "./assets/images/Scholarflowlightmode.png",
+
     "scheme": ["scholarflow"],
+
     "userInterfaceStyle": "automatic",
+
     "newArchEnabled": true,
+
     "jsEngine": "hermes",
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Scholarflowlightmode.png",
+
         "backgroundColor": "#d6cbb8"
       },
+
       "edgeToEdgeEnabled": false,
+
       "package": "com.ephraimcoder.scholarflow",
+
       "jsEngine": "hermes",
+
       "newArchEnabled": false
     },
+
     "web": {
       "bundler": "metro",
+
       "output": "static",
+
       "favicon": "./assets/images/Scholarflowlightmode.png"
     },
+
     "plugins": [
       "expo-router",
+
       [
         "@lovesworking/watermelondb-expo-plugin-sdk-52-plus",
+
         {
           "jscFlavor": "android-jsc-intl"
         }
       ],
+
       [
         "expo-splash-screen",
+
         {
           "image": "./assets/images/Scholarflowtransparent.png",
+
           "imageWidth": 180,
+
           "resizeMode": "contain",
+
           "backgroundColor": "#d6cbb8"
         }
       ],
+
       "expo-secure-store",
+
       [
         "expo-build-properties",
+
         {
           "android": {
             "kotlinVersion": "2.0.21",
+
             "packagingOptions": {
               "pickFirst": ["**/libc++_shared.so"]
             }
@@ -70,15 +107,18 @@
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {},
+
       "eas": {
         "projectId": "4997db7f-0865-42a0-b5b1-d10ccba4535d"
       }
     },
+
     "owner": "ephraimcoder"
   }
 }

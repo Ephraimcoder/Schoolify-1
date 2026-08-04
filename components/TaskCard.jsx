@@ -106,19 +106,19 @@ const TaskCard = React.memo(({ task }) => {
       case "high":
         return isDark
           ? "bg-red-900 border-red-800 text-red-200"
-          : "bg-red-100 border-red-200 text-red-700";
+          : "bg-red-200 border-red-300 text-red-800";
       case "medium":
         return isDark
           ? "bg-amber-900 border-amber-800 text-amber-200"
-          : "bg-amber-100 border-amber-200 text-amber-700";
+          : "bg-amber-200 border-amber-300 text-amber-800";
       case "low":
         return isDark
           ? "bg-emerald-900 border-emerald-800 text-emerald-200"
-          : "bg-emerald-100 border-emerald-200 text-emerald-700";
+          : "bg-emerald-200 border-emerald-300 text-emerald-800";
       default:
         return isDark
           ? "bg-gray-800 border-gray-700 text-gray-200"
-          : "bg-gray-100 border-gray-200 text-gray-700";
+          : "bg-gray-200 border-gray-300 text-gray-800";
     }
   };
 
@@ -173,21 +173,34 @@ const TaskCard = React.memo(({ task }) => {
         </View>
 
         <View
-          className={`flex-row justify-between items-center mt-auto pt-3 border-t ${
-            isDark ? "border-gray-700" : "border-gray-100"
+          className={`flex-row justify-between items-center mt-auto pt-4 border-t ${
+            isDark ? "border-gray-700" : "border-gray-200"
           }`}
         >
-          <Text
-            className={`text-sm font-quicksandSemiBold ml-2 ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            {formattedDate}
-          </Text>
           <View className="flex-row items-center">
-            <Ionicons name="time-outline" size={16} color="#6B7280" />
+            <Ionicons
+              name="calendar-outline"
+              size={14}
+              color={isDark ? "#9CA3AF" : "#6B7280"}
+              className="mr-1.5"
+            />
             <Text
-              className={`text-sm font-quicksandSemiBold ml-2 ${
+              className={`text-xs font-quicksandMedium ${
+                isDark ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
+              {formattedDate}
+            </Text>
+          </View>
+          <View className="flex-row items-center">
+            <Ionicons
+              name="time-outline"
+              size={14}
+              color={isDark ? "#9CA3AF" : "#6B7280"}
+              className="mr-1.5"
+            />
+            <Text
+              className={`text-xs font-quicksandMedium ${
                 isDark ? "text-gray-400" : "text-gray-600"
               }`}
             >
@@ -196,7 +209,7 @@ const TaskCard = React.memo(({ task }) => {
           </View>
           {priority && (
             <View
-              className={`px-3 py-1 rounded-full border ${getPriorityClasses()}`}
+              className={`px-2.5 py-1 rounded-full border ${getPriorityClasses()}`}
             >
               <Text className="text-xs font-quicksandBold uppercase">
                 {priority}

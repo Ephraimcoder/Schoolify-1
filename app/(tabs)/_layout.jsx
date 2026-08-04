@@ -37,20 +37,20 @@ const TabsLayout = () => {
           borderWidth: 1,
           borderColor: isDark ? "#374151" : "rgba(0, 0, 0, 0.1)",
           shadowColor: "#000",
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.3,
-          shadowRadius: 20,
-          elevation: 15,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 5,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
         },
         // Performance and transition tweaks
-        lazy: false, // Keep screens loaded for faster navigation
-        detachInactiveScreens: false, // Prevent screen destruction
-        freezeOnBlur: false, // Keep screens responsive
+        lazy: true, // Unload screens when not visible (saves memory)
+        detachInactiveScreens: false, // Destroy inactive screens (saves memory)
+        freezeOnBlur: true, // Freeze inactive screens (saves CPU/memory)
         tabBarHideOnKeyboard: true,
-        animationEnabled: true, // Enable tab animations
+        animationEnabled: false, // Disable animations for performance
         animationTypeForReplace: "push", // Animation when replacing tabs
 
         // Tab transition animation options:
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
 });
 

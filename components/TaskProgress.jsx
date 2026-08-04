@@ -1,11 +1,13 @@
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useContext, useMemo } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { TasksContext } from "../context/TasksContext";
 import { useTheme } from "../context/ThemeContext";
-
 const TaskProgress = React.memo(() => {
   const { tasks } = useContext(TasksContext);
   const { isDark, colors } = useTheme();
+  const router = useRouter();
 
   const {
     totalTasks,
@@ -105,113 +107,246 @@ const TaskProgress = React.memo(() => {
   // });
 
   return (
-    <View
-      className={`p-4 rounded-2xl my-3 mx-2 shadow-md ${
-        isDark ? "bg-gray-800/50 backdrop-blur" : "bg-white/80 backdrop-blur"
-      }`}
+    <LinearGradient
+      colors={isDark ? ["#1F2937", "#111827"] : ["#FFFFFF", "#F9FAFB"]}
+      className="p-5 rounded-3xl my-3 mx-2 shadow-lg"
       style={{
         borderWidth: 1,
-        borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+        borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+        shadowColor: isDark ? "#000" : "#6366F1",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDark ? 0.3 : 0.15,
+        shadowRadius: 16,
+        elevation: 8,
       }}
     >
-      {/* Header */}
-      <View className="flex-row justify-between items-center mb-4">
+      {/* Header with Enhanced Styling */}
+      <View className="flex-row justify-between items-center mb-5">
         <View className="flex-row items-center">
-          <View className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg items-center justify-center mr-2">
-            <Text className="text-white font-quicksandBold text-xs">📊</Text>
-          </View>
-          <Text
-            className={`text-lg font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
+          <LinearGradient
+            colors={["#6366F1", "#8B5CF6"]}
+            className="w-9 h-9 rounded-xl items-center justify-center mr-3 shadow-md"
+            style={{
+              shadowColor: "#6366F1",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.4,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
           >
-            Today's Overview
-          </Text>
+            <Text className="text-white font-quicksandBold text-base">📊</Text>
+          </LinearGradient>
+          <View>
+            <Text
+              className={`text-sm font-quicksandMedium ${isDark ? "text-gray-400" : "text-gray-500"}`}
+            >
+              Your Progress
+            </Text>
+            <Text
+              className={`text-xl font-quicksandBold ${isDark ? "text-white" : "text-gray-900"}`}
+            >
+              Today's Overview
+            </Text>
+          </View>
         </View>
-        <View className="px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full">
-          <Text className="text-white font-quicksandSemiBold text-xs">
+        <LinearGradient
+          colors={["#6366F1", "#8B5CF6"]}
+          className="px-4 py-2 rounded-full shadow-md"
+          style={{
+            shadowColor: "#6366F1",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.4,
+            shadowRadius: 4,
+            elevation: 4,
+          }}
+        >
+          <Text className="text-white font-quicksandBold text-sm">
             {Math.round(progress * 100)}%
           </Text>
-        </View>
+        </LinearGradient>
       </View>
 
-      {/* Key Metrics */}
-      <View className="flex-row justify-between mb-4">
-        <TouchableOpacity className="flex-1 items-center bg-blue-50 rounded-xl py-3 mx-1">
-          <View className="w-8 h-8 bg-blue-500 rounded-lg items-center justify-center mb-1">
-            <Text className="text-white font-quicksandBold text-sm">📅</Text>
-          </View>
-          <Text className="text-lg font-quicksandBold text-blue-600">
+      {/* Enhanced Key Metrics */}
+      <View className="flex-row justify-between mb-5">
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/Tasks?filter=dueToday")}
+          className="flex-1 items-center rounded-2xl py-4 mx-1.5"
+          style={{
+            backgroundColor: isDark
+              ? "rgba(59, 130, 246, 0.15)"
+              : "rgba(59, 130, 246, 0.1)",
+            borderWidth: 1,
+            borderColor: isDark
+              ? "rgba(59, 130, 246, 0.3)"
+              : "rgba(59, 130, 246, 0.2)",
+          }}
+        >
+          <LinearGradient
+            colors={["#3B82F6", "#2563EB"]}
+            className="w-10 h-10 rounded-xl items-center justify-center mb-2 shadow-md"
+            style={{
+              shadowColor: "#3B82F6",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-white font-quicksandBold text-base">📅</Text>
+          </LinearGradient>
+          <Text className="text-2xl font-quicksandBold text-blue-500 mb-0.5">
             {todayTasks}
           </Text>
-          <Text className="text-xs font-quicksandMedium text-blue-700">
+          <Text
+            className={`text-xs font-quicksandMedium ${isDark ? "text-blue-400" : "text-blue-600"}`}
+          >
             Due Today
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity className="flex-1 items-center bg-red-50 rounded-xl py-3 mx-1">
-          <View className="w-8 h-8 bg-red-500 rounded-lg items-center justify-center mb-1">
-            <Text className="text-white font-quicksandBold text-sm">⚠️</Text>
-          </View>
-          <Text className="text-lg font-quicksandBold text-red-600">
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/Tasks?filter=overdue")}
+          className="flex-1 items-center rounded-2xl py-4 mx-1.5"
+          style={{
+            backgroundColor: isDark
+              ? "rgba(239, 68, 68, 0.15)"
+              : "rgba(239, 68, 68, 0.1)",
+            borderWidth: 1,
+            borderColor: isDark
+              ? "rgba(239, 68, 68, 0.3)"
+              : "rgba(239, 68, 68, 0.2)",
+          }}
+        >
+          <LinearGradient
+            colors={["#EF4444", "#DC2626"]}
+            className="w-10 h-10 rounded-xl items-center justify-center mb-2 shadow-md"
+            style={{
+              shadowColor: "#EF4444",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-white font-quicksandBold text-base">⚠️</Text>
+          </LinearGradient>
+          <Text className="text-2xl font-quicksandBold text-red-500 mb-0.5">
             {overdueTasks}
           </Text>
-          <Text className="text-xs font-quicksandMedium text-red-700">
+          <Text
+            className={`text-xs font-quicksandMedium ${isDark ? "text-red-400" : "text-red-600"}`}
+          >
             Overdue
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity className="flex-1 items-center bg-green-50 rounded-xl py-3 mx-1">
-          <View className="w-8 h-8 bg-green-500 rounded-lg items-center justify-center mb-1">
-            <Text className="text-white font-quicksandBold text-sm">📈</Text>
-          </View>
-          <Text className="text-lg font-quicksandBold text-green-600">
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/Tasks")}
+          className="flex-1 items-center rounded-2xl py-4 mx-1.5"
+          style={{
+            backgroundColor: isDark
+              ? "rgba(34, 197, 94, 0.15)"
+              : "rgba(34, 197, 94, 0.1)",
+            borderWidth: 1,
+            borderColor: isDark
+              ? "rgba(34, 197, 94, 0.3)"
+              : "rgba(34, 197, 94, 0.2)",
+          }}
+        >
+          <LinearGradient
+            colors={["#22C55E", "#16A34A"]}
+            className="w-10 h-10 rounded-xl items-center justify-center mb-2 shadow-md"
+            style={{
+              shadowColor: "#22C55E",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-white font-quicksandBold text-base">📈</Text>
+          </LinearGradient>
+          <Text className="text-2xl font-quicksandBold text-green-500 mb-0.5">
             {thisWeekTasks}
           </Text>
-          <Text className="text-xs font-quicksandMedium text-green-700">
+          <Text
+            className={`text-xs font-quicksandMedium ${isDark ? "text-green-400" : "text-green-600"}`}
+          >
             This Week
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Progress Bar */}
-      <View>
-        <View className="flex-row justify-between mb-2">
+      {/* Enhanced Progress Bar */}
+      <View className="mb-4">
+        <View className="flex-row justify-between mb-3">
           <Text
-            className={`text-xs font-quicksandSemiBold ${isDark ? "text-gray-400" : "text-gray-600"}`}
+            className={`text-sm font-quicksandSemiBold ${isDark ? "text-gray-300" : "text-gray-700"}`}
           >
             Weekly Progress
           </Text>
           <Text
-            className={`text-xs font-quicksandSemiBold ${isDark ? "text-gray-400" : "text-gray-600"}`}
+            className={`text-sm font-quicksandSemiBold ${isDark ? "text-gray-300" : "text-gray-700"}`}
           >
             {completedTasks}/{totalTasks} tasks
           </Text>
         </View>
         <View
-          className={`h-2 ${isDark ? "bg-gray-700" : "bg-gray-100"} rounded-full overflow-hidden`}
+          className={`h-3 ${isDark ? "bg-gray-700/50" : "bg-gray-100"} rounded-full overflow-hidden`}
+          style={{
+            borderWidth: 1,
+            borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+          }}
         >
-          <View
+          <LinearGradient
+            colors={["#6366F1", "#8B5CF6", "#A855F7"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             className="h-full rounded-full"
             style={{
-              width: `${Math.max(progress * 100, 2)}%`,
-              minWidth: 4,
-              backgroundColor: "#6366F1",
+              width: `${Math.max(progress * 100, 3)}%`,
+              minWidth: 6,
             }}
           />
         </View>
       </View>
 
-      {/* Study Streak - More Compact */}
+      {/* Enhanced Study Streak */}
       {streak > 0 && (
-        <View
-          className={`flex-row items-center justify-center mt-3 pt-3 border-t ${isDark ? "border-gray-700" : "border-gray-100"}`}
+        <LinearGradient
+          colors={["rgba(251, 146, 60, 0.1)", "rgba(239, 68, 68, 0.1)"]}
+          className="flex-row items-center justify-center mt-4 pt-4 pb-3 px-4 rounded-2xl"
+          style={{
+            borderWidth: 1,
+            borderColor: isDark
+              ? "rgba(251, 146, 60, 0.3)"
+              : "rgba(251, 146, 60, 0.2)",
+          }}
         >
-          <View className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg items-center justify-center mr-2">
-            <Text className="text-white text-sm">🔥</Text>
+          <LinearGradient
+            colors={["#FB923C", "#EF4444"]}
+            className="w-10 h-10 rounded-xl items-center justify-center mr-3 shadow-md"
+            style={{
+              shadowColor: "#FB923C",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.4,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <Text className="text-white text-base">🔥</Text>
+          </LinearGradient>
+          <View className="flex-1">
+            <Text className="text-base font-quicksandBold text-orange-500">
+              {streak} Day{streak !== 1 ? "s" : ""} Streak!
+            </Text>
+            <Text
+              className={`text-xs font-quicksandMedium ${isDark ? "text-orange-400/70" : "text-orange-600/70"}`}
+            >
+              Keep up the great work!
+            </Text>
           </View>
-          <Text className="text-sm font-quicksandBold text-orange-600">
-            {streak} Day{streak !== 1 ? "s" : ""} Streak!
-          </Text>
-        </View>
+        </LinearGradient>
       )}
-    </View>
+    </LinearGradient>
   );
 });
 
