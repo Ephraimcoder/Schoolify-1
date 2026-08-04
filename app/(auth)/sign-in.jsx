@@ -44,6 +44,8 @@ export default function SignIn() {
 
   const params = useLocalSearchParams();
 
+  const isDevelopment = __DEV__ || Constants.appOwnership === "expo";
+
   useEffect(() => {
     // Mark onboarding as seen as soon as user hits any auth screen
 
@@ -334,15 +336,17 @@ export default function SignIn() {
               </Link>
             </View>
 
-            <TouchableOpacity
-              onPress={clearAsyncStorage}
-              className="mt-4 items-center"
-              activeOpacity={0.6}
-            >
-              <Text className="text-white/40 font-quicksandMedium text-xs">
-                Clear Storage & Reset
-              </Text>
-            </TouchableOpacity>
+            {isDevelopment && (
+              <TouchableOpacity
+                onPress={clearAsyncStorage}
+                className="mt-4 items-center"
+                activeOpacity={0.6}
+              >
+                <Text className="text-white/40 font-quicksandMedium text-xs">
+                  Clear Storage & Reset
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>

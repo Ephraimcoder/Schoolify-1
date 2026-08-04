@@ -11,6 +11,7 @@ import {
   Query,
 } from "react-native-appwrite";
 import { database } from "../database/database";
+import { showError } from "../utils/toast";
 const USER_STORAGE_KEY = "@user_data";
 const LOGOUT_PENDING_KEY = "@logout_pending";
 const LAST_SESSION_CHECK_KEY = "@last_session_check";
@@ -138,7 +139,17 @@ export function UserProvider({ children }) {
               return;
             }
           } catch (sessionError) {
-            // Can't get session - clear cache for safety
+            // If offline, keep cached user session
+            const netInfo = await NetInfo.fetch();
+            if (!netInfo.isConnected) {
+              // User is offline - keep them signed in with cached data
+              if (mounted) {
+                setUser(currentUserData);
+                setIsLoading(false);
+              }
+              return;
+            }
+            // Online but session failed - clear cache for safety
             await clearUser();
             currentUserData = null;
             if (mounted) {
