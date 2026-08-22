@@ -14,7 +14,7 @@ const CalendarScreen = () => {
   const { tasks } = useTasks();
   const { isDark, colors } = useTheme();
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
 
   // Use optimized DateUtils component
@@ -30,9 +30,8 @@ const CalendarScreen = () => {
   return (
     <ScreenAnimation duration={400}>
       <SafeAreaView
-        className={`flex-1 px-4 pt-4 ${
-          isDark ? "bg-gray-900" : "bg-[#FEFBF6]"
-        }`}
+        style={{ backgroundColor: colors.background[0] }}
+        className="flex-1 px-4 pt-4"
       >
         <View className="flex-row items-center justify-between mt-6 p-4">
           <Text
@@ -54,7 +53,7 @@ const CalendarScreen = () => {
             onDayPress={(day) => setSelectedDate(day.dateString)}
             markedDates={markedDates}
             theme={{
-              backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
+              backgroundColor: isDark ? "#1F2937" : "#E0DCD8",
               calendarBackground: isDark ? "#1F2937" : "#FFFFFF",
               textSectionTitleColor: isDark ? "#9CA3AF" : "#6B7280",
               selectedDayBackgroundColor: isDark ? "#6366F1" : "#FF6B47",

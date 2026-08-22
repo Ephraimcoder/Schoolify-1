@@ -17,31 +17,34 @@ const { width } = Dimensions.get("window");
 const ClassCard = ({ item, onPress }) => {
   const { isDark } = useTheme();
 
+  const priorityColors = {
+    High: isDark ? "bg-red-500" : "bg-red-500",
+    Medium: isDark ? "bg-amber-500" : "bg-amber-500",
+    Low: isDark ? "bg-green-500" : "bg-green-500",
+  };
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`w-80 rounded-3xl mx-2 shadow-xl border overflow-hidden ${
-        isDark
-          ? "bg-gray-800/60 border-gray-700/30"
-          : "bg-white/90 border-gray-200"
+      className={`w-80 rounded-2xl mx-2 shadow-md border ${
+        isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
       }`}
-      style={{
-        backdropFilter: "blur(20px)",
-        borderWidth: 1,
-        borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.08)",
-        elevation: 8,
-      }}
+      style={{ elevation: 4 }}
     >
-      {/* Header with gradient accent */}
-      <View className="h-2 bg-gradient-to-r from-indigo-500 to-purple-500" />
-
-      <View className="p-5">
-        <View className="flex-row justify-between items-start mb-4">
-          <View className="flex-1">
-            <View className="flex-row items-center mb-3">
-              <View className="w-3 h-3 bg-indigo-500 rounded-full mr-2" />
+      <View className="p-4">
+        {/* Title row with icon and priority dot */}
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center flex-1">
+            <View
+              className={`w-10 h-10 rounded-xl items-center justify-center mr-3 ${
+                isDark ? "bg-gray-700" : "bg-gray-100"
+              }`}
+            >
+              <Text className="text-lg">📚</Text>
+            </View>
+            <View className="flex-1">
               <Text
-                className={`text-xl font-quicksandBold ${
+                className={`text-lg font-quicksandBold ${
                   isDark ? "text-white" : "text-gray-900"
                 }`}
                 numberOfLines={1}
@@ -49,71 +52,67 @@ const ClassCard = ({ item, onPress }) => {
                 {item.title}
               </Text>
             </View>
-
-            {/* Priority and Time Row */}
-            <View className="flex-row items-center justify-between mb-3">
-              <View
-                className={`px-3 py-1.5 rounded-full border ${
-                  item.priority === "High"
-                    ? "bg-red-50 border-red-200"
-                    : item.priority === "Medium"
-                      ? "bg-amber-50 border-amber-200"
-                      : "bg-green-50 border-green-200"
-                }`}
-              >
-                <Text
-                  className={`text-sm font-quicksandSemiBold ${
-                    item.priority === "High"
-                      ? "text-red-700"
-                      : item.priority === "Medium"
-                        ? "text-amber-700"
-                        : "text-green-700"
-                  }`}
-                >
-                  {item.priority} Priority
-                </Text>
-              </View>
-
-              <View className="flex-row items-center bg-indigo-50 px-3 py-1.5 rounded-full">
-                <Text className="text-indigo-600 mr-1.5">🕐</Text>
-                <Text
-                  className={`text-sm font-quicksandSemiBold text-indigo-700`}
-                >
-                  {new Date(item.dueTime).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </Text>
-              </View>
-            </View>
           </View>
-
-          {/* Class Icon */}
-          <View className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl items-center justify-center shadow-lg ml-3">
-            <Text className="text-white text-xl">📚</Text>
-          </View>
+          <View
+            className={`w-2.5 h-2.5 rounded-full ${
+              priorityColors[item.priority] || priorityColors.Low
+            }`}
+          />
         </View>
 
-        {/* Description Section */}
-        {item.description && (
-          <View
-            className={`rounded-2xl p-4 ${
-              isDark ? "bg-gray-700/30" : "bg-gray-50"
+        {/* Date and time row */}
+        <View className="flex-row items-center mb-3">
+          <Ionicons
+            name="calendar-outline"
+            size={16}
+            color={isDark ? "#9CA3AF" : "#6B7280"}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            className={`text-sm font-quicksandMedium ${
+              isDark ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            <Text
-              className={`text-sm font-quicksandMedium leading-relaxed ${
-                isDark ? "text-gray-300" : "text-gray-600"
-              }`}
-              numberOfLines={3}
-            >
-              {item.description}
-            </Text>
-          </View>
-        )}
+            {new Date(item.dueDate).toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })}
+          </Text>
+          <View
+            className={`w-1 h-1 rounded-full mx-2 ${
+              isDark ? "bg-gray-600" : "bg-gray-300"
+            }`}
+          />
+          <Ionicons
+            name="time-outline"
+            size={16}
+            color={isDark ? "#9CA3AF" : "#6B7280"}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            className={`text-sm font-quicksandMedium ${
+              isDark ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            {new Date(item.dueTime).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
+        </View>
 
-        {/* Bottom accent line */}
-        <View className="h-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full mt-4" />
+        {/* Description (if exists) */}
+        {item.description && (
+          <Text
+            className={`text-sm font-quicksandMedium leading-relaxed ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+            numberOfLines={2}
+          >
+            {item.description}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );

@@ -34,7 +34,7 @@ import { showError, showSuccess } from "../utils/toast";
 
 const Settings = () => {
   const router = useRouter();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme, colors } = useTheme();
   const { user } = useUser();
   const [dailyReminder, setDailyReminder] = useState(false);
   const [reminderTime, setReminderTime] = useState(null);
@@ -45,6 +45,7 @@ const Settings = () => {
   const [showNotificationSettings, setShowNotificationSettings] =
     useState(false);
   const [backupStatus, setBackupStatus] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
   const fadeAnim = useFadeAnimation();
 
   const minuteOptions = [5, 10, 15, 30, 60, 120];
@@ -189,7 +190,13 @@ const Settings = () => {
       return;
     }
 
+    if (isExporting) {
+      showError("Backup export already in progress. Please wait.");
+      return;
+    }
+
     try {
+      setIsExporting(true);
       setBackupStatus("Preparing backup...");
       const result = await exportTasksToBackupFile(user?.accountId || "");
       setBackupStatus(`Backup saved to ${result.fileUri}`);
@@ -199,6 +206,8 @@ const Settings = () => {
     } catch (error) {
       setBackupStatus("Backup export failed.");
       showError(error.message || "Backup export failed.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -294,7 +303,10 @@ const Settings = () => {
   );
 
   return (
-    <SafeAreaView className={`flex-1 ${isDark ? "bg-gray-900" : "bg-white"}`}>
+    <SafeAreaView
+      style={{ backgroundColor: colors.background[0] }}
+      className="flex-1"
+    >
       <Animated.View
         style={{
           opacity: fadeAnim,
@@ -303,9 +315,11 @@ const Settings = () => {
       >
         {/* Header */}
         <View
-          className={`flex-row items-center justify-between px-5 py-4 border-b ${
-            isDark ? "border-gray-700 bg-gray-800" : "border-gray-100 bg-white"
-          }`}
+          style={{
+            backgroundColor: colors.background[1],
+            borderColor: colors.border,
+          }}
+          className="flex-row items-center justify-between px-5 py-4 border-b"
         >
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons
@@ -506,11 +520,14 @@ const Settings = () => {
               <View className="mt-3 gap-2">
                 <TouchableOpacity
                   onPress={handleExportBackup}
+                  disabled={isExporting}
                   className="rounded-xl px-4 py-3 items-center"
-                  style={{ backgroundColor: "#4F46E5" }}
+                  style={{
+                    backgroundColor: isExporting ? "#9CA3AF" : "#4F46E5",
+                  }}
                 >
                   <Text className="text-white font-quicksandSemiBold">
-                    Export Backup
+                    {isExporting ? "Exporting..." : "Export Backup"}
                   </Text>
                 </TouchableOpacity>
 

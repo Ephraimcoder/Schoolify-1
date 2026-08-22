@@ -155,7 +155,20 @@ const writeBackupFile = async (FileSystem, fileName, contents) => {
         return fileUri;
       }
     } catch (error) {
-      // Storage Access Framework backup export failed, falling back to standard export
+      // Check if this is a MissingActivity error - occurs when activity is no longer available
+      if (
+        error?.message?.includes("activity") ||
+        error?.message?.includes("Activity")
+      ) {
+        console.warn(
+          "Activity no longer available, falling back to standard export",
+        );
+      } else {
+        console.warn(
+          "Storage Access Framework backup export failed, falling back to standard export:",
+          error.message,
+        );
+      }
     }
   }
 
@@ -239,7 +252,13 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
 
     await database.write(async () => {
       for (const backupTask of backupPayload.tasks) {
-        const signature = buildTaskSignature(backupTask);
+        // Normalize backup task dates for signature comparison
+        const normalizedBackupTask = {
+          ...backupTask,
+          dueDate: backupTask.dueDate ? new Date(backupTask.dueDate) : null,
+          dueTime: backupTask.dueTime ? new Date(backupTask.dueTime) : null,
+        };
+        const signature = buildTaskSignature(normalizedBackupTask);
         if (existingSignatures.has(signature)) {
           // Keep the existing local task and skip creating a duplicate.
           skipped += 1;
@@ -247,25 +266,23 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
         }
 
         await tasksCollection.create((task) => {
-          task.title = backupTask.title || "";
-          task.description = backupTask.description || "";
-          task.categoryName = backupTask.category || "";
-          task.priorityName = backupTask.priority || "";
-          task.dueDate = backupTask.dueDate
-            ? new Date(backupTask.dueDate)
-            : null;
-          task.dueTime = backupTask.dueTime
-            ? new Date(backupTask.dueTime)
-            : null;
-          task.isCompleted = !!backupTask.isCompleted;
-          task.itemType = backupTask.itemType || "task";
-          task.alertEnabled = !!backupTask.alertEnabled;
-          task.notificationId = backupTask.notificationId || null;
-          task.subtasksJson = JSON.stringify(backupTask.subTasks || []);
-          task.userId = userId || backupTask.userId || "";
-          task.color = backupTask.color || null;
+          task.title = normalizedBackupTask.title || "";
+          task.description = normalizedBackupTask.description || "";
+          task.categoryName = normalizedBackupTask.category || "";
+          task.priorityName = normalizedBackupTask.priority || "";
+          task.dueDate = normalizedBackupTask.dueDate || null;
+          task.dueTime = normalizedBackupTask.dueTime || null;
+          task.isCompleted = !!normalizedBackupTask.isCompleted;
+          task.itemType = normalizedBackupTask.itemType || "task";
+          task.alertEnabled = !!normalizedBackupTask.alertEnabled;
+          task.notificationId = normalizedBackupTask.notificationId || null;
+          task.subtasksJson = JSON.stringify(
+            normalizedBackupTask.subTasks || [],
+          );
+          task.userId = userId || normalizedBackupTask.userId || "";
+          task.color = normalizedBackupTask.color || null;
           task.lastSyncedAt = null;
-          task.appwriteId = backupTask.appwriteId || null;
+          task.appwriteId = normalizedBackupTask.appwriteId || null;
         });
 
         existingSignatures.add(signature);

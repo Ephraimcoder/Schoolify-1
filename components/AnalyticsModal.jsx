@@ -206,7 +206,7 @@ export const AnalyticsModal = ({ visible, onClose, tasks }) => {
             showsVerticalScrollIndicator={false}
             className="flex-1 px-6"
             contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
-            nestedScrollEnabled={false}
+            nestedScrollEnabled={true}
           >
             {/* Loading State */}
             {isCalculating ? (

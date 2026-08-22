@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useDatabase } from "@nozbe/watermelondb/react";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -12,7 +12,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/ThemeContext";
-import { setNotificationLeadMinutes } from "../../../utils/notificationPrefs";
+import {
+  getNotificationLeadMinutes,
+  setNotificationLeadMinutes,
+} from "../../../utils/notificationPrefs";
 // UI-only: subtle shadow styling for hero card
 const cardShadow = Platform.select({
   ios: {

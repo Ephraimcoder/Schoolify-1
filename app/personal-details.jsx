@@ -14,7 +14,7 @@ import { useFadeAnimation } from "../hooks/useBackTransition";
 const PersonalDetails = () => {
   const router = useRouter();
   const { user, deleteAccount } = useUser();
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   const fadeAnim = useFadeAnimation();
 
   // Only show fields that we have data for
@@ -26,11 +26,11 @@ const PersonalDetails = () => {
 
   const InfoRow = ({ label, value, icon }) => (
     <View
-      className={`flex-row items-center justify-between py-5 border-b ${
+      className={`flex-row items-center py-5 border-b ${
         isDark ? "border-gray-700" : "border-gray-100"
       }`}
     >
-      <View className="flex-row items-center">
+      <View className="flex-row items-center flex-1">
         <Ionicons
           name={icon}
           size={24}
@@ -45,23 +45,24 @@ const PersonalDetails = () => {
           {label}
         </Text>
       </View>
-      <Text
-        className={`font-quicksand text-lg text-right ${
-          isDark ? "text-gray-100" : "text-gray-800"
-        }`}
-        numberOfLines={1}
-      >
-        {value}
-      </Text>
+      <View>
+        <Text
+          className={`font-quicksand text-lg ${
+            isDark ? "text-gray-100" : "text-gray-800"
+          }`}
+          numberOfLines={1}
+        >
+          {value}
+        </Text>
+      </View>
     </View>
   );
 
   if (!user) {
     return (
       <SafeAreaView
-        className={`flex-1 items-center justify-center ${
-          isDark ? "bg-gray-900" : "bg-[#FEFBF6]"
-        }`}
+        style={{ backgroundColor: colors.background[0] }}
+        className="flex-1 items-center justify-center"
       >
         <Text
           className={`font-quicksand ${
@@ -75,7 +76,10 @@ const PersonalDetails = () => {
   }
 
   return (
-    <SafeAreaView className={`flex-1 ${isDark ? "bg-gray-900" : "bg-white"}`}>
+    <SafeAreaView
+      style={{ backgroundColor: colors.background[0] }}
+      className="flex-1"
+    >
       {/* Header */}
       <Animated.View
         style={{
@@ -84,9 +88,11 @@ const PersonalDetails = () => {
         }}
       >
         <View
-          className={`flex-row items-center justify-between px-5 py-5 border-b ${
-            isDark ? "border-gray-700 bg-gray-800" : "border-gray-100 bg-white"
-          }`}
+          style={{
+            backgroundColor: colors.background[1],
+            borderColor: colors.border,
+          }}
+          className="flex-row items-center justify-between px-5 py-5 border-b"
         >
           <TouchableOpacity
             onPress={() => router.back()}

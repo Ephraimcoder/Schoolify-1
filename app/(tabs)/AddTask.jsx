@@ -351,7 +351,7 @@ const AddTask = () => {
     const taskData = {
       ...formData,
       description: "",
-      category: "Personal",
+      category: formData.category === "Class" ? "Class" : "Personal",
       priority: "Low",
       subTasks: [],
       alertEnabled,

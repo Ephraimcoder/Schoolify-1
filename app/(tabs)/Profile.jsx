@@ -9,13 +9,12 @@ import { useTasks } from "../../context/TasksContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useUser } from "../../context/UserContext";
 
-const SectionItem = ({ icon, label, onPress, isDark, iconColor }) => (
+const SectionItem = ({ icon, label, onPress, isDark, iconColor, colors }) => (
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.85}
-    className={`flex-row items-center justify-between rounded-2xl py-4 px-4 mb-3 border ${
-      isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
-    }`}
+    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+    className="flex-row items-center justify-between rounded-2xl py-4 px-4 mb-3 border"
   >
     <View className="flex-row items-center">
       <View
@@ -54,12 +53,12 @@ const StatCard = ({
   color = "#6B7280",
   onPress,
   isDark,
+  colors,
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    className={`flex-1 rounded-2xl p-4 mr-3 last:mr-0 border ${
-      isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
-    }`}
+    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+    className="flex-1 rounded-2xl p-4 mr-3 last:mr-0 border"
   >
     <View className="flex-row items-center mb-2">
       <Ionicons name={icon} size={18} color={color} />
@@ -85,7 +84,7 @@ const Profile = () => {
   const router = useRouter();
   const { user, logout } = useUser();
   const { tasks } = useTasks();
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   const stats = useMemo(
@@ -155,13 +154,16 @@ const Profile = () => {
   return (
     <ScreenAnimation duration={400}>
       <SafeAreaView
-        className={`flex-1 ${isDark ? "bg-gray-900" : "bg-[#FEFBF6]"}`}
+        style={{ backgroundColor: colors.background[0] }}
+        className="flex-1"
       >
         {/* Header */}
         <View
-          className={`flex-row justify-between items-center px-5 py-4 border-b ${
-            isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
-          }`}
+          style={{
+            backgroundColor: colors.background[1],
+            borderColor: colors.border,
+          }}
+          className="flex-row justify-between items-center px-5 py-4 border-b"
         >
           <TouchableOpacity
             onPress={() => router.back()}
@@ -204,11 +206,11 @@ const Profile = () => {
           >
             {/* Card header with avatar */}
             <View
-              className={`mx-5 mt-2 rounded-3xl items-center p-6 border ${
-                isDark
-                  ? "bg-gray-800 border-gray-700"
-                  : "bg-white border-gray-100"
-              }`}
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }}
+              className="mx-5 mt-2 rounded-3xl items-center p-6 border"
             >
               <Image
                 source={{ uri: profile.avatar }}
@@ -237,11 +239,11 @@ const Profile = () => {
                   <TouchableOpacity
                     key={stat.id}
                     onPress={stat.onPress}
-                    className={`w-[48%] rounded-2xl p-4 mb-4 border ${
-                      isDark
-                        ? "bg-gray-800 border-gray-700"
-                        : "bg-white border-gray-100"
-                    }`}
+                    style={{
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                    }}
+                    className="w-[48%] rounded-2xl p-4 mb-4 border"
                   >
                     <View className="flex-row items-center justify-between">
                       <View
@@ -283,6 +285,7 @@ const Profile = () => {
                   label={opt.label}
                   onPress={opt.onPress}
                   isDark={isDark}
+                  colors={colors}
                 />
               ))}
 
@@ -292,9 +295,9 @@ const Profile = () => {
                 label="Settings"
                 onPress={() => router.push("/settings")}
                 isDark={isDark}
+                colors={colors}
               />
             </View>
-
           </ScrollView>
         </View>
 
