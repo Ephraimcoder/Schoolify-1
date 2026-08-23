@@ -3,6 +3,15 @@ import { database } from "../database/database";
 import { appwriteSyncService } from "../services/appwriteSyncService";
 import { showError } from "../utils/toast";
 
+// Simple UUID generator for local backup deduplication
+const generateUUID = () => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 /**
  * Merge Appwrite-only tasks to local database
  * - Finds tasks that exist in Appwrite but not locally
@@ -27,7 +36,7 @@ export const mergeAppwriteOnlyTasks = async (userId) => {
     // Find tasks that exist in Appwrite but not locally
     const appwriteOnlyTasks = appwriteTasks.filter((appwriteTask) => {
       return !localTasks.some(
-        (localTask) => localTask.appwriteId === appwriteTask.$id
+        (localTask) => localTask.appwriteId === appwriteTask.$id,
       );
     });
 
@@ -57,6 +66,9 @@ export const mergeAppwriteOnlyTasks = async (userId) => {
           task.userId = userId;
           task.appwriteId = appwriteTask.$id;
           task.lastSyncedAt = new Date();
+
+          // 🆕 Generate UUID for local backup deduplication
+          task.localUuid = generateUUID();
         });
       }
     });

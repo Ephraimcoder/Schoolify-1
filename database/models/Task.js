@@ -51,4 +51,5 @@ export default class Task extends Model {
   @readonly @date("updated_at") updatedAt;
   @date("last_synced_at") lastSyncedAt;
   @text("appwrite_id") appwriteId;
+  @text("local_uuid") localUuid;
 }

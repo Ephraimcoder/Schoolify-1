@@ -27,7 +27,10 @@ const Tasks = () => {
 
   // Handle filter from URL params
   useEffect(() => {
-    if (filterParam && ["dueToday", "overdue"].includes(filterParam)) {
+    if (
+      filterParam &&
+      ["dueToday", "overdue", "classes"].includes(filterParam)
+    ) {
       setActiveFilter(filterParam);
     }
   }, [filterParam]);
@@ -167,6 +170,7 @@ const Tasks = () => {
               <View className="flex-row gap-2 px-1">
                 {[
                   { id: "all", label: "All Tasks" },
+                  { id: "classes", label: "📚 Classes" },
                   { id: "completed", label: "Completed" },
                   { id: "incomplete", label: "Incomplete" },
                   { id: "overdue", label: "Overdue" },
@@ -224,14 +228,6 @@ const Tasks = () => {
                   { key: "createdOld", label: "Created: oldest first" },
                   { key: "priorityHighLow", label: "Priority: High → Low" },
                   { key: "priorityLowHigh", label: "Priority: Low → High" },
-                  { key: "classes", label: "📚 Classes only" },
-                  // { key: "completed", label: "✅ Completed tasks" },
-
-                  // { key: "incomplete", label: "⏳ Incomplete tasks" },
-
-                  // { key: "overdue", label: "🔴 Overdue tasks" },
-
-                  // { key: "dueToday", label: "📅 Due today" },
                 ].map((opt) => (
                   <TouchableOpacity
                     key={opt.key}
@@ -281,11 +277,11 @@ const Tasks = () => {
                 No tasks found
               </Text>
               <Text className="text-gray-400 font-quicksand text-center px-8">
-                {sortOption === "classes" && "No classes available"}
-                {sortOption === "completed" && "No completed tasks yet"}
-                {sortOption === "incomplete" && "All tasks are completed!"}
-                {sortOption === "overdue" && "No overdue tasks - great job!"}
-                {sortOption === "dueToday" && "No tasks due today!"}
+                {activeFilter === "classes" && "No classes available"}
+                {activeFilter === "completed" && "No completed tasks yet"}
+                {activeFilter === "incomplete" && "All tasks are completed!"}
+                {activeFilter === "overdue" && "No overdue tasks - great job!"}
+                {activeFilter === "dueToday" && "No tasks due today!"}
                 {searchQuery && `No tasks matching "${searchQuery}"`}
                 {![
                   "classes",
@@ -293,7 +289,7 @@ const Tasks = () => {
                   "incomplete",
                   "overdue",
                   "dueToday",
-                ].includes(sortOption) &&
+                ].includes(activeFilter) &&
                   !searchQuery &&
                   "No tasks available"}
               </Text>

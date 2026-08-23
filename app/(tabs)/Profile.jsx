@@ -1,9 +1,8 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AnalyticsModal } from "../../components/AnalyticsModal";
 import ScreenAnimation from "../../components/ScreenAnimation";
 import { useTasks } from "../../context/TasksContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -85,10 +84,9 @@ const Profile = () => {
   const { user, logout } = useUser();
   const { tasks } = useTasks();
   const { isDark, colors } = useTheme();
-  const [showAnalytics, setShowAnalytics] = useState(false);
 
-  const stats = useMemo(
-    () => [
+  const stats = useMemo(() => {
+    return [
       {
         id: "tasks",
         label: "Total Tasks",
@@ -123,11 +121,10 @@ const Profile = () => {
         value: "",
         icon: "analytics-outline",
         color: "#F59E0B",
-        onPress: () => setShowAnalytics(true),
+        onPress: () => router.push("/analytics"),
       },
-    ],
-    [tasks],
-  );
+    ];
+  }, [tasks]);
 
   const profile = {
     name: user?.name || "",
@@ -300,12 +297,6 @@ const Profile = () => {
             </View>
           </ScrollView>
         </View>
-
-        <AnalyticsModal
-          visible={showAnalytics}
-          onClose={() => setShowAnalytics(false)}
-          tasks={tasks}
-        />
       </SafeAreaView>
     </ScreenAnimation>
   );

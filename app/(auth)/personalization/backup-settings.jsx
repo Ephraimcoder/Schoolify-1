@@ -123,13 +123,13 @@ export default function BackupSettings() {
             className="w-11/12 h-44 rounded-3xl items-center justify-center overflow-hidden"
             style={[cardShadow, { backgroundColor: colors.card }]}
           >
-            {/* Cloud backup illustration */}
+            {/* Local backup illustration */}
             <View className="items-center">
               <View className="relative mb-4">
-                {/* Shield with cloud */}
+                {/* Shield with device */}
                 <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center">
                   <View className="w-12 h-12 bg-green-500 rounded-full items-center justify-center">
-                    <Ionicons name="cloud" size={24} color="white" />
+                    <Ionicons name="phone-portrait" size={24} color="white" />
                   </View>
                   {/* Shield effect */}
                   <View className="absolute -top-1 -right-1 w-6 h-6 bg-green-400 rounded-full" />
@@ -164,7 +164,7 @@ export default function BackupSettings() {
             className="text-xl text-center font-quicksandMedium mt-3 leading-6"
             style={{ color: colors.textSecondary }}
           >
-            Your tasks, automatically backed up
+            Your tasks, safely stored on your device
           </Text>
         </View>
 
@@ -186,7 +186,7 @@ export default function BackupSettings() {
                   className="font-quicksandMedium text-sm mt-1"
                   style={{ color: colors.textSecondary }}
                 >
-                  Keep your tasks safe in the cloud
+                  Keep your tasks safe on your device
                 </Text>
               </View>
               <Switch
@@ -213,13 +213,13 @@ export default function BackupSettings() {
               </View>
               <View className="flex-row items-center">
                 <View className="w-6 h-6 rounded-full bg-blue-100 items-center justify-center mr-4">
-                  <Ionicons name="sync" size={16} color="#2563EB" />
+                  <Ionicons name="shield-checkmark" size={16} color="#2563EB" />
                 </View>
                 <Text
                   className="font-quicksandMedium text-sm flex-1"
                   style={{ color: colors.text, lineHeight: 20 }}
                 >
-                  Access from any device
+                  Data stays on your device
                 </Text>
               </View>
               <View className="flex-row items-center">

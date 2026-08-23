@@ -128,16 +128,33 @@ const TaskSorter = ({ filteredTasks, sortOption, activeFilter }) => {
     );
   }, [tasksByDate, sortedDates, sortTasksInGroup]);
 
-  // Flat mode for created date sorting
-  const flatMode = sortOption === "createdNew" || sortOption === "createdOld";
+  // Flat mode for created date sorting and priority sorting
+  const flatMode =
+    sortOption === "createdNew" ||
+    sortOption === "createdOld" ||
+    sortOption === "priorityHighLow" ||
+    sortOption === "priorityLowHigh";
   const flatTasks = useMemo(() => {
     if (!flatMode || !statusFilteredTasks) return [];
     const arr = [...statusFilteredTasks];
     if (sortOption === "createdNew") {
       return arr.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     }
-    return arr.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-  }, [statusFilteredTasks, sortOption, flatMode]);
+    if (sortOption === "createdOld") {
+      return arr.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    }
+    if (sortOption === "priorityHighLow") {
+      return arr.sort(
+        (a, b) => priorityRank(b.priority) - priorityRank(a.priority),
+      );
+    }
+    if (sortOption === "priorityLowHigh") {
+      return arr.sort(
+        (a, b) => priorityRank(a.priority) - priorityRank(b.priority),
+      );
+    }
+    return arr;
+  }, [statusFilteredTasks, sortOption, flatMode, priorityRank]);
 
   return {
     statusFilteredTasks,

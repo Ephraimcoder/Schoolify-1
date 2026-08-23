@@ -1,5 +1,6 @@
 import { Q } from "@nozbe/watermelondb";
 import { database } from "../database/database";
+import { showError } from "../utils/toast";
 
 const BACKUP_VERSION = 1;
 const BACKUP_PREFIX = "scholar-flow-backup";
@@ -22,6 +23,7 @@ const formatBackupFileName = () => {
 
 const serializeTaskForBackup = (task) => ({
   id: task.id,
+  localUuid: task.localUuid || null,
   title: task.title || "",
   description: task.description || "",
   category: task.categoryName || "",
@@ -243,8 +245,12 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
     const existingTasks = await tasksCollection
       .query(Q.where("user_id", userId))
       .fetch();
-    const existingSignatures = new Set(
-      existingTasks.map((task) => buildTaskSignature(task)),
+
+    // 🆕 Use UUIDs for deduplication instead of signatures
+    const existingUuids = new Set(
+      existingTasks
+        .map((task) => task.localUuid)
+        .filter((uuid) => uuid !== null && uuid !== undefined),
     );
 
     let created = 0;
@@ -252,18 +258,34 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
 
     await database.write(async () => {
       for (const backupTask of backupPayload.tasks) {
-        // Normalize backup task dates for signature comparison
+        // 🆕 Check if task has UUID and if it already exists
+        if (backupTask.localUuid && existingUuids.has(backupTask.localUuid)) {
+          skipped += 1;
+          continue;
+        }
+
+        // For tasks without UUID (old backups), fall back to signature-based deduplication
+        if (!backupTask.localUuid) {
+          const normalizedBackupTask = {
+            ...backupTask,
+            dueDate: backupTask.dueDate ? new Date(backupTask.dueDate) : null,
+            dueTime: backupTask.dueTime ? new Date(backupTask.dueTime) : null,
+          };
+          const signature = buildTaskSignature(normalizedBackupTask);
+          const existingSignatures = new Set(
+            existingTasks.map((task) => buildTaskSignature(task)),
+          );
+          if (existingSignatures.has(signature)) {
+            skipped += 1;
+            continue;
+          }
+        }
+
         const normalizedBackupTask = {
           ...backupTask,
           dueDate: backupTask.dueDate ? new Date(backupTask.dueDate) : null,
           dueTime: backupTask.dueTime ? new Date(backupTask.dueTime) : null,
         };
-        const signature = buildTaskSignature(normalizedBackupTask);
-        if (existingSignatures.has(signature)) {
-          // Keep the existing local task and skip creating a duplicate.
-          skipped += 1;
-          continue;
-        }
 
         await tasksCollection.create((task) => {
           task.title = normalizedBackupTask.title || "";
@@ -283,9 +305,11 @@ export const importTasksFromBackupFile = async (fileUri, userId) => {
           task.color = normalizedBackupTask.color || null;
           task.lastSyncedAt = null;
           task.appwriteId = normalizedBackupTask.appwriteId || null;
+
+          // 🆕 Preserve UUID from backup or generate new one for old tasks
+          task.localUuid = normalizedBackupTask.localUuid || null;
         });
 
-        existingSignatures.add(signature);
         created += 1;
       }
     });

@@ -2,14 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useContext, useMemo } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
+import { useRouter } from "expo-router";
 import { TasksContext } from "../context/TasksContext";
-
 import { useTheme } from "../context/ThemeContext";
-
 const TaskProgress = React.memo(() => {
   const { tasks } = useContext(TasksContext);
 
   const { isDark, colors } = useTheme();
+
+  const router = useRouter();
 
   const {
     totalTasks,
@@ -201,6 +202,12 @@ const TaskProgress = React.memo(() => {
 
       <View className="flex-row justify-between mb-4">
         <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/Tasks",
+              params: { filter: "dueToday" },
+            })
+          }
           className={`flex-1 items-center rounded-xl py-3 mx-1 ${
             isDark ? "bg-gray-700/50" : "bg-gray-50"
           }`}
@@ -230,6 +237,12 @@ const TaskProgress = React.memo(() => {
         </TouchableOpacity>
 
         <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/Tasks",
+              params: { filter: "overdue" },
+            })
+          }
           className={`flex-1 items-center rounded-xl py-3 mx-1 ${
             isDark ? "bg-gray-700/50" : "bg-gray-50"
           }`}
