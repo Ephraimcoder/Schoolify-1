@@ -11,8 +11,8 @@ import * as NavigationBar from "expo-navigation-bar";
 import * as Notifications from "expo-notifications";
 
 import { Stack, usePathname, useRouter } from "expo-router";
-
 import { useEffect, useRef } from "react";
+import UpdateManager from "../components/UpdateManager";
 
 import {
   ActivityIndicator,
@@ -320,6 +320,8 @@ const RootLayoutWrapper = () => {
       <GamificationNotificationsWrapper>
         <RootLayoutContent />
       </GamificationNotificationsWrapper>
+
+      <UpdateManager />
 
       <Toasts
         position="bottom"

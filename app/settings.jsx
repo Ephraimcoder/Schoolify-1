@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
+import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
 import {
   Animated,
@@ -49,6 +50,27 @@ const Settings = () => {
   const fadeAnim = useFadeAnimation();
 
   const minuteOptions = [5, 10, 15, 30, 60, 120];
+
+  // Manual update check
+  const checkForUpdates = async () => {
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        showSuccess(
+          "Update available! The UpdateManager will prompt you to download.",
+        );
+      } else {
+        showSuccess("You have the latest version.");
+      }
+    } catch (error) {
+      // Handle development build case
+      if (__DEV__) {
+        showSuccess("Updates not available in development builds");
+      } else {
+        showError("Failed to check for updates.");
+      }
+    }
+  };
 
   // Load backup preference from database
   const loadBackupPreference = async () => {
@@ -385,6 +407,29 @@ const Settings = () => {
                 />
               }
             />
+
+            <SettingItem
+              icon="cloud-download-outline"
+              title="Check for Updates"
+              description="Manually check for app updates"
+              onPress={checkForUpdates}
+            />
+
+            {__DEV__ && (
+              <SettingItem
+                icon="bug-outline"
+                title="Test Update UI (Dev Only)"
+                description="Test the update manager UI in development"
+                onPress={() => {
+                  // Trigger the test function
+                  if (global.testUpdateUI) {
+                    global.testUpdateUI();
+                  } else {
+                    showError("UpdateManager not loaded yet. Restart the app.");
+                  }
+                }}
+              />
+            )}
 
             <SettingItem
               icon="notifications-outline"
