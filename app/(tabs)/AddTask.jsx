@@ -97,7 +97,12 @@ const AddTask = () => {
 
       // Apply user's preferred lead time (minutes before)
       const leadMinutes = await getNotificationLeadMinutes();
-      const triggerTime = new Date(dueDateTime.getTime() - leadMinutes * 60000);
+
+      // If 0, schedule at due time; otherwise subtract lead time
+      const triggerTime =
+        leadMinutes === 0
+          ? dueDateTime
+          : new Date(dueDateTime.getTime() - leadMinutes * 60000);
 
       // Don't schedule in the past
       if (!triggerTime || triggerTime <= new Date()) {

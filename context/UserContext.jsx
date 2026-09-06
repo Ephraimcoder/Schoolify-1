@@ -113,46 +113,90 @@ export function UserProvider({ children }) {
             return;
           }
 
-          // Check session (only every 24 hours)
-          try {
-            const currentAccount = await account.get();
-            await AsyncStorage.setItem(LAST_SESSION_CHECK_KEY, now.toString());
+          // Check session (only every 24 hours) with retry logic
+          let sessionCheckFailed = false;
+          let isSessionExpired = false;
 
-            if (
-              currentAccount &&
-              currentAccount.$id !== currentUserData.accountId
-            ) {
-              // Session user doesn't match cached user - clear cache
-              await clearUser();
-              currentUserData = null;
-              if (mounted) {
-                setIsLoading(false);
+          for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+              const currentAccount = await account.get();
+              await AsyncStorage.setItem(
+                LAST_SESSION_CHECK_KEY,
+                now.toString(),
+              );
+
+              if (
+                currentAccount &&
+                currentAccount.$id !== currentUserData.accountId
+              ) {
+                // Session user doesn't match cached user - clear cache
+                await clearUser();
+                currentUserData = null;
+                if (mounted) {
+                  setIsLoading(false);
+                }
+                return;
+              } else if (!currentAccount) {
+                // No session - clear cache
+                isSessionExpired = true;
+                await clearUser();
+                currentUserData = null;
+                if (mounted) {
+                  setIsLoading(false);
+                }
+                return;
               }
-              return;
-            } else if (!currentAccount) {
-              // No session - clear cache
-              await clearUser();
-              currentUserData = null;
-              if (mounted) {
-                setIsLoading(false);
+              // Session valid - break out of retry loop
+              break;
+            } catch (sessionError) {
+              // Check if this is a genuine session expiration error
+              if (
+                sessionError.code === 401 ||
+                sessionError.message?.includes("session") ||
+                sessionError.message?.includes("unauthorized")
+              ) {
+                isSessionExpired = true;
+                break;
               }
-              return;
+
+              // If offline, keep cached user session
+              const netInfo = await NetInfo.fetch();
+              if (!netInfo.isConnected) {
+                // User is offline - keep them signed in with cached data
+                if (mounted) {
+                  setUser(currentUserData);
+                  setIsLoading(false);
+                }
+                return;
+              }
+
+              // For other errors, retry if we haven't exhausted attempts
+              if (attempt < 2) {
+                await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                continue;
+              }
+
+              // All retries failed
+              sessionCheckFailed = true;
+              break;
             }
-          } catch (sessionError) {
-            // If offline, keep cached user session
-            const netInfo = await NetInfo.fetch();
-            if (!netInfo.isConnected) {
-              // User is offline - keep them signed in with cached data
-              if (mounted) {
-                setUser(currentUserData);
-                setIsLoading(false);
-              }
-              return;
-            }
-            // Online but session failed - clear cache for safety
+          }
+
+          // Only clear cache if session is genuinely expired
+          if (isSessionExpired) {
             await clearUser();
             currentUserData = null;
             if (mounted) {
+              setIsLoading(false);
+            }
+            return;
+          }
+
+          // If session check failed but not due to expiration, keep user logged in
+          if (sessionCheckFailed) {
+            // Keep cached user - likely a temporary network/server issue
+            if (mounted) {
+              setUser(currentUserData);
               setIsLoading(false);
             }
             return;

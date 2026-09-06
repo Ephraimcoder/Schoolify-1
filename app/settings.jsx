@@ -49,7 +49,7 @@ const Settings = () => {
   const [isExporting, setIsExporting] = useState(false);
   const fadeAnim = useFadeAnimation();
 
-  const minuteOptions = [5, 10, 15, 30, 60, 120];
+  const minuteOptions = [0, 5, 10, 15, 30, 60, 120];
 
   // Manual update check
   const checkForUpdates = async () => {
@@ -479,7 +479,11 @@ const Settings = () => {
                         onPress={async () => {
                           setLeadMinutes(m);
                           await setNotificationLeadMinutes(m);
-                          showSuccess(`Reminder set to ${m} minutes before`);
+                          showSuccess(
+                            m === 0
+                              ? "Notifications at due time"
+                              : `Reminder set to ${m} minutes before`,
+                          );
                         }}
                       >
                         <Text
@@ -491,7 +495,7 @@ const Settings = () => {
                                 : "text-gray-700"
                           }`}
                         >
-                          {m} mins
+                          {m === 0 ? "At due" : `${m} mins`}
                         </Text>
                       </TouchableOpacity>
                     );

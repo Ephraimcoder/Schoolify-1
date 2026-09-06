@@ -164,7 +164,7 @@ export default function BackupSettings() {
             className="text-xl text-center font-quicksandMedium mt-3 leading-6"
             style={{ color: colors.textSecondary }}
           >
-            Your tasks, safely stored on your device
+            Your tasks, stored locally on your device
           </Text>
         </View>
 
@@ -180,13 +180,13 @@ export default function BackupSettings() {
                   className="font-quicksandBold text-lg"
                   style={{ color: colors.text }}
                 >
-                  Backup
+                  Local Storage
                 </Text>
                 <Text
                   className="font-quicksandMedium text-sm mt-1"
                   style={{ color: colors.textSecondary }}
                 >
-                  Keep your tasks safe on your device
+                  Save tasks to your device only
                 </Text>
               </View>
               <Switch

@@ -32,7 +32,7 @@ export default function NotificationTiming() {
   const router = useRouter();
   const database = useDatabase();
   const [leadMinutes, setLeadMinutes] = useState(15);
-  const minuteOptions = [5, 10, 15, 30, 60, 120];
+  const minuteOptions = [0, 5, 10, 15, 30, 60, 120];
   const { isDark, colors } = useTheme();
 
   // Load saved notification preference on mount
@@ -67,6 +67,9 @@ export default function NotificationTiming() {
   };
 
   const formatTimeDisplay = (minutes) => {
+    if (minutes === 0) {
+      return "At due time";
+    }
     if (minutes < 60) {
       return `${minutes} minute${minutes !== 1 ? "s" : ""} before`;
     } else {
@@ -249,8 +252,9 @@ export default function NotificationTiming() {
                   className="font-quicksandMedium text-sm flex-1"
                   style={{ color: colors.text }}
                 >
-                  We'll send you a notification before each task is due. You can
-                  always change this later in settings.
+                  We'll send you a notification before each task is due, or
+                  exactly when it's due. You can always change this later in
+                  settings.
                 </Text>
               </View>
             </View>

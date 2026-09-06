@@ -69,13 +69,7 @@
     "plugins": [
       "expo-router",
 
-      [
-        "@lovesworking/watermelondb-expo-plugin-sdk-52-plus",
-
-        {
-          "jscFlavor": "android-jsc-intl"
-        }
-      ],
+      ["@morrowdigital/watermelondb-expo-plugin", { "disableJsi": true }],
 
       [
         "expo-splash-screen",
@@ -98,8 +92,6 @@
 
         {
           "android": {
-            "kotlinVersion": "2.0.21",
-
             "packagingOptions": {
               "pickFirst": ["**/libc++_shared.so"]
             }
